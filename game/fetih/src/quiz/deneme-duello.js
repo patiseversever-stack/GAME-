@@ -371,10 +371,51 @@ function halatMore(base) {
 }
 const HALAT = ['tarih', 'cografya', 'bilim', 'spor', 'sanat', 'eglence'].map(halatRound);
 
+/**
+ * 2026-11 büyütmesi: ek bankadan (src/data/q/ek) turlar. Kategori başına en çok 8 tur; tur başına 12 kısa doğru/yanlış,
+ * 6 karşılaştır, 16 kısa şıklı (şık sayısı 2–4 karışık). Her madde kaynağının kimliğini taşır (srcs): tur oynanınca
+ * içindeki sorular hafızaya "görüldü" yazılır, oyuncu onları sonra tek başına bir daha görmez (src/game/match.js pick).
+ */
+function halatEk(prev) {
+	const used = new Set(prev.flatMap((r) => r.items.map((x) => x.t)));
+	const out = [];
+	for (const cat of Object.keys(CAT_NAME)) {
+		const pool = (t, f) => BANK.filter((q) => q.cat === cat && q.type === t && /-ek-/.test(q.id) && !used.has(q.q) && f(q));
+		const tfs = pool('tf', (q) => L(q.q) <= 70);
+		const hls = pool('hilo', (q) => q.left.v !== q.right.v && L(q.left.t) <= 24 && L(q.right.t) <= 24 && L(q.q) <= 60);
+		const chs = pool('choice', (q) => L(q.q) <= 60 && q.a.every((x) => L(x) <= 16));
+		for (let n = 0; n < 8 && tfs.length >= 12 && chs.length >= 16; n++) {
+			const tf = tfs.splice(0, 12).map((q) => ({ t: q.q, o: ['DOĞRU', 'YANLIŞ'], r: q.ans ? 0 : 1, d: q.diff, tf: true, id: q.id }));
+			const hl = hls.splice(0, 6).map((q) => ({ t: q.q, o: [q.left.t, q.right.t], r: q.left.v > q.right.v ? 0 : 1, d: q.diff, id: q.id }));
+			const ch = chs.splice(0, 34 - tf.length - hl.length).map((q, i) => ({ t: q.q, o: q.a.slice(0, [3, 2, 4][i % 3]), r: 0, d: q.diff, id: q.id }));
+			const items = [...tf, ...hl, ...ch];
+			if (items.length < 34) break;
+			for (const x of items) used.add(x.t);
+			out.push({ id: `dn-ht-ek-${cat}-${n + 1}`, cat, diff: 2, type: 'halat', q: `Halatı kendine çek! · ${CAT_NAME[cat]}`, items, srcs: items.map((x) => x.id) });
+		}
+	}
+	return out;
+}
+
+/**
+ * 2026-11 büyütmesi: ek bankanın tahmin soruları da Mancınık olur ("aşma" kuralına uygun: cevap aralığın %10–90'ı
+ * arasında, aralık geniş, cevap pozitif). Kimlik kaynak sorudan (dn-mc-<kaynak>): banka büyüse de kaymaz.
+ */
+const mancinikEk = (have) =>
+	BANK.filter((q) => q.type === 'num' && /-ek-nu-/.test(q.id) && !have.has(q.id) && Number.isFinite(q.ans) && q.ans > 0 && Number.isFinite(q.min) && Number.isFinite(q.max) && q.max - q.min >= 10)
+		.filter((q) => {
+			const f = (q.ans - q.min) / (q.max - q.min);
+			return f >= 0.1 && f <= 0.9;
+		})
+		.map((q) => ({ ...q, id: `dn-mc-${q.id}`, src: q.id, type: 'mancinik' }));
+
+const HALAT_ALL = [...HALAT, ...halatMore(HALAT)];
+const MANCINIK = MANCINIK_IDS.map((id, i) => [BANK.find((q) => q.id === id), i])
+	.filter(([q]) => q)
+	.map(([q, i]) => ({ ...q, id: `dn-mc${i + 1}`, src: q.id, type: 'mancinik' }));
+
 export const SAMPLES = {
-	halat: [...HALAT, ...halatMore(HALAT)],
+	halat: [...HALAT_ALL, ...halatEk(HALAT_ALL)],
 	// kimlik listedeki sıradan: bankadan bir soru düşse bile öbürlerinin dn-mc kimliği kaymaz
-	mancinik: MANCINIK_IDS.map((id, i) => [BANK.find((q) => q.id === id), i])
-		.filter(([q]) => q)
-		.map(([q, i]) => ({ ...q, id: `dn-mc${i + 1}`, src: q.id, type: 'mancinik' })),
+	mancinik: [...MANCINIK, ...mancinikEk(new Set(MANCINIK_IDS))],
 };

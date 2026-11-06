@@ -75,9 +75,39 @@ const CSS = /* css */ `
 .dn-id-c:nth-child(3) .dn-id-nt,.dn-id-c:nth-child(3) .dn-id-tg{animation-delay:.18s}.dn-id-c:nth-child(4) .dn-id-nt,.dn-id-c:nth-child(4) .dn-id-tg{animation-delay:.36s}
 .dn-id-c>i .fl-who{position:relative;inset:auto;width:24px;height:24px;margin-top:6px;border-radius:7px;box-shadow:0 0 0 2px #fff}
 @media (max-height:700px){.id-pg{height:40px}.dn-id-c>div{padding:9px 10px 10px}.dn-id{gap:8px}.fl-q.cover .dn-id.done .id-pg{display:none}}
+/* kısa ekran, tam ekran kart: kapak kurallarıyla AYNI seçiciler (onlardan sonra gelir, yoksa ezilmez). Eskiden kapak
+   kuralları kısa ekran kurallarını eziyordu: yalan makinesi 62 px, aralar 14 px kalıyor, gövde en küçük ölçeğe (0,64)
+   iniyor, bilgiler 10 px'e düşüyordu. Makine ince bir şerit olur, aralar ve iç boşluklar daralır, yazı 14 px'ten başlar. */
+@media (max-height:700px){
+  .fl-q.cover .dn-id{gap:8px}
+  .fl-q.cover .id-pg{height:30px}
+  .fl-q.cover .id-pg b{top:5px;padding:2px 6px;font-size:10px}
+  .fl-q.cover .id-pg i{top:10px;width:9px;height:9px}
+  .fl-q.cover .dn-id-c{font-size:clamp(14px,calc(4.2 * var(--vw)),17px);line-height:1.24}
+  .fl-q.cover .dn-id-c>div{padding:8px 10px 9px}
+  .fl-q.cover .dn-id-c>i b{font-size:26px}
+  .fl-q.cover .dn-id.done{gap:8px}
+  .fl-q.cover .dn-id.done .dn-id-c{line-height:1.2}
+  .fl-q.cover .dn-id.done .dn-id-c>div{padding:9px 9px 7px}
+  .fl-q.cover .dn-id.done .dn-id-nt{margin-top:4px;padding-top:4px;font-size:.86em;line-height:1.22}
+  .fl-q.cover .dn-id.done .dn-id-c>i b{font-size:22px}
+  .dn-id-c .dn-id-tg{margin:-4px -4px 3px 8px;padding:2px 8px 3px;font-size:15px}
+  .dn-id-c.lie .dn-id-tg{font-size:17px}
+}
+/* en kısa ekranda (≤600 px) yalan makinesi gizlenir (süs): gövde bilgilere kalır */
+@media (max-height:600px){.fl-q.cover .id-pg{display:none}}
+/* dar ekranda numara şeridi incelir: yazı sütunu genişler (daha az satır, daha az küçültme) */
+@media (max-width:380px){
+  .fl-q.cover .dn-id-c>i{width:36px}
+  .dn-id-c>i small{letter-spacing:.06em}
+  .dn-id-c::after{left:46px}
+  .fl-q.cover .dn-id-c>div{padding-left:9px;padding-right:9px}
+}
 @keyframes idScroll{to{transform:translateX(-50%)}}
 @keyframes idBlink{50%{opacity:.2}}
-@keyframes dnIdIn{from{transform:translateY(14px) rotate(-1deg)}}
+/* giriş yukarıdan: aşağı kayan kart gövdenin altından taşıp _coverFit'i boş yere küçültmeye zorluyordu (taşma
+   ölçüsü animasyon sürerken alınıyor, bitince yeniden ölçülmüyor); yukarı taşma ölçüye girmez */
+@keyframes dnIdIn{from{transform:translateY(-12px) rotate(-.5deg)}}
 @keyframes dnIdTag{from{transform:scale(2.2) rotate(-16deg)}}
 @keyframes dnIdLie{0%{transform:scale(1)}35%{transform:scale(1.04) rotate(-1.2deg)}70%{transform:scale(.99) rotate(.8deg)}100%{transform:none}}
 @keyframes dnIdNote{from{transform:translateY(-6px)}}

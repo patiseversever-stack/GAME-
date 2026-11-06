@@ -622,7 +622,9 @@ export class Match {
 		for (const h of H) {
 			h.gor(q);
 			if (q.src) h.gor({ id: q.src }); // Mancınık: kaynak tahmin sorusu da görüldü (aynı metin, aynı cevap)
+			if (q.srcs) for (const id of q.srcs) h.gor({ id }); // Halat turu: içindeki banka soruları da görüldü
 		}
+		if (q.srcs) for (const id of q.srcs) this.used.add(id); // aynı maçta tek başına da sorulmasın
 		if (this.persist && this.humanPlayer) this.progress.gordu();
 		return q;
 	}

@@ -20,7 +20,10 @@ const CSS = /* css */ `
 /* isim: ilk satır tam genişlik, alt satırlar VS elmasının çevresinden dolanır (iç kenarda yüzen boşluk); yazı boyu JS'te kalan
    yüksekliğe sığana kadar küçülür (kelime bölünmez) */
 .fl-hl .nm{position:absolute;top:14px;left:14px;right:18px;display:block;font:italic 900 28px/1.02 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.01em;text-transform:uppercase;text-wrap:balance;overflow-wrap:normal;word-break:normal;hyphens:none}
-.fl-hl .nm::before{content:'';float:right;width:38px;height:92px;margin-top:22px}
+/* yüzen boşluk ilk satırın altından başlar ve yalnız kendi kutusu kadar yer tutar (shape-outside: border-box): satırlar
+   yüzen öğenin margin kutusu kadar kısalır, margin-top'lu boşluk ilk satırı da daraltıyordu; dar levhada tek uzun kelime
+   ("TUTUNAMAYANLAR") o daralmış satıra sığmayınca boşluğun altına, değerin üstüne iniyordu */
+.fl-hl .nm::before{content:'';float:right;width:38px;height:92px;margin-top:1.1em;shape-outside:border-box}
 .fl-hl.b .nm::before{float:left}
 .fl-hl.b .nm{left:30px;right:14px}
 .fl-hl .vl{position:absolute;left:14px;right:30px;bottom:16px;display:flex;align-items:baseline;gap:5px;min-height:44px;white-space:nowrap}
@@ -112,7 +115,9 @@ const CSS = /* css */ `
 .fl-sir em{font-style:normal;background:linear-gradient(transparent 60%,rgba(255,210,90,.6) 60%,rgba(255,210,90,.6) 92%,transparent 92%) no-repeat 0 0/0% 100%;
   transition:background-size .45s cubic-bezier(.6,0,.2,1);transition-delay:calc(.45s + var(--j) * .28s)}
 .fl-sir.s-on em{background-size:100% 100%}
-.fl-sir .qm{position:absolute;right:12px;top:50%;width:40px;margin-top:-48px;text-align:center;font:400 88px/1 'Lilita One',sans-serif;color:rgba(255,255,255,.09);
+/* filigran soru işareti: ölçüleri kendi boyuna bağlı (em); JS kart kısaysa küçültür. Dönerken de kartın içinde kalır
+   (eskiden 88/66 px'lik işaret kartın sağ ve üst kenarından taşıp kırpılıyordu) */
+.fl-sir .qm{position:absolute;right:.2em;top:50%;width:.62em;margin-top:-.56em;text-align:center;font:400 88px/1 'Lilita One',sans-serif;color:rgba(255,255,255,.09);
   animation:flRvQ 3.4s ease-in-out infinite;transition:opacity .2s}
 .fl-sir.s-on .qm{opacity:0}
 .fl-sir .sl{position:absolute;right:10px;top:50%;width:40px;height:40px;margin-top:-20px;border-radius:50%;display:grid;place-items:center;background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.25);
@@ -130,7 +135,7 @@ const CSS = /* css */ `
   .fl-sir .hd{margin-bottom:4px;min-height:16px}
   .fl-sir p,.fl-sir.s-lg p{font-size:17px;line-height:1.18}
   .fl-sir p+p{margin-top:4px;padding-left:13px}
-  .fl-sir .qm{font-size:66px;margin-top:-36px;right:8px;width:32px}
+  .fl-sir .qm{font-size:66px}
   .fl-sir .sl{width:34px;height:34px;margin-top:-17px;right:6px}
   .fl-sir .an{font-size:15px}
 }
@@ -199,15 +204,24 @@ export const hilo = {
 			const avail = floor - nm.getBoundingClientRect().top;
 			// yazının gerçek yüksekliği satırlardan (kutunun scrollHeight'ı VS çevresindeki yüzen boşlukla şişer)
 			const rg = document.createRange();
-			const textH = () => {
+			const rects = () => {
 				rg.selectNodeContents(nm);
+				return [...rg.getClientRects()];
+			};
+			const textH = () => {
 				let bot = 0;
-				for (const r of rg.getClientRects()) bot = Math.max(bot, r.bottom);
+				for (const r of rects()) bot = Math.max(bot, r.bottom);
 				return bot ? bot - nm.getBoundingClientRect().top : 0;
+			};
+			// ilk satır kutunun tepesinde mi: sığmayan uzun kelime yüzen boşluğun altına itilirse isim aşağı, değerin üstüne düşer
+			const low = () => {
+				const r = rects()[0];
+				return !!r && r.top - nm.getBoundingClientRect().top > 4;
 			};
 			let px = 28;
 			nm.style.fontSize = `${px}px`;
-			while (px > 15 && (nm.scrollWidth > nm.clientWidth + 1 || textH() > avail)) nm.style.fontSize = `${(px -= 1)}px`;
+			// en çok 12 px'e kadar (eskiden 15: o boyda da sığmayan isim değerin üstüne biniyordu)
+			while (px > 12 && (nm.scrollWidth > nm.clientWidth + 1 || textH() > avail || low())) nm.style.fontSize = `${(px -= 1)}px`;
 		};
 		const fitVal = (b) => {
 			const vl = b.querySelector('.vl');
@@ -299,6 +313,10 @@ export const hilo = {
 
 // ---------------------------------------------------------------- odd
 export const odd = {
+	// kısa ekranda (yükseklik < 720 px) tam ekran kart (ui.js): cevaptaki "neden farklı" kutusu alttaki kartın payına
+	// sığmıyordu (320×568'de joker çubuğunun altında kalıyordu, 360×640'ta gövde 0,7'ye küçülüp açıklama 10 px'e iniyordu);
+	// tam ekran kartta cevap anında joker çubuğu da kalkar
+	cover: 'kisa',
 	time: 20,
 	label: 'Farklı olan',
 	prepare(q, R) {
@@ -386,6 +404,17 @@ export const riddle = {
 			.map((s, i) => `<p style="--i:${i}">${mark(s)}</p>`)
 			.join('')}<span class="qm">?</span></div><div data-r="o"></div>`;
 		const card = el.querySelector('.fl-sir');
+		// filigran kartın boyuna sığsın: dönüşle birlikte işaretin dikey payı ~1,1 em
+		const qm = card.querySelector('.qm');
+		const fitQm = () => {
+			if (!qm.isConnected) return;
+			qm.style.fontSize = '';
+			const base = parseFloat(getComputedStyle(qm).fontSize) || 88;
+			const h = card.clientHeight;
+			if (h) qm.style.fontSize = Math.max(30, Math.min(base, Math.floor((h - 16) / 1.16))) + 'px';
+		};
+		fitQm();
+		requestAnimationFrame(fitQm);
 		const ctl = mountChoice(el.querySelector('[data-r=o]'), v, api);
 		return {
 			lock: ctl.lock,

@@ -92,6 +92,17 @@ const CSS = /* css */ `
 .an-b.gold svg{color:#1a1200}
 .an-b.gold.hot{animation:xwHot 1s ease-in-out infinite}
 .xw.done .xw-clue{opacity:.4;pointer-events:none}
+/* kısa ekran (< 700 px, tam ekran kart; JS .sh): tahtaya yer açılsın diye ipucu plakası, kartlar ve düğmeler sıkı */
+.xw.sh{gap:7px;margin:0 0 4px}
+.xw.sh .xw-txt{min-height:42px;padding:5px 12px;gap:9px}
+.xw.sh .xw-txt b{height:28px;padding:0 7px;font-size:19px}
+.xw.sh .xw-txt b i{font-size:15px}
+.xw.sh .xw-txt span{font-size:15px;line-height:1.18}
+.xw.sh .xw-nav{width:40px}
+.xw.sh .an-tiles{gap:8px 8px}
+.xw.sh .an-acts{gap:8px}
+.xw.sh .an-b{height:34px;padding:0 12px;gap:6px;font-size:14px}
+.xw.sh .an-b svg{width:16px;height:16px}
 @keyframes xwIn{0%{transform:scale(1.35);opacity:0}100%{transform:none}}
 @keyframes xwHot{50%{box-shadow:inset 0 0 0 2px #fff,0 4px 0 #8a5a00,0 0 22px rgba(255,210,90,.9)}}
 @keyframes flq-pop2{from{transform:scale(.4)}to{transform:scale(1)}}
@@ -268,6 +279,31 @@ export const anagram = {
 };
 
 // ---------------------------------------------------------------- cross
+/**
+ * Dikey telefon (oyun dikey kilitli): tahtanın eni boyundan az olmasın. Kartta en 296–440 px, tahtanın boyu ise 128–300 px
+ * (kısa ekranda 568 px'te ancak ~100 px); uzun kelime dikey düşünce (11 harf: 11 satır) tahta ekrana sığmaz, kutular
+ * küçülür. Böyle tahta 90° çevrilir: satır ↔ sütun, yatay ↔ dikey; numaralar okuma sırasıyla yeniden verilir (bulmaca
+ * aynı: kelimeler, kesişmeler, harfler). Hücre sırası layout() ile aynı kuralla kurulur.
+ */
+function wide(L) {
+	if (L.rows <= L.cols) return L;
+	const words = L.words.map((w) => ({ ...w, r: w.c, c: w.r, dir: w.dir === 'a' ? 'd' : 'a' }));
+	const starts = [...new Set(words.map((p) => p.r * 100 + p.c))].sort((a, b) => a - b);
+	for (const p of words) p.n = starts.indexOf(p.r * 100 + p.c) + 1;
+	words.sort((a, b) => a.n - b.n || (a.dir === 'a' ? -1 : 1));
+	const cells = [];
+	const seen = new Set();
+	for (const p of words)
+		for (let i = 0; i < p.w.length; i++) {
+			const r = p.r + (p.dir === 'd' ? i : 0);
+			const c = p.c + (p.dir === 'a' ? i : 0);
+			if (seen.has(r + ',' + c)) continue;
+			seen.add(r + ',' + c);
+			cells.push({ r, c, ch: p.w[i] });
+		}
+	return { ...L, rows: L.cols, cols: L.rows, words, cells };
+}
+
 export const cross = {
 	cover: 'kisa', // kısa ekranda (yükseklik < 720 px) tam ekran kart: harita şeridi yerine bulmacaya yer (ui.js)
 	time: 45, // belge/yedek: bankanın ortancası (timing.test; v1.5: 3–4 kelime, kartlarla)
@@ -287,7 +323,7 @@ export const cross = {
 			const score = (L.ok ? 1000 : 0) - L.rows * L.cols - Math.abs(L.rows - L.cols) * 1.5;
 			if (!best || score > best.score) best = { L, score };
 		}
-		const L = best.L;
+		const L = wide(best.L);
 		// her kelimenin karışık harfleri (klavye yerine kartlar; çevrimiçinde kelimenin kendisi gizli kalır, kartlar gelir)
 		for (const w of L.words) {
 			const ch = [...w.w];
@@ -301,10 +337,17 @@ export const cross = {
 		css('word', CSS);
 		const { L } = v;
 		const land = isLand();
-		const W = Math.min(Math.max(240, (el.closest('.fl-ui')?.clientWidth || innerWidth) - 32), 440);
+		// ölçüler oyun alanından (pencereden değil: galerinin telefon çerçevesinde 1280×720 → 325×704)
+		const ui = el.closest('.fl-ui');
+		const W = Math.min(Math.max(240, (ui?.clientWidth || innerWidth) - 32), 440);
+		const H0 = ui?.clientHeight || innerHeight;
+		// kısa ekran (tam ekran kart, < 700 px): ipucu plakası, harf kartları, düğmeler ve aralıklar sıkı (.xw.sh). Yoksa
+		// 568 px'te gövde ancak ~0,64 yakınlaştırmayla sığıyor, tahta harfleri 8 px'e iniyordu, düğmeler joker çubuğunun
+		// altında kalıyordu
+		const short = !land && H0 < 700;
 		// kutu boyu: genişliğe ve (dikeyde) tahta yüksekliğine sığar; 3–4 kelimede iri kutular. Tahta yüksekliği ekranla
 		// küçülür (740 px'te 300, 568 px'te 128): kısa telefonda bulmaca ipucu, harf kartları ve düğmelerle birlikte sığar
-		const BH = clamp(innerHeight - 440, 128, 300);
+		const BH = clamp(H0 - 440, 128, 300);
 		const cs = land
 			? clamp(Math.min(Math.floor((210 - (L.cols - 1) * 4) / L.cols), Math.floor((210 - (L.rows - 1) * 4) / L.rows)), 18, 36)
 			: clamp(Math.min(Math.floor((W - (L.cols - 1) * 4) / L.cols), Math.floor((BH - (L.rows - 1) * 4) / L.rows)), 20, 50);
@@ -331,7 +374,7 @@ export const cross = {
 		}).join('');
 		const chev = (d) => SVG(d < 0 ? '<path d="m15 18-6-6 6-6"/>' : '<path d="m9 18 6-6-6-6"/>');
 		const I_OK = SVG('<path d="M20 6 9 17l-5-5"/>');
-		el.innerHTML = `<div class="an xw">
+		el.innerHTML = `<div class="an xw${short ? ' sh' : ''}">
 			<div class="xw-grid" style="--cs:${cs}px;grid-template-columns:repeat(${L.cols},${cs}px);grid-auto-rows:${cs}px">${grid}</div>
 			<div class="xw-clue"><button type="button" class="xw-nav" data-d="-1" aria-label="önceki kelime">${chev(-1)}</button><div class="xw-txt" data-r="clue"></div><button type="button" class="xw-nav" data-d="1" aria-label="sonraki kelime">${chev(1)}</button></div>
 			<div class="an-tiles" data-r="bank"></div>
@@ -350,9 +393,9 @@ export const cross = {
 		const banks = L.words.map((w) => (w.tiles ? w.tiles.slice() : shuffle([...w.w], Math.random)));
 		const maxBank = Math.max(...banks.map((b) => b.length));
 		const per = maxBank <= 7 ? maxBank : Math.ceil(maxBank / 2);
-		const tw = clamp(Math.floor(((land ? 260 : W) - (per - 1) * 9) / per), 34, land ? 44 : 56);
+		const tw = clamp(Math.floor(((land ? 260 : W) - (per - 1) * 9) / per), 34, land || short ? 44 : 56);
 		root.style.setProperty('--tw', tw + 'px');
-		root.style.setProperty('--th', clamp(Math.round(tw * 1.12), 40, 60) + 'px');
+		root.style.setProperty('--th', clamp(Math.round(tw * 1.12), 40, short ? 48 : 60) + 'px');
 		const known = L.cells.every((c) => c.ch);
 		let wi = 0;
 		let done = false;
@@ -514,7 +557,25 @@ export const cross = {
 					e.classList.remove('wd', 'nx', 'in');
 					if (L.cells[i].ch) e.classList.add(letters[i] === L.cells[i].ch ? 'ok' : 'bad');
 				});
-				bankEl.style.visibility = 'hidden';
+				if (root.closest('.fl-q.cover')) {
+					// tam ekran kart: kartlar ve düğmeler kalkar, tahta boşalan yere büyür (kısa ekranda çözüm okunsun; joker
+					// çubuğu da cevapta kalkar)
+					bankEl.style.display = 'none';
+					root.querySelector('.an-acts').style.display = 'none';
+					requestAnimationFrame(() => {
+						if (!root.isConnected) return;
+						const z0 = root.style.zoom; // ui._coverFit'in yakınlaştırması: ölçü onsuz
+						root.style.zoom = '';
+						const st = getComputedStyle(root);
+						const avail = el.clientHeight - (parseFloat(getComputedStyle(el).paddingTop) || 0) - parseFloat(st.marginTop) - parseFloat(st.marginBottom) - (root.offsetHeight - gridEl.offsetHeight) - 4;
+						root.style.zoom = z0;
+						const c2 = clamp(Math.min(Math.floor((W - (L.cols - 1) * 4) / L.cols), Math.floor((avail - (L.rows - 1) * 4) / L.rows)), cs, 50);
+						if (c2 <= cs) return;
+						gridEl.style.setProperty('--cs', c2 + 'px');
+						gridEl.style.gridTemplateColumns = `repeat(${L.cols},${c2}px)`;
+						gridEl.style.gridAutoRows = c2 + 'px';
+					});
+				} else bankEl.style.visibility = 'hidden';
 				setTimeout(() => {
 					cellEls.forEach((e, i) => {
 						if (!L.cells[i].ch) return;

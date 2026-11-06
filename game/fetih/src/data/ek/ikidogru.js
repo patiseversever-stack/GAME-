@@ -28,7 +28,7 @@ export default [
 		f: [
 			{ t: 'Dilimizin ucu tatlıyı, kenarları ekşiyi ayrı ayrı algılar.', n: 'Yalan: “Tat haritası” 1901’deki bir makalenin yanlış yorumudur; dilin her yerindeki tomurcuklar her tadı algılar.' },
 			{ t: 'Tek yumurta ikizlerinin bile parmak izleri birbirinden farklıdır.', n: 'Parmak izi anne karnında, bebeğin konumu ve dokunduğu sıvının basıncıyla şekillenir; aynı DNA aynı izi vermez.', k: ['Live Science: Do identical twins have identical fingerprints?', 'Healthline: Do identical twins have the same fingerprints?'] },
-			{ t: 'Koalaların parmak izleri insanınkine o kadar benzer ki karışabilir.', n: 'Mikroskop altında bile ayırt etmek zordur. Ortak atamız 100 milyon yıl önce yaşadığı için bu izler ayrı ayrı evrildi.', k: ['PBS NOVA: Koalas have fingerprints almost identical to ours', 'Earth.com: Koalas have fingerprints nearly identical to humans'] },
+			{ t: 'Koalaların parmak izleri insanınkine o kadar benzer ki karışabilir.', n: 'Mikroskop altında bile ayırt etmek zordur. Bu izler insanlarda ve koalalarda birbirinden bağımsız olarak evrildi.', k: ['PBS NOVA: Koalas have fingerprints almost identical to ours', 'Earth.com: Koalas have fingerprints nearly identical to humans'] },
 		],
 		lie: 0,
 	},
@@ -139,7 +139,7 @@ export default [
 	{ id: 'ek-id-0018', cat: 'cografya', diff: 2, type: 'ikidogru', q: 'İkisi doğru, biri yalan. Yalanı bul!',
 		f: [
 			{ t: 'Ekvatorda insan, kutuplardakinden daha ağır gelir.', n: 'Yalan: Tersi doğru. Dünya’nın dönüşü ve basık şekli yüzünden ekvatorda ağırlık yaklaşık yüzde 0,5 azalır.' },
-			{ t: 'Ekvador’daki ünlü Ekvator Anıtı, gerçek ekvatorun 200 metre uzağında.', n: 'Anıt 18. yüzyıldaki Fransız ölçümlerine göre kondu; GPS, sıfır enleminin 240 metre kadar kuzeyden geçtiğini gösterdi.', k: ['Amusing Planet: The Equator in Ecuador', 'Wikipedia: Ciudad Mitad del Mundo'] },
+			{ t: 'Ekvador’daki ünlü Ekvator Anıtı, gerçek ekvatorun 240 metre uzağında.', n: 'Anıt 18. yüzyıldaki Fransız ölçümlerine göre kondu; GPS, sıfır enleminin 240 metre kadar kuzeyden geçtiğini gösterdi.', k: ['Amusing Planet: The Equator in Ecuador', 'Wikipedia: Ciudad Mitad del Mundo'] },
 			{ t: 'Özbekistan’dan açık denize ulaşmak için en az iki ülke geçmek gerekir.', n: 'Bütün komşuları da denize kıyısız: “çift kara ile çevrili” yalnızca iki ülke var, Özbekistan ve Lihtenştayn.', k: ['WorldAtlas: The world’s two double landlocked countries', 'Britannica: Landlocked country'] },
 		],
 		lie: 0,
@@ -290,7 +290,7 @@ export default [
 	},
 	{ id: 'ek-id-0037', cat: 'eglence', diff: 1, type: 'ikidogru', q: 'İkisi doğru, biri yalan. Yalanı bul!',
 		f: [
-			{ t: 'Köpekler dünyayı yalnızca siyah ve beyaz görür.', n: 'Yalan: Köpekler renk görür ama bizden daha azını; özellikle kırmızı ile yeşili birbirinden ayırt edemez.' },
+			{ t: 'Köpekler, insanlar gibi bütün derileriyle terleyerek serinler.', n: 'Yalan: Köpeklerin ter bezleri çoğunlukla pati yastıklarındadır; asıl dillerini çıkarıp hızlı soluyarak serinlerler.' },
 			{ t: 'Her köpeğin burun izi, insan parmak izi gibi kendine özgüdür.', n: 'Burundaki kabarcık ve oluk deseni ömür boyu değişmez; bazı kulüpler kimlik için burun izi alır.', k: ['VCA Hospitals: Are pet nose prints as unique as fingerprints?', 'MDPI Animals: Canine nose pattern as a biometric marker'] },
 			{ t: 'Köpeklerin koku alma duyusu insanınkinden on binlerce kat güçlüdür.', n: 'Veteriner kaynaklarına göre fark 10 bin ile 100 bin kat arasıdır; bu yüzden arama ve kurtarmada kullanılırlar.', k: ['PetsRadar: A vet’s favorite dog facts', 'Puptown Houston: Dog facts you didn’t know'] },
 		],
@@ -339,7 +339,7 @@ export default [
 	{ id: 'ek-id-0043', cat: 'cografya', diff: 2, type: 'ikidogru', q: 'İkisi doğru, biri yalan. Yalanı bul!',
 		f: [
 			{ t: 'Japonya bayrağındaki kırmızı daire Ay’ı simgeler.', n: 'Yalan: Daire Güneş’i simgeler; bayrağın adı Hinomaru “güneş dairesi”, Japonya’nın adı da “güneşin kaynağı” demektir.' },
-			{ t: 'Danimarka bayrağı, hâlâ kullanılan en eski ulusal bayrak sayılır.', n: 'Efsaneye göre kırmızı zemindeki beyaz haç 1219’da gökten düştü; bugünkü tasarım 1625’te resmîleşti.', k: ['Guinness World Records: Oldest continuously used national flag', 'WorldAtlas: Which is the oldest continuously used national flag?'] },
+			{ t: 'İsviçre ve Vatikan’ın ulusal bayrakları tam karedir.', n: 'Bayrakların çoğu dikdörtgendir; egemen devletler arasında kare bayrak yalnızca bu ikisinde vardır.', k: ['Wikipedia: Flag of Switzerland', 'Wikipedia: Flag of Vatican City'] },
 			{ t: 'Kosova bayrağında ülkenin haritası bulunur.', n: 'Mavi zemindeki altın renkli haritanın üstünde, kemer gibi dizilmiş altı beyaz yıldız yer alır.', k: ['CIA World Factbook: Kosovo, flag', 'Wikipedia: Flag of Kosovo'] },
 		],
 		lie: 0,

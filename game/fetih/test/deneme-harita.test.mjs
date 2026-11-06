@@ -91,7 +91,14 @@ for (const q of KM) nst[q.style] = (nst[q.style] || 0) + 1;
 ok(KM.every((q) => STYLES[q.style]) && Object.keys(nst).length === Math.min(KM.length, Object.keys(STYLES).length), 'kimim: tarz tanımsız ya da kullanılmayan tarz var');
 ok(Math.max(...Object.values(nst)) - Math.min(...Object.values(nst)) <= 1, 'kimim: tarzlar dengesiz ' + JSON.stringify(nst));
 ok(KM.every((q, i) => !i || q.style !== KM[i - 1].style), 'kimim: art arda aynı tarz');
-ok(new Set(KM.map((q) => q.il)).size === KM.length, 'kimim: yinelenen il');
+// 2026-11: her ilin birden çok ipucu seti olabilir (hafıza aynı ili kardeş sayar: aynı maçta iki set çıkmaz), ama aynı il
+// aynı tarzla iki kez anlatılmaz ve bir ilin en çok iki seti olur
+ok(new Set(KM.map((q) => q.il + '|' + q.style)).size === KM.length, 'kimim: aynı il aynı tarzla yinelenmiş');
+{
+	const per = {};
+	for (const q of KM) per[q.il] = (per[q.il] || 0) + 1;
+	ok(Math.max(...Object.values(per)) <= 2, 'kimim: bir ilin ikiden çok seti var');
+}
 for (const q of KM) {
 	ok(q.clues.length === 5 && q.clues.every((c) => c.length > 10), q.id + ': 5 dolu ipucu yok');
 	const name = low(byId.get(q.il).name);

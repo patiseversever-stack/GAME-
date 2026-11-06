@@ -123,6 +123,9 @@ export function sahneSVG(cL, cR) {
 
 export const SAHNE_CSS = /* css */ `
 .dn-ht{display:flex;flex-direction:column;gap:8px;min-height:0;user-select:none;-webkit-user-select:none}
+/* yalnız sahne (.ht-sw) daralır: öteki parçalar içeriği kadar kalır. Eskiden soru tahtası ve şıklar da daralıyordu
+   (min-height içeriğin altına iniyordu): tahtadaki "Doğrusu" satırı kesiliyor, dört şıkkın alt sırası gövdeden taşıyordu */
+.dn-ht>*{flex:none}
 .fl-q.cover .dn-ht{flex:1 1 auto}
 .ht-hud{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
 .ht-side{display:flex;align-items:center;gap:6px;min-width:0}
@@ -131,7 +134,7 @@ export const SAHNE_CSS = /* css */ `
 .ht-side b{min-width:44px;padding:2px 8px 3px;transform:skewX(-10deg);text-align:center;font:italic 900 24px/1 'Barlow Condensed','Lilita One',sans-serif;color:#fff;background:var(--pc);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7),0 3px 0 rgba(0,0,0,.4);transition:transform .15s}
 .ht-side b.pop{transform:skewX(-10deg) scale(1.28)}
 .ht-meter{position:relative;display:flex;flex-direction:column;gap:3px;min-width:0}
-.ht-mid{text-align:center;white-space:nowrap;font:italic 900 15px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em;color:var(--lc,#ffe7a0);text-shadow:0 1px 0 #000,0 0 10px color-mix(in srgb,var(--lc,#ffd25a) 60%,transparent)}
+.ht-mid{text-align:center;white-space:nowrap;font:italic 900 clamp(12px,calc(4 * var(--vw)),15px)/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em;color:var(--lc,#ffe7a0);text-shadow:0 1px 0 #000,0 0 10px color-mix(in srgb,var(--lc,#ffd25a) 60%,transparent)}
 .dn-ht.hot .ht-mid{color:#ff8a7a;animation:htBeat2 .5s ease-in-out infinite}
 .ht-track{position:relative;height:12px;border-radius:7px;overflow:visible;background:#05070f;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)}
 .ht-track .hl,.ht-track .hr{position:absolute;top:2px;bottom:2px;width:calc(50% - 3px);border-radius:5px;opacity:.85}
@@ -174,7 +177,7 @@ export const SAHNE_CSS = /* css */ `
 .ht-combo.L{left:5%}.ht-combo.R{right:5%}
 .ht-combo.on{opacity:1;transform:skewX(-10deg) scale(1)}
 .ht-big{position:absolute;left:50%;top:34%;z-index:2;transform:translate(-50%,-50%) scale(.4);opacity:0;white-space:nowrap;pointer-events:none;
-  font:italic 900 44px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em;color:#fff;text-shadow:0 4px 0 #8a0e14,0 0 28px rgba(255,60,40,.9);transition:opacity .2s,transform .35s cubic-bezier(.3,1.7,.5,1)}
+  font:italic 900 min(44px,11cqw)/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em;color:#fff;text-shadow:0 4px 0 #8a0e14,0 0 28px rgba(255,60,40,.9);transition:opacity .2s,transform .35s cubic-bezier(.3,1.7,.5,1)}
 .ht-big.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .ht-big.gold{text-shadow:0 4px 0 #7a4a00,0 0 28px rgba(255,210,90,.95)}
 .dn-ht .crowd .fan{animation:htFan 1.6s ease-in-out infinite;animation-delay:var(--d)}
@@ -217,14 +220,21 @@ export const SAHNE_CSS = /* css */ `
 .dn-ht-lk{position:absolute;left:8%;right:8%;bottom:-6px;height:5px;border-radius:3px;background:#ff6a5a;transform-origin:left;transform:scaleX(0);opacity:0}
 .dn-ht-a.lock .dn-ht-lk{opacity:1;animation:dnHtLk var(--lk) linear forwards}
 .dn-ht.done .dn-ht-q,.dn-ht.done .dn-ht-a,.dn-ht.done .ht-dots,.dn-ht.done .ht-log{display:none}
-.dn-ht-rows{display:none;flex-direction:column;gap:4px;font-size:12.5px;text-align:left}
+/* cevap: son üç maddem. Madde yazısı sarar (kesilmez, küçülmez); doğru şık sağda, gerekirse o da iki satıra iner */
+.dn-ht-rows{display:none;flex-direction:column;gap:4px;font:500 12.5px/1.25 'Fredoka',sans-serif;text-align:left}
 .dn-ht.done .dn-ht-rows{display:flex}
-.dn-ht-rows div{display:flex;gap:7px;align-items:center;padding:4px 9px;border-radius:9px;background:rgba(255,255,255,.07)}
+.dn-ht-rows div{display:flex;gap:7px;align-items:center;padding:5px 9px;border-radius:9px;background:rgba(255,255,255,.07)}
 .dn-ht-rows div.n{background:rgba(255,80,60,.2)}
-.dn-ht-rows span:nth-child(2){min-width:0;overflow:hidden;white-space:nowrap}
-.dn-ht-rows em{margin-left:auto;flex:none;font-style:normal;font-family:'Lilita One';opacity:.85}
-@media (max-height:600px){.ht-sw{min-height:92px!important}.dn-ht-q{min-height:48px!important;font-size:14px!important}.dn-ht-a .fl-tf .fl-opt{min-height:44px!important}.dn-ht-g .fl-opt{min-height:38px!important}}
-@media (max-height:700px){.ht-sw{min-height:110px}.dn-ht-q{min-height:56px;padding:16px 10px 6px;font-size:15px}.dn-ht-a .fl-tf .fl-opt{min-height:48px;font-size:19px}.dn-ht-g .fl-opt{min-height:42px}.ht-side .fl-av{width:28px;height:28px}.ht-side b{font-size:20px}}
+.dn-ht-rows span:first-child{flex:none}
+.dn-ht-rows span:nth-child(2){flex:1 1 auto;min-width:0}
+.dn-ht-rows em{flex:0 1 auto;max-width:42%;text-align:right;font-style:normal;font-family:'Lilita One';opacity:.85}
+@media (max-height:600px){.ht-sw{min-height:72px!important}.dn-ht-q{min-height:48px!important;font-size:14px!important}.dn-ht-a .fl-tf .fl-opt{min-height:44px!important}.dn-ht-g .fl-opt{min-height:38px!important}}
+@media (max-height:700px){.ht-sw{min-height:90px}.dn-ht-q{min-height:56px;padding:16px 10px 6px;font-size:15px}.dn-ht-a .fl-tf .fl-opt{min-height:48px;font-size:19px}.dn-ht-g .fl-opt{min-height:42px}.ht-side .fl-av{width:28px;height:28px}.ht-side b{font-size:20px}
+  /* kısa ekranda yer soruya ve şıklara: olay kaydı (sahnedeki "+1 DOĞRU" balonlarının yinelemesi) ve turun başlık satırı
+     (kategori çipinde ve kural yazısında zaten var) soru boyunca gizlenir; cevapta başlık satırı damganın yeri olur */
+  .dn-ht{gap:6px}
+  .ht-log{display:none}
+  .fl-q.cover.t-halat:not(.rv) .fl-qtext{display:none}}
 @keyframes dnHtIn{from{transform:translateY(12px) scale(.94)}}
 @keyframes dnHtRd{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes dnHtLk{from{transform:scaleX(1)}to{transform:scaleX(0)}}

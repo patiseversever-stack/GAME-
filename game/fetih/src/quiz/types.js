@@ -171,6 +171,9 @@ export const TYPES = {
 	},
 
 	num: {
+		// kısa ekranda (yükseklik < 720 px) tam ekran kart (ui.js): değer, kaydırıcı, adım düğmeleri ve GÖNDER uzun soruyla
+		// birlikte alttaki kartın payına sığmıyordu (320×568'de GÖNDER joker çubuğunun altında kalıyordu)
+		cover: 'kisa',
 		time: 20,
 		label: 'Tahmin',
 		kind: 'closest',
