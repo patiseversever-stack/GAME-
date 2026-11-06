@@ -13,7 +13,10 @@
 //        o anki hâli belirlenimci (yanlış kart da gerçek yerine kayar); judge aynı tüneli yeniden kurar.
 // Tür 'closest': err = 3 − doğru (eşitlikte saat: üçüncü kart konunca cevap gider).
 // Çevrimiçi: publicView kartların yılını taşımaz; her yerleştirme sunucuya sorulur (act 'yer' { k, g } → { ok, y, g }).
-// Joker: yarı yarıya → her kart için yanlış boşlukların yarısı kapanır (kırmızı çarpı).
+// Joker: yarı yarıya → her kart için yanlış boşlukların yarısı kapanır (kırmızı çarpı); seyirci → her kart için
+//        boşlukların oy yüzdesi (boşluk düğmeleri yüzdeye döner, en çok oy altın).
+// Açıklık: talimat satırı (ESKİ yukarıda, YENİ aşağıda), tünelin iki ucunda ESKİ/YENİ levhaları, sürüklerken boş yuvada ve
+//        hayalet yuvada "1896 İLE 2000 ARASI" yazısı, ilk kartta parmak izi öğreticisi.
 
 import { css, esc, pCorrect, clamp, buzz, shuffle } from './util.js';
 import { botTime } from './timing.js';
@@ -188,7 +191,7 @@ const CSS = /* css */ `
 .tn-gap.cut .tn-node::before,.tn-gap.cut .tn-node::after{background:#ff5a4a;transform:rotate(45deg)}
 .tn-gap.cut .tn-node::after{transform:rotate(-45deg)}
 .yn-tn.drag .tn-node,.yn-tn.busy .tn-node,.yn-tn.over .tn-node{opacity:0}
-.tn-ghost{position:absolute;z-index:2;left:var(--rx);right:8px;top:0;height:var(--rh);border-radius:10px;border:2px dashed #ffd25a;background:rgba(255,210,90,.08);opacity:0;transition:opacity .15s,transform .2s;pointer-events:none}
+.tn-ghost{position:absolute;z-index:2;left:var(--rx);right:8px;top:0;height:var(--rh);border-radius:10px;border:2px dashed #ffd25a;background:rgba(255,210,90,.08);opacity:0;transition:opacity .15s;pointer-events:none}
 .tn-ghost.on{opacity:1}
 .tn-ghost{display:flex;align-items:center;justify-content:center;gap:8px;font:italic 900 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#ffd25a;text-shadow:0 0 10px rgba(255,210,90,.6);
   box-shadow:0 0 18px rgba(255,210,90,.25),inset 0 0 18px rgba(255,210,90,.12)}
@@ -211,7 +214,9 @@ const CSS = /* css */ `
 /* plaka */
 .tn-it{position:absolute;left:var(--rx);right:8px;top:0;height:var(--rh);display:flex;align-items:center;gap:9px;padding:0 9px 0 7px;border-radius:10px;
   background:linear-gradient(180deg,rgba(32,38,78,.96),rgba(18,22,50,.96));box-shadow:inset 0 0 0 1.5px rgba(160,170,255,.28),0 6px 14px rgba(0,0,0,.4);
-  transition:transform .4s cubic-bezier(.3,1.25,.45,1),box-shadow .3s,background .3s;will-change:transform}
+  transition:box-shadow .3s,background .3s;will-change:transform}
+/* yer değiştirme geçişi yalnız bilinçli kaydırmada (JS satır içi verir): sürekli bir transform geçişi, sığdırıcının
+   (_coverFit) yakınlaştırma aramasında px değerleri ölçekle değiştiği için kendiliğinden başlayıp yarıda kalıyordu */
 .tn-it .tn-nm{flex:1 1 auto;min-width:0;font:600 15px/1.1 'Fredoka',sans-serif;color:#eef2ff}
 .tn-dot{position:absolute;left:calc(-1 * var(--rx) + 12px);top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:#c9d4ff;box-shadow:0 0 0 3px #0c0f24,0 0 10px rgba(200,210,255,.8)}
 .tn-it.a{background:linear-gradient(180deg,rgba(60,48,18,.96),rgba(34,26,10,.96));box-shadow:inset 0 0 0 1.5px rgba(255,210,90,.55),0 6px 14px rgba(0,0,0,.4)}
@@ -445,6 +450,11 @@ export const tunel = {
 			list.forEach((it, i) => {
 				it.top = L.ys[i];
 				if (instant) it.el.style.transition = 'none';
+				else if (!it.el.classList.contains('mv')) {
+					it.el.style.transition = 'transform .4s cubic-bezier(.3,1.25,.45,1),box-shadow .3s,background .3s';
+					clearTimeout(it.tt);
+					it.tt = later(() => (it.el.style.transition = ''), 460);
+				}
 				it.el.style.transform = `translateY(${L.ys[i].toFixed(1)}px)`;
 				if (instant) {
 					void it.el.offsetWidth;
@@ -452,14 +462,14 @@ export const tunel = {
 				}
 			});
 			if (L.ghost != null) {
-			ghost.style.transform = `translateY(${L.ghost.toFixed(1)}px)`;
-			// yuvanın adı: komşu yıllarla (yılı açılmış olaylar), kart buraya düşerse ne demek
-			const m = list.length;
-			const yr = (it) => `<b>${esc(String(it.y))}</b>`;
-			ghost.innerHTML = open === 0 ? `${yr(list[0])} ÖNCESİ` : open >= m ? `${yr(list[m - 1])} SONRASI` : `${yr(list[open - 1])} İLE ${yr(list[open])} ARASI`;
-		}
-		// rampadaki boş yuva sürüklerken kartın nereye düşeceğini söyler (kart parmağın altında yuvayı örter)
-		whereEl.innerHTML = L.ghost != null ? ghost.innerHTML : 'TÜNELE BIRAK';
+				ghost.style.transform = `translateY(${L.ghost.toFixed(1)}px)`;
+				// yuvanın adı: komşu yıllarla (yılı açılmış olaylar), kart buraya düşerse ne demek
+				const m = list.length;
+				const yr = (it) => `<b>${esc(String(it.y))}</b>`;
+				ghost.innerHTML = open === 0 ? `${yr(list[0])} ÖNCESİ` : open >= m ? `${yr(list[m - 1])} SONRASI` : `${yr(list[open - 1])} İLE ${yr(list[open])} ARASI`;
+			}
+			// rampadaki boş yuva sürüklerken kartın nereye düşeceğini söyler (kart parmağın altında yuvayı örter)
+			whereEl.innerHTML = L.ghost != null ? ghost.innerHTML : 'TÜNELE BIRAK';
 			ghost.classList.toggle('on', L.ghost != null);
 			shown = open;
 			return L;
@@ -486,7 +496,7 @@ export const tunel = {
 		};
 		const refresh = () => {
 			if (busy) return; // kart uçarken satırlar yerinde (uçuş bitince kendisi yerleştirir)
-			place(shown, !root.classList.contains('rv'));
+			place(shown, true); // boy değişimi (sığdırma, portre sırası) kaymadan: geçiş yarıda kalıp plakaları üst üste bırakmasın
 			if (!done && step < N) gaps();
 		};
 		// tünelin boyu ölçülünce (yazı tipi, sığdırma) satırlar yerine
@@ -864,8 +874,15 @@ export const tunel = {
 						it.el.classList.add(m === true ? 'ok' : m === false ? 'no' : 'miss');
 					});
 					list.sort((a, b) => a.y - b.y);
-					place(-1, !spins.length);
-					spins.forEach((it, i) => spin(it.el.querySelector('.tn-yr'), it.y, 120 + i * 160));
+					// yerleşim anında (yükseklik --rh portre sırasıyla değişir; geçiş sığdırmayla yarıda kalıyordu); konmamış kartlar
+					// tünelin derinliğinden yuvalarına uçar (giriş devinimi transform'dan ayrı: translate/scale)
+					place(-1, true);
+					spins.forEach((it, i) => {
+						it.el.style.setProperty('--o', i);
+						it.el.classList.add('enter');
+						later(() => it.el.classList.remove('enter'), 1000 + i * 140);
+						spin(it.el.querySelector('.tn-yr'), it.y, 120 + i * 160);
+					});
 					// kart plakalarında herkesin sonucu: portre + doğru/yanlış rozeti (senin portren altın halkalı)
 					const res = results.map((r) => ({ r, s: puan(v, r.value) }));
 					const nP = res.length;
@@ -881,7 +898,7 @@ export const tunel = {
 							.join('');
 						it.el.appendChild(box);
 					}
-					later(sweep, 650);
+					later(sweep, spins.length ? 1100 + spins.length * 140 : 650);
 					if (meR && app) {
 						const order = results.slice().sort((a, b) => a.err - b.err || a.time - b.time);
 						const win = order[0] === meR;

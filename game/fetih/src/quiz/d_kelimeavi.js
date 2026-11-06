@@ -16,7 +16,7 @@
 // (3 − bulunan) + son bulunanın saniyesi / 100 (en çok 0,9): az kelime geride, eşit kelimede erken bulan önde.
 // Çevrimiçi: publicView yerleşimi taşımaz (harfler ve ipuçları açık); her seçim sunucuya sorulur (act 'kelime'
 // { s } → { i } ya da boş), sunucu aynı judge ile sayar.
-// Joker: yarı yarıya → bulunmamış kelimelerin ilk harfi parlar.
+// Joker: yarı yarıya → bulunmamış kelimelerin ilk harfi parlar; seyirci → her kelimenin geçtiği 3×3 bölge çerçevelenir.
 
 import { css, esc, pCorrect, clamp, buzz, trUp } from './util.js';
 import { botTime } from './timing.js';
@@ -303,8 +303,9 @@ const CSS = /* css */ `
 .ka-none{font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#7f88aa;white-space:nowrap}
 /* pano */
 .ka-board{position:relative;flex:1 1 0;min-height:calc(var(--n) * 21px + 10px);container-type:size;display:grid;place-items:center}
-/* sahne ışığı: panonun arkasında yukarıdan düşen soğuk bir hale (pano karanlık arenada aydınlık bir masa gibi) */
-.ka-board::before{content:'';position:absolute;inset:-4% -6%;pointer-events:none;background:radial-gradient(60% 55% at 50% 38%,rgba(120,150,255,.2),rgba(120,150,255,0) 70%);animation:kaBreath 4.8s ease-in-out infinite alternate}
+/* sahne ışığı: panonun arkasında yukarıdan düşen soğuk bir hale (pano karanlık arenada aydınlık bir masa gibi). Panonun
+   dışına taşmaz: mutlak konumlu taşma gövdeyi kaydırmalı yapıyordu (sığdırıcı küçültemez) */
+.ka-board::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(64% 60% at 50% 40%,rgba(120,150,255,.2),rgba(120,150,255,0) 70%);animation:kaBreath 4.8s ease-in-out infinite alternate}
 .ka-grid{--cs:calc((min(100cqw,100cqh) - 10px) / var(--n));position:relative;width:calc(var(--cs) * var(--n));height:calc(var(--cs) * var(--n));font-size:var(--cs);touch-action:none;cursor:pointer;
   border-radius:.2em;
   background:

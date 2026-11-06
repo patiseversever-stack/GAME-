@@ -113,6 +113,7 @@ export const CSS_ARENA = /* css */ `
 .fl-q .fl-tf.vd .fl-opt>.jp{left:22px;right:22px;bottom:8px}
 /* joker bildirimleri: soru kartının üstünde, afişin ve asılı etiketlerin altında (kartın arkasında kalıp okunmuyordu) */
 .fl-toasts{z-index:60}
+.fl-ui.toaston .fl-q.cover .fl-cvt{opacity:0;transition:opacity .2s} /* bildirim tam ekran kartın başlığına binmesin */
 .fl-ui.qon .fl-toasts{top:calc(var(--sat) + min(calc(100 * var(--vw)),560px) * .23 + 32px)}
 .fl-ui.qmap .fl-toasts{top:auto;bottom:calc(var(--sab) + 66px)}
 /* ---------------------------------------------------------------- jokerler: renkli eğik karolar, simge + kalın küçük ad */
