@@ -1,11 +1,14 @@
-// KAZI KAZAN: koyu, altın çizgili premium bir kazı kazan bileti. Metal folyonun altında 100 yapıdan birinin resmi
+// KAZI KAZAN: koyu premium bir kazı kazan bileti. Folyo koyu fırçalanmış metal: banknot gibi gravür halkaları, platin,
+// altın ya da hologram çizgiler, çift çerçeve, ortada kabartma metal madalyon. Altında 99 yapıdan birinin resmi
 // (dist/yapi/<no>.webp, beyaz zemini saydam) kendi sahnesinde durur: temaya göre gündüz, gün batımı ya da gece göğü,
-// arkasında ışık huzmeleri, ayağının dibinde gölge. Parmağınla kazırsın: madeni para izi gibi pürüzlü silgi, kenarında
-// folyonun kalkık gölgesi, saçılan metal kırıntılar, kazıma sesi. Az kazıyan çok kazanır: "KALAN PUAN" her kazımada düşer.
+// arkasında ışık huzmeleri, ayağının dibinde gölge. Parmağınla kazırsın: kesilen folyonun kenarı metalin renginde
+// ışıldar, parmağın altında metalde ışık gezer, elmas pullar dökülür, hızlı kazımada kıvılcım saçılır, kazıma sesi gelir.
+// Az kazıyan çok kazanır: "KALAN PUAN" her kazımada düşer.
 //
-// İmza anı (cevap): folyo soyulmaz; altın bir madeni para kendiliğinden belirir ve kalan folyoyu satır satır, sesiyle,
-// kırıntısıyla kazıyarak temizler. Sonra sahne aydınlanır (yapı hafifçe öne gelir, huzmeler döner), resmin üstünden bir
-// parıltı geçer, yapının adı ve yeri koyu cam bir plakada yükselir; biletin alt şeridinde herkesin puanı ve kazıdığı pay.
+// İmza anı (cevap): folyo soyulmaz, kendini kazır. Pencere şarj olur (çerçeve parlar, folyonun üstünden ışık geçer), altı
+// ışık bıçağı eğik bantlar halinde folyoyu yarar (her biri kıvılcım saçar, vınlar, bileti sarsar), kalan kırıntılar
+// parıltıya dönüşür ve ışık çakar. Sonra sahne aydınlanır (yapı plakanın üstüne oturur, huzmeler döner), resmin
+// üstünden bir parıltı geçer, yapının adı ve yeri koyu cam bir plakada yükselir; alt şeritte herkesin puanı ve payı.
 //
 // Veri (src/data/ek/kazi.js): img (görsel no), a [doğru, y1, y2, y3], ad, il (Türkiye: plaka) ya da yer (yurt dışı),
 //       alt (plakanın ikinci satırı), tema ('gunduz' | 'batim' | 'gece'), folyo ('gumus' | 'altin' | 'holo': zorluk 1–3).
@@ -89,17 +92,28 @@ function sesOf(app) {
 		basamak(n) {
 			safe((e, t) => e.hit('woodTap', t, 0.22, 1.1 + (n % 5) * 0.06));
 		},
-		// otomatik kazıma: para düşer (çınlama), sonra satır satır hızlı kazıma (satır dönüşlerinde kısa vurgu)
-		oto(ms, rows) {
+		// otomatik kazıma, 1: folyo şarj olur (yükselen hışırtı ve ince çınlama)
+		sarj() {
 			safe((e, t) => {
-				e.hit('tink', t, 0.3, 1.1);
-				e.hit('tink', t + 0.06, 0.2, 1.45);
+				e.noise(t, 0.3, 0.05, 900, 6000, { q: 0.9, a: 0.22 });
+				e.hit('chime', t + 0.16, 0.08, 2.2, 0.2);
+			});
+		},
+		// 2: tek bir kesiş — havayı yaran vınn (süpürülen süzgeç), kazıma tanesi ve kıvılcım çıtırtısı (sağdan sola, soldan sağa)
+		kesik(k, ms) {
+			safe((e, t) => {
 				const d = ms / 1000;
-				for (let k = 0; k < Math.round(d / 0.05); k++) {
-					const tt = t + 0.12 + k * 0.05;
-					e.noise(tt, 0.06, 0.07, 2400 + Math.random() * 2800, 1600 + Math.random() * 1400, { q: 2.2, a: 0.004, pan: Math.sin(k * 0.7) * 0.4 });
-				}
-				for (let r = 1; r < rows; r++) e.hit('crack', t + 0.12 + (d * r) / rows, 0.07, 1.2 + r * 0.05, (r % 2) - 0.5);
+				const pan = k % 2 ? 0.45 : -0.45;
+				e.noise(t, d + 0.05, 0.11, 600, 5200, { q: 1.6, a: 0.02, pan });
+				e.noise(t + 0.01, d, 0.06, 2600 + Math.random() * 2000, 2000, { q: 2.4, a: 0.004, pan: -pan * 0.5 });
+				for (let i = 0; i < 3; i++) e.hit('crack', t + d * (0.2 + i * 0.28), 0.05, 1.5 + Math.random() * 0.8, pan * (1 - i * 0.6));
+			});
+		},
+		// 3: kalan kırıntılar parıltıya dönüşür
+		toz() {
+			safe((e, t) => {
+				e.noise(t, 0.4, 0.04, 4000, 9000, { q: 0.6, a: 0.02 });
+				[0, 1, 2].forEach((i) => e.hit('tink', t + i * 0.05, 0.1 - i * 0.025, 1.7 + i * 0.25, -0.3 + i * 0.3));
 			});
 		},
 		// sahne aydınlanır, plaka yükselir: çan, kanun ve pirinç çınlaması
@@ -123,11 +137,12 @@ const GLOBE = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="1
 const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const CROSS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/></svg>';
 
-// folyo renkleri: [degrade durakları], kabartma (açık, koyu), parıltı
+// folyo: koyu metal zemin (base), çizgi ve kabartma rengi (ac, rgb), metal degrade (met: açık → orta → koyu),
+// kazınan kenarın ışıltısı ve kıvılcımlar (ac), hologramda çizgiler gökkuşağı
 const FOLYO = {
-	gumus: { stops: ['#eef1f5', '#a9b1bc', '#dfe4ea', '#8f98a4', '#e9edf2'], hi: 'rgba(255,255,255,.5)', lo: 'rgba(40,48,60,.26)', shine: 'rgba(255,255,255,.75)', name: 'GÜMÜŞ' },
-	altin: { stops: ['#fff0b8', '#d6a43a', '#ffe08a', '#b07d22', '#f7d774'], hi: 'rgba(255,250,220,.5)', lo: 'rgba(90,55,0,.28)', shine: 'rgba(255,248,210,.8)', name: 'ALTIN' },
-	holo: { stops: ['#e9f1ff', '#b6c2d6', '#f0e6ff', '#9eb0c8', '#e4fbff'], hi: 'rgba(255,255,255,.5)', lo: 'rgba(40,40,80,.24)', shine: 'rgba(255,255,255,.8)', name: 'HOLOGRAM', rainbow: true },
+	gumus: { base: ['#262c3d', '#141826', '#1f2435', '#0c0f19'], ac: '214,226,242', met: ['#ffffff', '#c9d6ea', '#6d7a93'], kir: ['#ffffff', '#dfe8f6', '#a9b8d0'], name: 'PLATİN' },
+	altin: { base: ['#2a2418', '#15110a', '#231d12', '#0d0a05'], ac: '255,210,90', met: ['#fff4c8', '#ffcf4a', '#9a6a0c'], kir: ['#fff6d0', '#ffd25a', '#e0a23a'], name: 'ALTIN' },
+	holo: { base: ['#22203a', '#11102a', '#1d1a36', '#0b0a1c'], ac: '160,240,255', met: ['#ecfdff', '#9ff3ff', '#b46cff'], kir: ['#ffffff', '#8af3ff', '#ff8ad8', '#c49aff'], name: 'HOLOGRAM', rainbow: true },
 };
 
 const CSS = /* css */ `
@@ -182,9 +197,19 @@ const CSS = /* css */ `
 .yn-kz-ip span svg,.yn-kz-para svg{width:100%;height:100%;display:block}
 .yn-kz-ip b{padding:3px 10px 4px;transform:skewX(-8deg);font:italic 900 14px/1.1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.12em;color:#fff;background:rgba(8,12,32,.86);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ac) 70%,transparent);white-space:nowrap}
 .yn-kz-ip.gone{opacity:0;transform:translate(-50%,-40%) scale(.9)}
-.yn-kz-para{position:absolute;left:0;top:0;z-index:4;width:40px;height:40px;margin:-20px 0 0 -20px;pointer-events:none;opacity:0;filter:drop-shadow(0 0 10px rgba(255,210,90,.85)) drop-shadow(0 6px 6px rgba(0,0,0,.4));transition:opacity .2s}
-.yn-kz-para.on{opacity:1}
-.yn-kz-kir{position:absolute;left:0;top:0;z-index:4;width:var(--s,4px);height:var(--s,4px);border-radius:1px;pointer-events:none;background:var(--c,#cfd5dd);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.25);animation:ynKzKir .7s cubic-bezier(.25,.6,.45,1) forwards}
+/* kazıma: parmağın altında ışık (folyonun metalinde yansıma), metal pul ve kıvılcım */
+.yn-kz-isik{position:absolute;left:0;top:0;z-index:3;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;pointer-events:none;opacity:0;mix-blend-mode:screen;
+  background:radial-gradient(closest-side,rgba(var(--rgb),.42),rgba(var(--rgb),.12) 55%,transparent);transition:opacity .25s}
+.yn-kz-isik.on{opacity:1}
+.yn-kz-kir{position:absolute;left:0;top:0;z-index:4;width:var(--s,4px);height:var(--s,4px);pointer-events:none;background:var(--c,#cfd5dd);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+  filter:drop-shadow(0 0 3px rgba(var(--rgb),.9));animation:ynKzKir .75s cubic-bezier(.25,.6,.45,1) forwards}
+.yn-kz-kv{position:absolute;left:0;top:0;z-index:6;width:var(--l,10px);height:2px;margin:-1px 0 0 0;border-radius:2px;pointer-events:none;transform-origin:0 50%;
+  background:linear-gradient(90deg,rgba(255,255,255,0),#fff 60%,rgba(var(--rgb),1));box-shadow:0 0 6px rgba(var(--rgb),.95),0 0 12px rgba(var(--rgb),.6);animation:ynKzKv var(--d,.45s) cubic-bezier(.2,.7,.4,1) forwards}
+/* son kazıma: pencere nefes alır (çerçeve parlar), her kesişte bilet hafifçe sarsılır, sonunda beyaz bir ışık çakar */
+.yn-kz.sarj .yn-kz-pen{animation:ynKzSarj .35s ease-out both}
+.yn-kz-bilet.sars{animation:ynKzSars .16s ease-out}
+.yn-kz-cak{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;background:radial-gradient(80% 70% at 50% 55%,rgba(255,255,255,.75),rgba(var(--rgb),.35) 45%,transparent 75%);mix-blend-mode:screen}
+.yn-kz.cak .yn-kz-cak{animation:ynKzCak .6s ease-out both}
 .yn-kz-isi{position:absolute;inset:-10% -60%;z-index:4;pointer-events:none;opacity:0;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,0) 42%,rgba(255,255,255,.8) 50%,rgba(255,255,255,0) 58%,transparent 62%);mix-blend-mode:screen;transform:translateX(-70%)}
 /* imza anı: sahne aydınlanır, yapı öne gelir ve plakaya yer açar, huzmeler döner, parıltı geçer */
 .yn-kz.ac .yn-kz-yap{filter:drop-shadow(0 8px 12px rgba(0,0,0,.5)) drop-shadow(0 0 18px color-mix(in srgb,var(--ac) 30%,transparent)) brightness(1.06) saturate(1.06);transform:translate(-50%,var(--ty,-12cqh)) scale(var(--sc,.9))}
@@ -277,97 +302,191 @@ const CSS = /* css */ `
 @keyframes ynKzPlaka{0%{opacity:0;transform:translate(-50%,40%) scale(.92)}100%{opacity:1;transform:translate(-50%,0)}}
 @keyframes ynKzRow{0%{opacity:0;transform:skewX(-8deg) translateY(10px) scale(.9)}100%{opacity:1;transform:skewX(-8deg)}}
 @keyframes ynKzHz{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.yn-kz-ip span,.yn-kz.ac .yn-kz-hz{animation:none}}
+@keyframes ynKzKv{0%{opacity:1;transform:translate(var(--x0),var(--y0)) rotate(var(--a)) scaleX(.2)}30%{opacity:1}100%{opacity:0;transform:translate(var(--x1),var(--y1)) rotate(var(--a)) scaleX(1)}}
+@keyframes ynKzSarj{0%{box-shadow:0 0 0 1.5px rgba(0,0,0,.6),0 0 0 3px color-mix(in srgb,var(--ac) 75%,transparent),0 0 0 4.5px rgba(0,0,0,.45),0 0 18px color-mix(in srgb,var(--ac) 22%,transparent)}100%{box-shadow:0 0 0 1.5px rgba(0,0,0,.6),0 0 0 3px var(--ac),0 0 0 4.5px rgba(0,0,0,.45),0 0 34px color-mix(in srgb,var(--ac) 70%,transparent)}}
+@keyframes ynKzSars{0%{transform:translate(0,0)}30%{transform:translate(var(--sx,2px),1px)}65%{transform:translate(calc(var(--sx,2px) * -.5),-1px)}100%{transform:none}}
+@keyframes ynKzCak{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.yn-kz-ip span,.yn-kz.ac .yn-kz-hz,.yn-kz-bilet.sars{animation:none}}
 `;
 
-/** Folyonun durgun yüzü: metal degrade, ince fırça dokusu, kabartma desen, kenar gölgesi ve ortada soru işaretli madalyon. */
+/** Folyonun durgun yüzü (koyu premium): koyu fırçalanmış metal, eşkenar dörtgen mikro gravür, banknot gibi dalgalı
+ *  halkalar (guilloche), çapraz ışık bandı, altın/platin çift çerçeve ve köşe süsleri, ortada kabartma metal madalyon
+ *  (çevresinde KAZI · KAZAN yazısı, içinde metal soru işareti), sağ altta seri numarası. Hologramda çizgiler gökkuşağı. */
 function folyoCiz(c, f, seed, etiket = '') {
 	const ctx = c.getContext('2d');
 	const W = c.width;
 	const H = c.height;
+	const m = Math.min(W, H);
+	const u = Math.max(1, m / 200); // çizgi birimi (pencere boyuyla ölçeklenir)
+	const A = (a) => `rgba(${f.ac},${a})`;
+	const line = (a) => {
+		if (!f.rainbow) return A(a);
+		const h = ctx.createLinearGradient(0, 0, W, H);
+		['255,138,216', '138,216,255', '168,255,154', '255,243,138', '196,154,255', '138,255,239'].forEach((k, i, arr) => h.addColorStop(i / (arr.length - 1), `rgba(${k},${a})`));
+		return h;
+	};
+	ctx.save();
 	ctx.globalCompositeOperation = 'source-over';
 	ctx.globalAlpha = 1;
 	ctx.clearRect(0, 0, W, H);
-	const g = ctx.createLinearGradient(0, 0, W, H);
-	f.stops.forEach((s, i) => g.addColorStop(i / (f.stops.length - 1), s));
+	// koyu metal zemin
+	const g = ctx.createLinearGradient(0, 0, W * 0.7, H);
+	f.base.forEach((k, i) => g.addColorStop(i / (f.base.length - 1), k));
 	ctx.fillStyle = g;
 	ctx.fillRect(0, 0, W, H);
-	if (f.rainbow) {
-		// hologram: yarı saydam gökkuşağı bantları
-		const h = ctx.createLinearGradient(0, H, W, 0);
-		['#ff8ad8', '#8ad8ff', '#a8ff9a', '#fff38a', '#ff9a8a', '#c49aff', '#8affef'].forEach((s, i, a) => h.addColorStop(i / (a.length - 1), s));
-		ctx.globalAlpha = 0.34;
-		ctx.fillStyle = h;
-		ctx.fillRect(0, 0, W, H);
-		ctx.globalAlpha = 1;
-	}
-	// fırça dokusu: yatay ince çizgiler (rastgele açık-koyu)
+	// fırçalanmış metal: rastgele açık-koyu ince yatay çizgiler
 	let s = seed || 7;
 	const R = () => (s = (s * 16807) % 2147483647) / 2147483647;
-	const u = Math.max(1, Math.round(H / 220));
-	for (let y = 0; y < H; y += u) {
+	for (let y = 0; y < H; y += u * 1.5) {
 		const k = R();
-		ctx.fillStyle = k < 0.5 ? `rgba(255,255,255,${(0.05 + k * 0.1).toFixed(3)})` : `rgba(30,35,45,${(0.02 + (k - 0.5) * 0.08).toFixed(3)})`;
+		ctx.fillStyle = k < 0.5 ? `rgba(255,255,255,${(0.012 + k * 0.03).toFixed(3)})` : `rgba(0,0,0,${(0.04 + (k - 0.5) * 0.08).toFixed(3)})`;
 		ctx.fillRect(0, y, W, u);
 	}
-	// kabartma desen: eğik satırlarda KAZI KAZAN (açık ve koyu kayık iki kopya)
-	const fs = Math.max(10, Math.round(H * 0.07));
-	ctx.save();
-	ctx.translate(W / 2, H / 2);
-	ctx.rotate(-0.32);
-	ctx.font = `italic 900 ${fs}px "Barlow Condensed","Lilita One",sans-serif`;
-	ctx.textBaseline = 'middle';
-	const row = 'KAZI · KAZAN · '.repeat(8);
-	const step = fs * 1.9;
-	for (let y = -H; y < H; y += step) {
-		const off = ((y / step) % 2) * fs * 2.2;
-		ctx.fillStyle = f.lo;
-		ctx.fillText(row, -W * 1.2 + off + 1, y + 1);
-		ctx.fillStyle = f.hi;
-		ctx.fillText(row, -W * 1.2 + off - 0.6, y - 0.6);
+	// mikro gravür: iki yönde ince çapraz çizgiler (eşkenar dörtgen ağ)
+	ctx.strokeStyle = line(0.07);
+	ctx.lineWidth = u * 0.55;
+	ctx.beginPath();
+	for (let x = -H; x < W + H; x += u * 9) {
+		ctx.moveTo(x, 0);
+		ctx.lineTo(x + H, H);
+		ctx.moveTo(x, H);
+		ctx.lineTo(x + H, 0);
 	}
-	ctx.restore();
-	// kenar gölgesi: folyo pencereye gömülü dursun
-	const v = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
-	v.addColorStop(0, 'rgba(0,0,0,0)');
-	v.addColorStop(1, 'rgba(10,14,30,.28)');
-	ctx.fillStyle = v;
-	ctx.fillRect(0, 0, W, H);
-	// orta madalyon: kabartma halka ve soru işareti (nereden başlanacağını söyler)
-	const r = Math.min(W, H) * 0.2;
+	ctx.stroke();
+	// guilloche: ortadan yayılan dalgalı halkalar (pencereyi dolduracak kadar basık elips)
 	const cx = W / 2;
 	const cy = H / 2;
-	ctx.lineWidth = Math.max(2, r * 0.09);
-	ctx.strokeStyle = f.lo;
+	const ex = W >= H ? (W / H) * 0.82 : 1;
+	const ey = H > W ? (H / W) * 0.82 : 1;
+	const r1 = m * 0.27;
+	const r2 = Math.hypot(W, H) * 0.62;
+	const N = 24;
+	ctx.lineWidth = u * 0.7;
+	for (let k = 0; k < N; k++) {
+		const r0 = r1 + (k * (r2 - r1)) / N;
+		const amp = u * (2 + (k % 3) * 0.9);
+		const lobes = 16 + (k % 4) * 6;
+		ctx.strokeStyle = line(0.06 + 0.11 * (1 - k / N));
+		ctx.beginPath();
+		for (let i = 0; i <= 240; i++) {
+			const t = (i / 240) * Math.PI * 2;
+			const r = r0 + amp * Math.sin(lobes * t + k * 0.7);
+			const x = cx + Math.cos(t) * r * ex;
+			const y = cy + Math.sin(t) * r * ey;
+			if (i) ctx.lineTo(x, y);
+			else ctx.moveTo(x, y);
+		}
+		ctx.stroke();
+	}
+	// çapraz ışık bandı ve kenar karartması (metal gibi derinlik)
+	const sh = ctx.createLinearGradient(0, 0, W, H);
+	sh.addColorStop(0, 'rgba(255,255,255,0)');
+	sh.addColorStop(0.4, 'rgba(255,255,255,.04)');
+	sh.addColorStop(0.5, 'rgba(255,255,255,.1)');
+	sh.addColorStop(0.6, 'rgba(255,255,255,.04)');
+	sh.addColorStop(1, 'rgba(255,255,255,0)');
+	ctx.fillStyle = sh;
+	ctx.fillRect(0, 0, W, H);
+	const v = ctx.createRadialGradient(cx, cy, m * 0.3, cx, cy, Math.max(W, H) * 0.75);
+	v.addColorStop(0, 'rgba(0,0,0,0)');
+	v.addColorStop(1, 'rgba(0,0,0,.45)');
+	ctx.fillStyle = v;
+	ctx.fillRect(0, 0, W, H);
+	// çift çerçeve ve köşe süsleri
+	const i1 = u * 5;
+	const i2 = u * 8.5;
+	ctx.strokeStyle = line(0.8);
+	ctx.lineWidth = u * 1.2;
+	ctx.strokeRect(i1, i1, W - 2 * i1, H - 2 * i1);
+	ctx.strokeStyle = line(0.32);
+	ctx.lineWidth = u * 0.7;
+	ctx.strokeRect(i2, i2, W - 2 * i2, H - 2 * i2);
+	ctx.fillStyle = line(0.9);
+	for (const [x, y] of [[i1, i1], [W - i1, i1], [W - i1, H - i1], [i1, H - i1]]) {
+		const d = u * 4.5;
+		ctx.beginPath();
+		ctx.moveTo(x, y - d);
+		ctx.lineTo(x + d, y);
+		ctx.lineTo(x, y + d);
+		ctx.lineTo(x - d, y);
+		ctx.closePath();
+		ctx.fill();
+	}
+	// madalyon: gölge, koyu kabartma disk, metal halka, ince iç halka, çevre yazısı, metal soru işareti, bir ışıltı
+	const r = m * 0.22;
+	ctx.save();
+	ctx.shadowColor = 'rgba(0,0,0,.7)';
+	ctx.shadowBlur = u * 10;
+	ctx.shadowOffsetY = u * 2.5;
+	const dk = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.4, r * 0.1, cx, cy, r * 1.1);
+	dk.addColorStop(0, f.base[0]);
+	dk.addColorStop(1, f.base[3]);
+	ctx.fillStyle = dk;
 	ctx.beginPath();
-	ctx.arc(cx + 1.5, cy + 1.5, r, 0, Math.PI * 2);
-	ctx.stroke();
-	ctx.strokeStyle = f.hi;
+	ctx.arc(cx, cy, r * 1.06, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.restore();
+	const mg = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+	mg.addColorStop(0, f.met[0]);
+	mg.addColorStop(0.45, f.met[1]);
+	mg.addColorStop(1, f.met[2]);
+	ctx.lineWidth = r * 0.11;
+	ctx.strokeStyle = mg;
 	ctx.beginPath();
-	ctx.arc(cx - 1, cy - 1, r, 0, Math.PI * 2);
+	ctx.arc(cx, cy, r, 0, Math.PI * 2);
 	ctx.stroke();
-	ctx.font = `400 ${Math.round(r * 1.25)}px "Lilita One",sans-serif`;
+	ctx.lineWidth = u * 0.8;
+	ctx.strokeStyle = line(0.6);
+	ctx.beginPath();
+	ctx.arc(cx, cy, r * 0.74, 0, Math.PI * 2);
+	ctx.stroke();
+	const yazi = 'KAZI · KAZAN · KAZI · KAZAN · ';
+	ctx.font = `italic 800 ${Math.max(7, Math.round(r * 0.13))}px "Barlow Condensed",sans-serif`;
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'middle';
-	ctx.fillStyle = f.lo;
-	ctx.fillText('?', cx + 2, cy + 3);
-	ctx.fillStyle = f.hi;
-	ctx.fillText('?', cx - 1, cy);
+	ctx.fillStyle = line(0.85);
+	const chars = [...yazi];
+	chars.forEach((ch, i) => {
+		const t = (i / chars.length) * Math.PI * 2 - Math.PI / 2;
+		ctx.save();
+		ctx.translate(cx + Math.cos(t) * r * 0.86, cy + Math.sin(t) * r * 0.86);
+		ctx.rotate(t + Math.PI / 2);
+		ctx.fillText(ch, 0, 0);
+		ctx.restore();
+	});
+	ctx.font = `400 ${Math.round(r * 1.02)}px "Lilita One",sans-serif`;
+	ctx.fillStyle = 'rgba(0,0,0,.6)';
+	ctx.fillText('?', cx + u * 1.5, cy + u * 3);
+	const qg = ctx.createLinearGradient(0, cy - r * 0.5, 0, cy + r * 0.5);
+	qg.addColorStop(0, f.met[0]);
+	qg.addColorStop(0.5, f.met[1]);
+	qg.addColorStop(1, f.met[2]);
+	ctx.fillStyle = qg;
+	ctx.fillText('?', cx, cy + u);
+	const sx = cx + r * 0.72;
+	const sy = cy - r * 0.72;
+	const sr = r * 0.2;
+	const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
+	sg.addColorStop(0, 'rgba(255,255,255,.95)');
+	sg.addColorStop(1, 'rgba(255,255,255,0)');
+	ctx.fillStyle = sg;
+	ctx.beginPath();
+	ctx.moveTo(sx, sy - sr);
+	ctx.quadraticCurveTo(sx, sy, sx + sr, sy);
+	ctx.quadraticCurveTo(sx, sy, sx, sy + sr);
+	ctx.quadraticCurveTo(sx, sy, sx - sr, sy);
+	ctx.quadraticCurveTo(sx, sy, sx, sy - sr);
+	ctx.fill();
 	// baskı: bilet türü ve seri numarası (sağ alt köşe; kazınınca o da gider)
 	if (etiket) {
-		const es = Math.max(9, Math.round(H * 0.055));
+		const es = Math.max(9, Math.round(H * 0.05));
 		ctx.font = `italic 800 ${es}px "Barlow Condensed",sans-serif`;
 		ctx.textAlign = 'right';
 		ctx.textBaseline = 'alphabetic';
-		ctx.fillStyle = f.lo;
-		ctx.fillText(etiket, W - es * 0.8 + 1, H - es * 0.7 + 1);
-		ctx.fillStyle = 'rgba(255,255,255,.7)';
-		ctx.fillText(etiket, W - es * 0.8, H - es * 0.7);
+		ctx.fillStyle = line(0.75);
+		ctx.fillText(etiket, W - i2 - es * 0.5, H - i2 - es * 0.45);
 	}
-	// kenarda ince parlak çerçeve
-	ctx.strokeStyle = 'rgba(255,255,255,.35)';
-	ctx.lineWidth = 2;
-	ctx.strokeRect(1, 1, W - 2, H - 2);
+	ctx.restore();
 }
 
 /** Oyuncu portresi: kartın afişindeki plakadan (yoksa baş harf). */
@@ -376,19 +495,30 @@ function avOf(card, p) {
 	return `<span class="fl-av">${html || esc([...String(p?.name || '?')][0] || '?')}</span>`;
 }
 
-/** Otomatik kazımanın yolu: pencerede satır satır gidip gelen bir çizgi (CSS piksel). Satır arası fırçanın 1,4 yarıçapı. */
-export function otoYol(w, h, r) {
-	const gap = r * 1.4;
-	const rows = Math.max(2, Math.ceil((h + r * 0.6) / gap));
-	const pts = [];
-	for (let k = 0; k < rows; k++) {
-		const y = Math.min(h, r * 0.35 + k * gap);
-		const a = [-r * 0.6, y];
-		const b = [w + r * 0.6, y + gap * 0.18];
-		if (k % 2) pts.push(b, a);
-		else pts.push(a, b);
-	}
-	return { pts, rows };
+/**
+ * Otomatik kazımanın kesişleri (CSS piksel): pencereyi eğik, paralel bantlara bölen 6 kesiş. Her kesiş bir bandın
+ * ortasından geçer, yarı genişliği (hw) bandın 0,62'si: komşu kesişler üst üste biner, hiç ada kalmaz. Sıra
+ * ortadan dışa karışık (sinematik), yönler sırayla soldan ve sağdan.
+ */
+export const OTO = { n: 6, aci: 0.36, sarj: 280, ara: 115, sure: 200, son: 260 };
+export function otoSerit(w, h) {
+	const n = OTO.n;
+	const d = [Math.cos(OTO.aci), Math.sin(OTO.aci)];
+	const nn = [-d[1], d[0]];
+	const pr = [[0, 0], [w, 0], [w, h], [0, h]].map(([x, y]) => x * nn[0] + y * nn[1]);
+	const lo = Math.min(...pr);
+	const band = (Math.max(...pr) - lo) / n;
+	const hw = band * 0.62;
+	const L = Math.hypot(w, h) / 2 + hw;
+	const c0 = (w / 2) * nn[0] + (h / 2) * nn[1];
+	const sira = [2, 4, 1, 5, 0, 3];
+	return sira.map((i, k) => {
+		const off = lo + (i + 0.5) * band - c0;
+		const mx = w / 2 + nn[0] * off;
+		const my = h / 2 + nn[1] * off;
+		const y = k % 2 ? -1 : 1;
+		return { a: [mx - d[0] * L * y, my - d[1] * L * y], b: [mx + d[0] * L * y, my + d[1] * L * y], hw, nn };
+	});
 }
 
 // en son açılan kart (eski kartın zamanlayıcıları yenisini bozmasın)
@@ -436,14 +566,14 @@ export const kazi = {
 		const foes = (cur?.bots || []).filter((b) => b?.p && b.p !== human);
 		const serial = String(1000 + ((q.id || '').split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9000, 7) % 9000));
 		const tema = ['gunduz', 'batim', 'gece'].includes(q.tema) ? q.tema : 'gunduz';
-		el.innerHTML = `<div class="yn-kz f-${esc(q.folyo || 'gumus')}">
+		el.innerHTML = `<div class="yn-kz f-${esc(q.folyo || 'gumus')}" style="--rgb:${f.ac}">
 			<div class="yn-kz-bilet">
 				<div class="yn-kz-ust"><span class="yn-kz-logo"><b>KAZI KAZAN</b><small>${esc(f.name)}</small></span>
 					<span class="yn-kz-puan"><small>KALAN PUAN</small><b>100</b><i>${'<u class="on"></u>'.repeat(10)}</i></span></div>
 				<div class="yn-kz-pen">
 					<div class="yn-kz-sah t-${tema}"><i class="yn-kz-hz"></i><i class="yn-kz-gl"></i><img class="yn-kz-yap yok" alt="" draggable="false"></div>
 					<canvas class="yn-kz-fol" aria-label="kazı kazan folyosu: parmağınla kazı"></canvas><canvas class="yn-kz-sim"></canvas>
-					<div class="yn-kz-ip"><span>${COIN}</span><b>PARMAĞINLA KAZI</b></div><i class="yn-kz-para">${COIN}</i><i class="yn-kz-isi"></i><div class="yn-kz-pl"></div></div>
+					<i class="yn-kz-isik"></i><div class="yn-kz-ip"><span>${COIN}</span><b>PARMAĞINLA KAZI</b></div><i class="yn-kz-isi"></i><i class="yn-kz-cak"></i><div class="yn-kz-pl"></div></div>
 				<div class="yn-kz-oy">${foes.length && !foes.some((b) => human && b.p.team != null && b.p.team === human.team) ? '<small>RAKİP</small>' : ''}${foes.map((b, k) => `<span class="yn-kz-c" data-p="${b.p.i}" style="--pc:${esc(b.p.css || '#888')};--k:${k}">${avOf(card, b.p)}<b>%0</b></span>`).join('')}</div>
 			</div>
 			<div data-r="o"></div>
@@ -456,7 +586,8 @@ export const kazi = {
 		const cvF = pen.querySelector('.yn-kz-fol');
 		const cvS = pen.querySelector('.yn-kz-sim');
 		const ip = pen.querySelector('.yn-kz-ip');
-		const para = pen.querySelector('.yn-kz-para');
+		const isik = pen.querySelector('.yn-kz-isik');
+		const bilet = root.querySelector('.yn-kz-bilet');
 		const plaka = pen.querySelector('.yn-kz-pl');
 		const meter = root.querySelector('.yn-kz-puan');
 		const meterB = meter.querySelector('b');
@@ -515,15 +646,20 @@ export const kazi = {
 		let rect = null;
 		const fctx = cvF.getContext('2d');
 		const brushPx = () => clamp((rect?.width || 300) * 0.06, 13, 24);
-		// pürüzlü madeni para izi: kenarında folyonun kalkık gölgesi, sonra birkaç kayık daire silinir; pay ızgarası (mark)
+		// pürüzlü madeni para izi: kalan folyonun kenarı metalin renginde ışıldar (kesik kenar ışığı yakalar), sonra birkaç
+		// kayık daire silinir; pay ızgarası (mark)
 		const stampAt = (nx, ny, r, k, mark = true) => {
 			const x = nx * fw;
 			const y = ny * fh;
 			const rr = r * dpr;
 			fctx.globalCompositeOperation = 'source-atop';
-			fctx.fillStyle = 'rgba(20,24,34,.22)';
+			const kg = fctx.createRadialGradient(x, y, rr * 0.78, x, y, rr * 1.3);
+			kg.addColorStop(0, `rgba(${f.ac},.75)`);
+			kg.addColorStop(0.35, `rgba(${f.ac},.28)`);
+			kg.addColorStop(1, `rgba(${f.ac},0)`);
+			fctx.fillStyle = kg;
 			fctx.beginPath();
-			fctx.arc(x + rr * 0.08, y + rr * 0.12, rr * 1.12, 0, Math.PI * 2);
+			fctx.arc(x, y, rr * 1.3, 0, Math.PI * 2);
 			fctx.fill();
 			fctx.globalCompositeOperation = 'destination-out';
 			fctx.fillStyle = '#000';
@@ -639,11 +775,26 @@ export const kazi = {
 				const px = nx * rect.width;
 				const py = ny * rect.height;
 				const dx = (Math.random() - 0.5) * 46;
-				const col = f.stops[Math.floor(Math.random() * f.stops.length)];
-				e.style.cssText = `--s:${(2.5 + Math.random() * 3.5).toFixed(1)}px;--c:${col};--x0:${px.toFixed(0)}px;--y0:${py.toFixed(0)}px;--x1:${(px + dx).toFixed(0)}px;--y1:${(py + 18 + Math.random() * 28).toFixed(0)}px;--r:${Math.round(Math.random() * 540 - 270)}deg`;
+				const col = f.kir[Math.floor(Math.random() * f.kir.length)];
+				e.style.cssText = `--s:${(3 + Math.random() * 4).toFixed(1)}px;--c:${col};--x0:${px.toFixed(0)}px;--y0:${py.toFixed(0)}px;--x1:${(px + dx).toFixed(0)}px;--y1:${(py + 18 + Math.random() * 28).toFixed(0)}px;--r:${Math.round(Math.random() * 540 - 270)}deg`;
 				pen.appendChild(e);
-				setTimeout(() => e.remove(), 760);
+				setTimeout(() => e.remove(), 800);
 			}
+		};
+		// kıvılcım: (x, y) CSS pikselinden ang yönünde (radyan) fırlayan ışıklı çizgi
+		const kivilcim = (x, y, ang, hiz = 1) => {
+			const e = document.createElement('i');
+			e.className = 'yn-kz-kv';
+			const L = (26 + Math.random() * 46) * hiz;
+			const len = 6 + Math.random() * 12;
+			const d = 0.32 + Math.random() * 0.25;
+			e.style.cssText = `--l:${len.toFixed(0)}px;--d:${d.toFixed(2)}s;--a:${((ang * 180) / Math.PI).toFixed(0)}deg;--x0:${x.toFixed(0)}px;--y0:${y.toFixed(0)}px;--x1:${(x + Math.cos(ang) * L).toFixed(0)}px;--y1:${(y + Math.sin(ang) * L + 10).toFixed(0)}px`;
+			pen.appendChild(e);
+			setTimeout(() => e.remove(), d * 1000 + 60);
+		};
+		// parmağın altında metalde gezen ışık (yalnız basılıyken)
+		const isikAt = (p) => {
+			isik.style.transform = `translate(${(p[0] * rect.width).toFixed(1)}px,${(p[1] * rect.height).toFixed(1)}px)`;
 		};
 		const toN = (ev) => {
 			const r = rect || pen.getBoundingClientRect();
@@ -671,7 +822,10 @@ export const kazi = {
 				ip.classList.add('gone');
 				sesA.para();
 			}
+			isikAt(p);
+			isik.classList.add('on');
 			kirinti(p[0], p[1]);
+			for (let i = 0; i < 3; i++) kivilcim(p[0] * rect.width, p[1] * rect.height, Math.random() * Math.PI * 2, 0.6);
 			meterLater();
 		});
 		cvF.addEventListener('pointermove', (ev) => {
@@ -683,9 +837,12 @@ export const kazi = {
 			stroke.p.push(p);
 			segment(a, p, brushPx());
 			kirinti(p[0], p[1]);
+			isikAt(p);
 			const t = clock.now();
 			const sp = d / Math.max(8, t - (stroke.t || t));
 			stroke.t = t;
+			// hızlı kazımada fırçanın arkasına kıvılcım saçılır
+			if (sp > 0.25 && Math.random() < 0.55) kivilcim(p[0] * rect.width, p[1] * rect.height, Math.atan2(a[1] - p[1], a[0] - p[0]) + (Math.random() - 0.5) * 1.4, 0.8);
 			if (t - lastSnd > 45) {
 				lastSnd = t;
 				sesA.kazi(Math.min(2, sp));
@@ -698,6 +855,7 @@ export const kazi = {
 		});
 		const end = (ev) => {
 			if (stroke && stroke.id === ev.pointerId) stroke = null;
+			isik.classList.remove('on');
 		};
 		cvF.addEventListener('pointerup', end);
 		cvF.addEventListener('pointercancel', end);
@@ -723,7 +881,9 @@ export const kazi = {
 			const x = -W * 0.6 + ph * W * 2.2;
 			const g = sctx.createLinearGradient(x - W * 0.25, 0, x + W * 0.25, H * 0.4);
 			g.addColorStop(0, 'rgba(255,255,255,0)');
-			g.addColorStop(0.5, f.shine);
+			g.addColorStop(0.42, `rgba(${f.ac},.22)`);
+			g.addColorStop(0.5, 'rgba(255,255,255,.45)');
+			g.addColorStop(0.58, `rgba(${f.ac},.22)`);
 			g.addColorStop(1, 'rgba(255,255,255,0)');
 			sctx.fillStyle = g;
 			sctx.fillRect(0, 0, W, H);
@@ -774,56 +934,168 @@ export const kazi = {
 			if (!rect) size();
 			raf = requestAnimationFrame(frame);
 		});
-		// ---------------------------------------------------------------- imza: altın para kalan folyoyu kendisi kazır
+		// kesiş: a → b arasında hw yarı genişlikli bant silinir; kalan folyonun kenarı ışıldar, kenar pürüzlü (CSS piksel)
+		const kes = (a, b, s) => {
+			const R = s.hw * dpr;
+			const x0 = a[0] * dpr;
+			const y0 = a[1] * dpr;
+			const x1 = b[0] * dpr;
+			const y1 = b[1] * dpr;
+			const yol = () => {
+				fctx.beginPath();
+				fctx.moveTo(x0, y0);
+				fctx.lineTo(x1, y1);
+				fctx.stroke();
+			};
+			fctx.lineCap = 'round';
+			fctx.globalCompositeOperation = 'source-atop';
+			fctx.strokeStyle = `rgba(${f.ac},.6)`;
+			fctx.lineWidth = R * 2.26;
+			yol();
+			fctx.globalCompositeOperation = 'destination-out';
+			fctx.strokeStyle = '#000';
+			fctx.lineWidth = R * 1.92;
+			yol();
+			fctx.fillStyle = '#000';
+			for (let i = 0; i < 5; i++) {
+				const t = Math.random();
+				const o = R * (0.94 + Math.random() * 0.12) * (Math.random() < 0.5 ? -1 : 1);
+				fctx.beginPath();
+				fctx.arc(x0 + (x1 - x0) * t + s.nn[0] * o, y0 + (y1 - y0) * t + s.nn[1] * o, R * (0.05 + Math.random() * 0.09), 0, Math.PI * 2);
+				fctx.fill();
+			}
+			fctx.globalCompositeOperation = 'source-over';
+		};
+		// ışık bıçağı: kesişin başında bandı enlemesine kesen beyaz çekirdekli parlak çizgi ve arkasında sönen ışık izi
+		const bicak = (p, s) => {
+			const R = s.hw * dpr * 1.1;
+			const x = p[0] * dpr;
+			const y = p[1] * dpr;
+			const dl = Math.hypot(s.b[0] - s.a[0], s.b[1] - s.a[1]) || 1;
+			const ux = (s.b[0] - s.a[0]) / dl;
+			const uy = (s.b[1] - s.a[1]) / dl;
+			const [nx, ny] = s.nn;
+			const tl = R * 2.4;
+			const g = sctx.createLinearGradient(x - ux * tl, y - uy * tl, x, y);
+			g.addColorStop(0, `rgba(${f.ac},0)`);
+			g.addColorStop(0.7, `rgba(${f.ac},.22)`);
+			g.addColorStop(1, `rgba(${f.ac},.55)`);
+			sctx.fillStyle = g;
+			sctx.beginPath();
+			sctx.moveTo(x + nx * R, y + ny * R);
+			sctx.lineTo(x - nx * R, y - ny * R);
+			sctx.lineTo(x - nx * R - ux * tl, y - ny * R - uy * tl);
+			sctx.lineTo(x + nx * R - ux * tl, y + ny * R - uy * tl);
+			sctx.closePath();
+			sctx.fill();
+			// bıçağın ortasında sıcak nokta
+			const hg = sctx.createRadialGradient(x, y, 0, x, y, R * 0.7);
+			hg.addColorStop(0, 'rgba(255,255,255,.55)');
+			hg.addColorStop(0.4, `rgba(${f.ac},.25)`);
+			hg.addColorStop(1, `rgba(${f.ac},0)`);
+			sctx.fillStyle = hg;
+			sctx.beginPath();
+			sctx.arc(x, y, R * 0.7, 0, Math.PI * 2);
+			sctx.fill();
+			sctx.save();
+			sctx.lineCap = 'round';
+			sctx.shadowColor = `rgba(${f.ac},1)`;
+			sctx.shadowBlur = 28 * dpr;
+			sctx.strokeStyle = `rgba(${f.ac},.95)`;
+			sctx.lineWidth = 10 * dpr;
+			sctx.beginPath();
+			sctx.moveTo(x + nx * R, y + ny * R);
+			sctx.lineTo(x - nx * R, y - ny * R);
+			sctx.stroke();
+			sctx.shadowBlur = 8 * dpr;
+			sctx.strokeStyle = '#fff';
+			sctx.lineWidth = 3.2 * dpr;
+			sctx.stroke();
+			sctx.restore();
+		};
+		// ---------------------------------------------------------------- imza: folyo kendini kazır
+		// şarj (pencere çerçevesi parlar, folyonun üstünden güçlü bir ışık geçer) → altı ışık bıçağı eğik bantlar halinde
+		// folyoyu yarar (her biri kıvılcım saçar, vınlar, bileti sarsar) → kalan kırıntılar parıltıya dönüşür, ışık çakar
 		let autoRaf = 0;
-		const otoKazi = (ms, done) => {
+		const otoKazi = (reduce, done) => {
 			auto = true;
-			if (!fw || !fh || !rect) {
-				// folyo hiç boyanmadıysa (kart ölçülmeden cevap geldi): resim yine açılır
+			stroke = null;
+			isik.classList.remove('on');
+			if (!fw || !fh || !rect || reduce) {
+				// folyo hiç boyanmadıysa (kart ölçülmeden cevap geldi) ya da hareket azaltıldıysa: folyo söner
 				cvF.style.opacity = '0';
 				return done();
 			}
 			const w = rect.width;
 			const h = rect.height;
-			const r = clamp(Math.min(w, h) * 0.13, 20, 42);
-			const { pts, rows } = otoYol(w, h, r);
-			const seg = [];
-			let L = 0;
-			for (let i = 1; i < pts.length; i++) {
-				const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-				seg.push([L, d]);
-				L += d;
-			}
-			const at = (x) => {
-				let i = 0;
-				while (i < seg.length - 1 && seg[i][0] + seg[i][1] < x) i++;
-				const k = clamp((x - seg[i][0]) / (seg[i][1] || 1), 0, 1);
-				const a = pts[i];
-				const b = pts[i + 1];
-				return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
-			};
-			sesA.oto(ms, rows);
-			para.classList.add('on');
+			const S = otoSerit(w, h);
+			const T1 = OTO.sarj + (S.length - 1) * OTO.ara + OTO.sure;
+			const last = S.map((x) => x.a.slice());
+			const basladi = S.map(() => false);
+			const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+			root.classList.add('sarj');
+			sesA.sarj();
 			const a0 = clock.now();
-			let last = at(0);
-			let k = 0;
-			const ease = (x) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2) * 0.35 + x * 0.65; // yumuşak kalkış ve iniş
 			const step = () => {
 				autoRaf = 0;
 				if (LIVE !== me || !el.isConnected) return;
-				const u = Math.min(1, (clock.now() - a0) / ms);
-				const p = at(ease(u) * L);
-				segment([last[0] / w, last[1] / h], [p[0] / w, p[1] / h], r, false);
-				k++;
-				para.style.transform = `translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px) rotate(${(u * 900).toFixed(0)}deg)`;
-				kirinti(clamp(p[0] / w, 0, 1), clamp(p[1] / h, 0, 1), 22, 2);
-				if (k % 3 === 0) buzz(2);
-				last = p;
-				if (u < 1) autoRaf = requestAnimationFrame(step);
+				const t = clock.now() - a0;
+				const W = cvS.width;
+				const H = cvS.height;
+				sctx.globalCompositeOperation = 'source-over';
+				sctx.clearRect(0, 0, W, H);
+				simOn = true;
+				if (t < OTO.sarj) {
+					const ph = t / OTO.sarj;
+					const x = -W * 0.5 + ph * W * 2;
+					const g = sctx.createLinearGradient(x - W * 0.3, 0, x + W * 0.3, H * 0.5);
+					g.addColorStop(0, 'rgba(255,255,255,0)');
+					g.addColorStop(0.44, `rgba(${f.ac},.5)`);
+					g.addColorStop(0.5, 'rgba(255,255,255,.85)');
+					g.addColorStop(0.56, `rgba(${f.ac},.5)`);
+					g.addColorStop(1, 'rgba(255,255,255,0)');
+					sctx.fillStyle = g;
+					sctx.fillRect(0, 0, W, H);
+					sctx.globalCompositeOperation = 'destination-in';
+					sctx.drawImage(cvF, 0, 0);
+					sctx.globalCompositeOperation = 'source-over';
+				}
+				S.forEach((s, k) => {
+					const tk = t - OTO.sarj - k * OTO.ara;
+					if (tk < 0) return;
+					const u = Math.min(1, tk / OTO.sure);
+					if (!basladi[k]) {
+						basladi[k] = true;
+						sesA.kesik(k, OTO.sure);
+						bilet.style.setProperty('--sx', `${k % 2 ? -2 : 2}px`);
+						bilet.classList.remove('sars');
+						void bilet.offsetWidth;
+						bilet.classList.add('sars');
+						buzz(8);
+					}
+					const e = ease(u);
+					const p = [s.a[0] + (s.b[0] - s.a[0]) * e, s.a[1] + (s.b[1] - s.a[1]) * e];
+					kes(last[k], p, s);
+					last[k] = p;
+					if (u >= 1) return;
+					bicak(p, s);
+					const yon = Math.atan2(s.b[1] - s.a[1], s.b[0] - s.a[0]);
+					for (let i = 0; i < 3; i++) {
+						const o = (Math.random() * 2 - 1) * s.hw;
+						const x = p[0] + s.nn[0] * o;
+						const y = p[1] + s.nn[1] * o;
+						if (x > -8 && x < w + 8 && y > -8 && y < h + 8) kivilcim(x, y, yon + (Math.random() - 0.5) * 1.1, 1.3);
+					}
+				});
+				if (t < T1) autoRaf = requestAnimationFrame(step);
 				else {
-					para.classList.remove('on');
-					cvF.style.opacity = '0'; // kalan kılçık kırıntılar
-					done();
+					sctx.clearRect(0, 0, W, H);
+					root.classList.remove('sarj');
+					cvF.style.opacity = '0'; // kalan kılçık kırıntılar parıltıyla söner
+					root.classList.add('cak');
+					sesA.toz();
+					for (let i = 0; i < 16; i++) kirinti(Math.random(), Math.random() * 0.9, 0, 1);
+					setTimeout(done, OTO.son);
 				}
 			};
 			autoRaf = requestAnimationFrame(step);
@@ -884,7 +1156,7 @@ export const kazi = {
 				const go = () => {
 					if (LIVE !== me || !el.isConnected || auto) return;
 					size(); // alt şerit ve başlık değişti: folyo yeni boyda (otomatik kazıma doğru yere düşsün)
-					otoKazi(reduce ? 250 : 1250, () => {
+					otoKazi(reduce, () => {
 						if (LIVE !== me || !el.isConnected) return;
 						sigdir();
 						root.classList.add('ac');

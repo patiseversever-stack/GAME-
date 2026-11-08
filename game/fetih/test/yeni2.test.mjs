@@ -14,7 +14,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BODY = /* js */ `
 import { TYPES, SAMPLES, ORDER } from './src/quiz/deneme-yeni2.js';
 import { TUR, sayim } from './src/quiz/d_balon.js';
-import { puanOf, PUAN, otoYol } from './src/quiz/d_kazi.js';
+import { puanOf, PUAN, otoSerit, OTO } from './src/quiz/d_kazi.js';
 import { KAZI_SORULAR, YAPILAR } from './src/data/ek/kazi.js';
 import { existsSync, statSync } from 'node:fs';
 import { CATS } from './src/quiz/categories.js';
@@ -178,25 +178,26 @@ const BY_NAME = new Map(DATA.provinces.map((p) => [p.name, p]));
 		}
 		ok(sum[1] < sum[0], q.id + ': usta bot daha az kazımıyor (' + sum.map((x) => (x / 200).toFixed(2)) + ')');
 	}
-	// otomatik kazıma yolu: pencerenin her noktası yoldan fırça yarıçapı içinde (folyo hiç ada bırakmaz)
-	for (const [w, h] of [[300, 180], [270, 120], [380, 260], [600, 330]]) {
-		const r = Math.max(20, Math.min(42, Math.min(w, h) * 0.13));
-		const { pts } = otoYol(w, h, r);
-		let worst = 0;
-		for (let y = 0; y <= h; y += 4)
-			for (let x = 0; x <= w; x += 4) {
-				let best = Infinity;
-				for (let i = 1; i < pts.length; i++) {
-					const [ax, ay] = pts[i - 1];
-					const [bx, by] = pts[i];
-					const dx = bx - ax;
-					const dy = by - ay;
+	// otomatik kazıma: 6 ışık bıçağının sildiği bantlar (yarı genişlik hw · 0,96) pencerenin her noktasını kapsar, folyo
+	// hiç ada bırakmaz; bıçaklar sırayla soldan ve sağdan girer, toplam süre cevap filmine sığar
+	ok(OTO.n === 6 && OTO.sarj + (OTO.n - 1) * OTO.ara + OTO.sure + OTO.son <= 1600, 'kazi: otomatik kazıma 1,6 sn içinde bitmiyor');
+	for (const [w, h] of [[300, 180], [270, 100], [380, 260], [600, 330], [200, 300]]) {
+		const S = otoSerit(w, h);
+		ok(S.length === 6 && S.every((s) => s.hw > 0), 'kazi: altı kesiş');
+		let worst = -Infinity;
+		for (let y = 0; y <= h; y += 3)
+			for (let x = 0; x <= w; x += 3) {
+				let best = -Infinity; // bandın içinde ne kadar (pay; artı: içeride)
+				for (const s of S) {
+					const [ax, ay] = s.a;
+					const dx = s.b[0] - ax;
+					const dy = s.b[1] - ay;
 					const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy || 1)));
-					best = Math.min(best, Math.hypot(x - ax - t * dx, y - ay - t * dy));
+					best = Math.max(best, s.hw * 0.96 - Math.hypot(x - ax - t * dx, y - ay - t * dy));
 				}
-				worst = Math.max(worst, best);
+				worst = Math.max(worst, -best);
 			}
-		ok(worst <= r * 0.86, 'kazi: otomatik kazıma ' + w + 'x' + h + ' penceresinde ' + worst.toFixed(1) + ' px boşluk bırakıyor (fırça ' + r.toFixed(1) + ')');
+		ok(worst < 0, 'kazi: otomatik kazıma ' + w + 'x' + h + ' penceresinde ' + worst.toFixed(1) + ' px folyo bırakıyor');
 	}
 }
 
