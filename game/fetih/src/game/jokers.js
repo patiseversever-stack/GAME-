@@ -243,9 +243,10 @@ export function computeEffect(id, env) {
 			return { id, kind: 'hide', hide: wrong.slice(0, v.opts.length >= 4 ? 2 : 1).sort((a, b) => a - b) };
 		}
 		if (k === 'num') {
-			// cevabı içeren, ama ortalanmamış dar aralık (toplam aralığın %28'i)
+			// cevabı içeren, ama ortalanmamış dar aralık (toplam aralığın %28'i, en az 6). Aralığı zaten dar soruda (1–7
+			// gibi) en az 6 kuralı hiç daraltmıyordu: aralık her zaman asıl aralıktan en az 2 dar (ya da 1 birim) kalır.
 			const span = q.max - q.min;
-			const w = Math.max(6, Math.round(span * 0.28));
+			const w = Math.min(Math.max(6, Math.round(span * 0.28)), Math.max(1, span - 2));
 			let lo = Math.round(q.ans - w * (0.15 + R() * 0.7));
 			lo = Math.max(q.min, Math.min(q.max - w, lo));
 			return { id, kind: 'range', min: lo, max: Math.min(q.max, lo + w) };
