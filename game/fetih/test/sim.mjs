@@ -445,7 +445,6 @@ console.log(`4) Soru düzeni: ${PLAN * 8} maç (her mod × uzunluk ${PLAN})`);
 					if (yeni) seenT.add(e.type);
 					if (j && log[j - 1].type === e.type) P.repeat++;
 					if (MAC.CANLI.has(e.type)) check(e.moment === 'attack' || e.moment === 'siege', `${key}: canlı tur ${e.type} düello dışında (${e.moment})`);
-					check(e.type !== 'golge', `${key}: Gölge bayrağı kapalıyken sorulmadı olmalı`);
 				});
 				P.distinct += seenT.size;
 				for (const [t, c] of Object.entries(r.types)) {
@@ -464,13 +463,13 @@ console.log(`4) Soru düzeni: ${PLAN * 8} maç (her mod × uzunluk ${PLAN})`);
 			}
 			check(P.repeat === 0, `${key}: ${P.repeat} kez aynı tip art arda`);
 		}
-	// Gölge bayrakla açılır
+	// Gölge maçta açık (görselli sürüm; bayrak gerekmez)
 	{
 		const app = makeApp();
-		const m = new Match(app, makeUI({}), { mode: '1v1', length: 'long', region: 'all', bot: 'er', seed: 5, allBots: true, persist: false, yeni: { golge: true } });
+		const m = new Match(app, makeUI({}), { mode: '1v1', length: 'long', region: 'all', bot: 'er', seed: 5, allBots: true, persist: false });
 		app.match = m;
 		await m.run();
-		check(m.pool.some((q) => q.type === 'golge') && m.typeOn('golge'), 'Gölge bayrakla açılmadı');
+		check(m.pool.some((q) => q.type === 'golge') && m.typeOn('golge'), 'Gölge maçta açık değil');
 	}
 }
 

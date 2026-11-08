@@ -18,6 +18,7 @@
 //   fitil      'fitil' { k, c }             herkese 'top' { ev: [olaylar] } (açılış, cevap, patlama)   iki tarafın kaydı
 //   blitz      'bz' { k, a }                'bz' { k, ok, ans } (sıradaki ifade yargısı)  { score, n } sunucunun saydığı
 //   azbilinen  (yok; cevap sıra)            reveal: gerçek seçilme oranları (istatistik) { sıra }
+//   golge      (yok; cevap şık)             'ipucu' { k: 2, text } (ilk harf) saatinde   şık
 //   tufan, kusbakisi, kayip, golge, ikidogru: şık (0..n−1) · mancinik: sayı (min..max): yalnız doğrulama
 //
 // İstatistik (Az Bilinen, Şive): Match cfg.istatistik ile bir Istatistik nesnesi alır (sunucu saklar, JSON); yoksa
@@ -30,6 +31,7 @@ import { engine } from '../quiz/d_fitil.js';
 import { between } from '../quiz/d_ilavi.js';
 import { GAP as KIMIM_GAP, LOCK as KIMIM_LOCK } from '../quiz/d_kimim.js';
 import { karma } from '../quiz/mac.js';
+import { filmOf as golgeFilm, IPUCU_AN as GOLGE_AN } from '../quiz/d_golge.js';
 import DATA from '../data/turkiye.json';
 import { setPinAreas } from '../quiz/types.js';
 setPinAreas(DATA); // harita sorusu: il ve göl sınırları (types.js pinJudge)
@@ -338,7 +340,14 @@ export const ADIM = {
 	},
 	tufan: { final: (S, x) => choice(S, x) },
 	kusbakisi: { final: (S, x) => choice(S, x) },
-	golge: { final: (S, x) => choice(S, x) },
+	golge: {
+		// ilk harf (cevabı ele verir) istemciye görünümle gitmez: açılma anında, sunucunun saatiyle gönderilir
+		open(S) {
+			const h = S.v.ipucu?.[2];
+			if (h) S.later(() => S.send('ipucu', { k: 2, text: h }), golgeFilm(S.v.sec) * GOLGE_AN[2] * 1000);
+		},
+		final: (S, x) => choice(S, x),
+	},
 	penalti: { final: (S, x) => choice(S, x) },
 	// Kazı Kazan: { i: şık, s: kazınan pay } (pay istemcinin ölçümü; 0..1'e kırpılır, binde bire yuvarlanır)
 	kazi: { final: (S, x) => (x && typeof x === 'object' && choice(S, x.i) !== null ? { i: x.i, s: Math.round(Math.min(1, Math.max(0, Number(x.s) || 0)) * 1000) / 1000 } : null) },

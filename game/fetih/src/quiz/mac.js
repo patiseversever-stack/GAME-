@@ -4,7 +4,7 @@
 // düzeni"; sayısal doğrulama: node test/sim.mjs (binlerce maç), rapor: ref/mac-entegrasyon-v12/rapor.md.
 //
 //   YENİ TİPLER   kusbakisi ilavi kimim sive halat mancinik yanlis ikidogru harfal azbilinen tufan kayip fitil golge
-//                 (golge kullanıcı onayı bekliyor: maçta KAPALI, BAYRAK.golge ya da cfg.yeni = { golge: true } açar)
+//                 (BAYRAK ile bir tip maçtan çekilebilir; cfg.yeni = { tip: false } maç başına kapatır)
 //                 Elenenler (kosu, baglanti) maça hiç girmez. Eski 16 tip olduğu gibi kalır.
 //   KÖPRÜ         yeni tiplerin soruları galeri örneklerinden (DENEME_SAMPLES) okunur: yeniBank(). Örnek dizilerine
 //                 eklenen her soru maça kendiliğinden girer (bu dosya yalnız okur).
@@ -24,13 +24,13 @@ import { BANK } from '../data/bank.js';
 import { CATS } from './categories.js';
 import DATA from '../data/turkiye.json';
 
-/** Maça giren yeni tipler (kullanıcının onayladığı 15 + onay bekleyen Gölge). */
+/** Maça giren yeni tipler. */
 export const YENI = ['kusbakisi', 'ilavi', 'kimim', 'sive', 'halat', 'mancinik', 'yanlis', 'ikidogru', 'harfal', 'azbilinen', 'tufan', 'kayip', 'fitil', 'golge', 'gozkarari', 'penalti', 'kazi'];
 const YENI_SET = new Set(YENI);
 export const isYeni = (t) => YENI_SET.has(t);
 
 /** Açma bayrakları: false olan tip maçta hiç seçilmez (galeride oynanır). cfg.yeni = { golge: true } maç başına açar. */
-export const BAYRAK = { golge: false };
+export const BAYRAK = {}; // Gölge görselli sürümüyle açıldı (v: 99 yapı görseli)
 
 /** İki oyunculu canlı tur (aynı tur, iki taraf aynı anda): yalnız düelloda (saldırı ve kuşatma). */
 export const CANLI = new Set(['halat', 'fitil']);
@@ -319,7 +319,7 @@ export function okumaK(t, sec, moment) {
  */
 export const FILM = {
 	tufan: [11000, 5200],
-	golge: [5600, 3200],
+	golge: [4000, 2600], // perde aralanır, gölge gerçeğe döner, plaka yükselir
 	kusbakisi: [4400, 2800],
 	kayip: [4600, 3000],
 	ilavi: [4600, 3200],
@@ -482,9 +482,6 @@ function hardened(type, base) {
 		if (type === 'kusbakisi' && o.q) {
 			if (o.q.site) o.q.sid = sidOf(o.q.site, salt);
 			delete o.q.site;
-		} else if (type === 'golge' && o.q) {
-			if (o.q.model) o.q.sid = sidOf(o.q.model, salt);
-			delete o.q.model;
 		} else if (type === 'ilavi' && Number.isInteger(v.hedef)) {
 			o.sil = kabaSiluet(v.hedef, (karma(salt + v.q.id).charCodeAt(0) * 7919) | 1);
 		} else if (type === 'kayip' && Number.isInteger(v.hedef)) {

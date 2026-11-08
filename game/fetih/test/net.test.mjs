@@ -222,7 +222,7 @@ for (const q of [...BANK, ...SAMPLES]) {
 			case 'kazi':
 				return has2(pv, 'right') || has2(q, 'a', 'ad', 'il', 'yer', 'alt');
 			case 'golge':
-				return has2(pv, 'right') || has2(q, 'model', 'a') || !q.sid;
+				return has2(pv, 'right') || has2(q, 'a', 'ad', 'il', 'yer') || !!pv.ipucu?.[2];
 			case 'ilavi':
 				return has2(pv, 'hedef') || has2(q, 'il', 'hints') || pv.hints.slice(1).some((h) => h) || pv.sil === full.sil;
 			case 'kimim':
