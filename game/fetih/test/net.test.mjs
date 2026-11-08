@@ -111,8 +111,9 @@ for (const q of [...BANK, ...SAMPLES]) {
 	let predictsAll = 0;
 	// son maç yeni tipler kapalı: izleyici tahmini yalnız eski basit tiplerin düellosunda açılır; yeni tip havuzları büyüyünce
 	// (v1.6: 237 → ~740 soru) karışık maçlarda bu düellolar seyrekleşti, mekanizma tohum şansına kalmasın
+	// (tohum 58: uzak koltuk 3 kez izleyici; 57'de uzak koltuk ya her düellodaydı ya elenmişti, hiç izleyici olmuyordu)
 	const NOYENI = Object.fromEntries(Object.keys((await import('../src/quiz/deneme.js')).DENEME_SAMPLES).map((k) => [k, false]));
-	for (const [mode, n, seed, eski] of [['1v1', 2, 50], ['1v1', 2, 53], ['ffa3', 3, 51], ['ffa4', 4, 52], ['team', 4, 54], ['ffa4', 4, 57, true]]) {
+	for (const [mode, n, seed, eski] of [['1v1', 2, 50], ['1v1', 2, 53], ['ffa3', 3, 51], ['ffa4', 4, 52], ['team', 4, 54], ['ffa4', 4, 58, true]]) {
 		const app = makeApp();
 		const seats = Array.from({ length: n }, (_, i) => (i === 1 ? 'remote' : 'bot'));
 		const [srv, cli] = LocalTransport.pair();
