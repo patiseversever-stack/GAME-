@@ -70,8 +70,6 @@ function sesOf(app) {
 
 // ---------------------------------------------------------------- görünüm
 
-const LANTERN =
-	'<svg viewBox="0 0 24 24" fill="none" stroke="#ffd25a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M12 3v2M8 7h8l1 3-1 8H8l-1-8z"/><path d="M12 15.5c-1.3 0-2-1-2-2 0-1.4 2-3 2-3s2 1.6 2 3c0 1-.7 2-2 2z" fill="#ffb347" stroke="none"/><path d="M7 21h10"/></svg>';
 const LOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/></svg>';
 const PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c-4 0-7 3-7 6.9 0 5 7 12.1 7 12.1s7-7.1 7-12.1c0-3.9-3-6.9-7-6.9zm0 9.6a2.7 2.7 0 1 1 0-5.4 2.7 2.7 0 0 1 0 5.4z"/></svg>';
 const GLOBE = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
@@ -80,14 +78,6 @@ const IP_AD = ['BÖLGE', 'TÜR', 'İLK HARF'];
 const CSS = /* css */ `
 .gg{--film:20s;display:flex;flex-direction:column;gap:8px;min-height:0}
 .fl-q.cover .gg{flex:1 1 auto}
-.gg-ust{flex:none;display:flex;align-items:center;gap:8px;min-height:26px}
-.gg-fn{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#2a160c;box-shadow:0 0 0 2px #ffd25a,0 0 14px rgba(255,170,70,.5)}
-.gg-fn svg{width:16px;height:16px}
-.gg-ust b{flex:none;font:italic 800 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:#ffe2b8;white-space:nowrap}
-.gg-bar{flex:1 1 auto;min-width:40px;height:8px;transform:skewX(-14deg);background:rgba(255,255,255,.12);overflow:hidden;position:relative}
-.gg-bar i{position:absolute;inset:0;background:linear-gradient(90deg,#ffd25a,#ff8a3a);transform-origin:0 50%;animation:ggSur var(--film) linear forwards}
-.gg.rv .gg-bar i{animation-play-state:paused}
-.gg-ust small{flex:none;font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#ffd25a;white-space:nowrap}
 /* sahne: çerçeve, perdenin arkası (altın ışıklı oda ve yapı), perde (iki kanat), gölge, fener ışığı, plaka */
 .gg-sah{position:relative;flex:1 1 auto;min-height:110px;max-height:92cqw;border-radius:10px;overflow:hidden;container-type:size;background:#140a04;
   box-shadow:0 0 0 2px #2a1406,0 0 0 4px #c8962e,0 0 0 5.5px #5a1a0e,0 14px 28px rgba(0,0,0,.55),0 0 30px rgba(255,150,60,.18)}
@@ -109,16 +99,18 @@ const CSS = /* css */ `
 .gg-pr{right:0;transform-origin:100% 50%;background-position:0 0,0 0,100% 0}
 .gg-pl::after,.gg-pr::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .5s;background:repeating-linear-gradient(90deg,rgba(60,20,0,.42) 0 5px,rgba(255,230,180,.12) 5px 9px,rgba(60,20,0,.18) 9px 14px)}
 /* gölge: görselin kendisi kapkara; fener yanda başlar (yamuk, basık, bulanık), öne geldikçe düzelir ve netleşir */
+.gg-golk{position:absolute;inset:0;pointer-events:none;transition:opacity .45s}
 .gg-gol{opacity:.55;mix-blend-mode:multiply;filter:brightness(0) blur(14px);transform:translateX(-50%) skewX(22deg) scaleX(.5) scaleY(.9);animation:ggNet var(--film) cubic-bezier(.3,.1,.4,1) forwards;transition:opacity .55s}
 .gg-alev{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(48% 42% at 50% 60%,rgba(255,200,120,.32),transparent 70%);animation:ggAlev 2.7s steps(9,end) infinite}
 .gg-cer{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 3px #2a1406,inset 0 0 0 5px rgba(200,150,46,.85),inset 0 0 0 8px rgba(122,28,18,.9),inset 0 0 0 9.5px rgba(200,150,46,.5),inset 0 0 46px rgba(40,10,0,.75)}
-.gg-cer::before,.gg-cer::after{content:'';position:absolute;top:12px;width:14px;height:14px;transform:rotate(45deg);background:#c8962e;box-shadow:0 0 0 2px #5a1a0e}
+.gg-cer::before,.gg-cer::after{content:'';position:absolute;bottom:12px;width:14px;height:14px;transform:rotate(45deg);background:#c8962e;box-shadow:0 0 0 2px #5a1a0e}
 .gg-cer::before{left:12px}.gg-cer::after{right:12px}
 /* imza anı */
 .gg.ac .gg-pl{transform:translateX(-82%) scaleX(.22)}
 .gg.ac .gg-pr{transform:translateX(82%) scaleX(.22)}
 .gg.ac .gg-pl::after,.gg.ac .gg-pr::after{opacity:1}
-.gg.ac .gg-gol{opacity:0;animation-play-state:paused}
+.gg.ac .gg-golk{opacity:0} /* gölge söner: sarmalayıcı söner (gölgenin kendi opaklığını netleşme devinimi tutar) */
+.gg.ac .gg-gol{animation-play-state:paused}
 .gg.ac .gg-alev{opacity:0;transition:opacity .4s}
 .gg.ac .gg-yap{opacity:1;filter:drop-shadow(0 10px 14px rgba(0,0,0,.6)) drop-shadow(0 0 22px rgba(255,190,90,.4)) brightness(1.04) saturate(1.05);transform:translate(-50%,var(--ty,-12cqh)) scale(var(--sc,.9))}
 .gg.ac .gg-hz{opacity:.55;animation:ggHz 10s linear infinite}
@@ -133,36 +125,37 @@ const CSS = /* css */ `
 .gg-pl2 i{max-width:100%;font:500 clamp(11.5px,3.4cqw,13.5px)/1.2 'Fredoka',sans-serif;font-style:normal;color:rgba(255,236,200,.86);text-wrap:balance}
 .gg.ac .gg-pl2{animation:ggPlaka .55s .9s cubic-bezier(.3,1.5,.5,1) both}
 @container (max-height:170px){.gg-pl2{padding:3px 12px 4px;gap:1px}.gg-pl2 b{font-size:15px}.gg-pl2 i{display:none}}
-/* ipuçları: üç eğik plaka; kilitliyken süre dolduran ince çubuk, açılınca döner ve altın ışır */
-.gg-ip{flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.gg-i{position:relative;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:40px;padding:5px 9px 6px;transform:skewX(-8deg);background:linear-gradient(170deg,#1b2a55,#101a3a);box-shadow:inset 0 0 0 1.5px rgba(255,210,90,.28);overflow:hidden}
+/* ipuçları: perdenin üst kenarında üç eğik plaka; kilitliyken süre dolduran ince çubuk, açılınca döner ve altın ışır.
+   Cevapta söner (plaka ve resim konuşur). Gölge ve resim plakaların altında başlar (tepeleri %18'den aşağıda). */
+.gg-ip{position:absolute;left:14px;right:14px;top:12px;z-index:4;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;transition:opacity .4s}
+.gg.ac .gg-ip{opacity:0}
+.gg-i{position:relative;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px;min-height:32px;padding:3px 8px 4px;transform:skewX(-8deg);background:rgba(18,26,58,.86);box-shadow:inset 0 0 0 1.5px rgba(255,210,90,.3),0 4px 10px rgba(40,10,0,.35);overflow:hidden}
 .gg-i>*{transform:skewX(8deg)}
-.gg-i small{font:italic 800 10.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:rgba(255,226,180,.7);white-space:nowrap}
-.gg-i b{display:flex;align-items:center;gap:5px;min-width:0;font:600 13.5px/1.15 'Fredoka',sans-serif;color:#fff;overflow-wrap:anywhere}
-.gg-i b svg{flex:none;width:13px;height:13px;color:rgba(255,226,180,.55)}
-.gg-i b.harf{font:400 20px/1 'Lilita One',sans-serif;color:#ffd25a}
-.gg-i u{position:absolute;left:0;bottom:0;height:3px;width:100%;background:linear-gradient(90deg,#ffd25a,#ff8a3a);transform-origin:0 50%;transform:skewX(8deg) scaleX(0);animation:ggDol var(--d,5s) linear forwards}
-.gg-i.acik{background:linear-gradient(170deg,#4a2a0c,#2a1406);box-shadow:inset 0 0 0 1.5px #ffd25a,0 0 16px rgba(255,190,90,.35);animation:ggAc .5s cubic-bezier(.3,1.5,.5,1)}
+.gg-i small{font:italic 800 9.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:rgba(255,226,180,.72);white-space:nowrap}
+.gg-i b{display:flex;align-items:center;gap:4px;min-width:0;font:600 12.5px/1.12 'Fredoka',sans-serif;color:#fff;overflow-wrap:anywhere}
+.gg-i b svg{flex:none;width:11px;height:11px;color:rgba(255,226,180,.55)}
+.gg-i b.harf{font:400 17px/1 'Lilita One',sans-serif;color:#ffd25a}
+.gg-i u{position:absolute;left:0;bottom:0;height:2.5px;width:100%;background:linear-gradient(90deg,#ffd25a,#ff8a3a);transform-origin:0 50%;transform:skewX(8deg) scaleX(0);animation:ggDol var(--d,5s) linear forwards}
+.gg-i.acik{background:linear-gradient(170deg,rgba(80,44,12,.94),rgba(42,20,6,.94));box-shadow:inset 0 0 0 1.5px #ffd25a,0 0 14px rgba(255,190,90,.4);animation:ggAc .5s cubic-bezier(.3,1.5,.5,1)}
 .gg-i.acik u{display:none}
 .gg.rv .gg-i u{animation-play-state:paused}
-.gg .fl-opts{gap:8px}
+.gg-yap,.gg-gol{max-height:68%}
+@container (max-height:230px){.gg-yap,.gg-gol{max-height:58%;bottom:8%}}
+/* şıklar: uzun adda bile iki sütun (ortak kural 17 harfi geçince tek sütuna dizer; burada perdeye yer kalsın): ad heceden bölünür */
+.gg .fl-opts{gap:7px}
+.gg .fl-opts.one{grid-template-columns:1fr 1fr}
 .gg .fl-opt{min-height:46px}
+.gg .fl-opts.one .fl-opt{font-size:16.5px;line-height:1.12}
 @media (max-height:700px){
   .gg{gap:6px}
-  .gg-i{min-height:36px;padding:4px 8px 5px}
-  .gg-i b{font-size:12.5px}
-  .gg-i b.harf{font-size:18px}
-  .gg .fl-opt{min-height:42px;font-size:17px}
+  .gg .fl-opt{min-height:42px;font-size:16.5px}
 }
 @media (max-height:600px){
-  .gg-ust{display:none} /* kısa ekran: kartın kendi süre çubuğu yeter, perdeye yer kalsın */
   .gg-sah{min-height:84px}
-  .gg-i{min-height:32px}
-  .gg-i small{font-size:9.5px}
   .gg .fl-opts{gap:6px}
-  .gg .fl-opt{min-height:38px;font-size:16px}
+  .gg .fl-opt{min-height:38px;font-size:15.5px}
+  .gg .fl-opts.one .fl-opt{font-size:15px}
 }
-@keyframes ggSur{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @keyframes ggDol{to{transform:skewX(8deg) scaleX(1)}}
 @keyframes ggNet{0%{opacity:.5;filter:brightness(0) blur(14px);transform:translateX(-50%) skewX(22deg) scaleX(.5) scaleY(.9)}38%{opacity:.68;filter:brightness(0) blur(8px);transform:translateX(-50%) skewX(12deg) scaleX(.72) scaleY(.95)}72%{opacity:.8;filter:brightness(0) blur(3px);transform:translateX(-50%) skewX(4deg) scaleX(.92)}100%{opacity:.86;filter:brightness(0) blur(.4px);transform:translateX(-50%)}}
 @keyframes ggAlev{0%,100%{opacity:.9}11%{opacity:.72}23%{opacity:1}37%{opacity:.8}52%{opacity:.95}64%{opacity:.7}78%{opacity:1}90%{opacity:.84}}
@@ -215,13 +208,12 @@ export const golge = {
 		const ip = v.ipucu || ipucuOf(q);
 		const sesA = sesOf(app);
 		el.innerHTML = `<div class="gg" style="--film:${FILM.toFixed(2)}s">
-			<div class="gg-ust"><span class="gg-fn">${LANTERN}</span><b>FENER YAKLAŞIYOR</b><span class="gg-bar"><i></i></span><small>ERKEN BİL</small></div>
 			<div class="gg-sah">
 				<div class="gg-arka"><i class="gg-hz"></i><i class="gg-zemin"></i><img class="gg-yap" alt="" draggable="false"><i class="gg-toz"></i></div>
 				<div class="gg-perde"><i class="gg-pl"></i><i class="gg-pr"></i></div>
-				<img class="gg-gol" alt="" draggable="false"><i class="gg-alev"></i><i class="gg-cer"></i><div class="gg-pl2"></div>
+				<i class="gg-golk"><img class="gg-gol" alt="" draggable="false"></i><i class="gg-alev"></i><i class="gg-cer"></i>
+				<div class="gg-ip">${IP_AD.map((ad, k) => `<div class="gg-i" data-k="${k}" style="--d:${(FILM * IPUCU_AN[k]).toFixed(2)}s"><small>${ad}</small><b>${LOCK}<span>…</span></b><u></u></div>`).join('')}</div><div class="gg-pl2"></div>
 			</div>
-			<div class="gg-ip">${IP_AD.map((ad, k) => `<div class="gg-i" data-k="${k}" style="--d:${(FILM * IPUCU_AN[k]).toFixed(2)}s"><small>${ad}</small><b>${LOCK}<span>…</span></b><u></u></div>`).join('')}</div>
 			<div data-r="o"></div>
 		</div>`;
 		rule(el, 'Erken bilen kazanır');
