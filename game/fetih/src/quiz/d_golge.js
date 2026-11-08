@@ -155,9 +155,8 @@ const CSS = /* css */ `
   .gg .fl-opt{min-height:42px;font-size:17px}
 }
 @media (max-height:600px){
-  .gg-ust{min-height:20px}
-  .gg-ust b{display:none}
-  .gg-sah{min-height:90px}
+  .gg-ust{display:none} /* kısa ekran: kartın kendi süre çubuğu yeter, perdeye yer kalsın */
+  .gg-sah{min-height:84px}
   .gg-i{min-height:32px}
   .gg-i small{font-size:9.5px}
   .gg .fl-opts{gap:6px}
