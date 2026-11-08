@@ -2,8 +2,9 @@
 // Denetler: örnek kimlikleri, kategori ve zorluk; bilgiler oyunun kendi verisiyle (Ege illeri turkiye.json'dan, yapıların
 // maketi ve ili SITES'tan); Balon'un uçuş planı (aynı şeritte iki balon hiçbir anda üst üste binmez, hepsi tur bitmeden
 // tepeden çıkar, ilk üç balonda bir doğru), sayım (aynı balon bir kez, o an gökte olmayan sayılmaz), bot (süre, değer,
-// beceriyle artan başarı); Kazı Kazan'ın puan kuralı, yargısı, botu (usta az kazır) ve CPU resmi (her örnekte gerçekten
-// maket çiziliyor, boş ya da tek renk değil). deneme.test.mjs gibi esbuild ile paketler.
+// beceriyle artan başarı); Kazı Kazan'ın puan kuralı, yargısı, botu (usta az kazır), 100 sorusu (görsel dosyası var, il
+// plakası turkiye.json'daki adla, şehir/ülke cevabı plakadaki yerle tutarlı, il sorusunun şıkları il) ve otomatik kazıma
+// yolu (pencerenin her noktası fırçanın altından geçer). deneme.test.mjs gibi esbuild ile paketler.
 import { build } from 'esbuild';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,10 +14,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BODY = /* js */ `
 import { TYPES, SAMPLES, ORDER } from './src/quiz/deneme-yeni2.js';
 import { TUR, sayim } from './src/quiz/d_balon.js';
-import { puanOf, PUAN } from './src/quiz/d_kazi.js';
-import { modelKur, ciz, TEMA } from './src/quiz/d_kazi_cizim.js';
-import { HEROES } from './src/map/hero_index.js';
-import { SITES } from './src/map/siteplan.js';
+import { puanOf, PUAN, otoYol } from './src/quiz/d_kazi.js';
+import { KAZI_SORULAR, EKSIK, YAPILAR } from './src/data/ek/kazi.js';
+import { existsSync, statSync } from 'node:fs';
 import { CATS } from './src/quiz/categories.js';
 import { rng } from './src/core/math.js';
 import DATA from './src/data/turkiye.json';
@@ -34,16 +34,20 @@ const ok = (c, m) => {
 // ---------------------------------------------------------------- ortak
 ok(ORDER.map((o) => o[0]).join() === 'balon,kazi', 'ORDER: balon, kazi');
 for (const t of ['balon', 'kazi']) {
-	const L = SAMPLES[t] || [];
-	ok(L.length === 3, t + ': tam 3 örnek');
-	L.forEach((q, i) => {
-		ok(q.id === 'yn-' + t + '-' + (i + 1), q.id + ': kimlik yn-' + t + '-' + (i + 1));
-		ok(q.diff === i + 1, q.id + ': zorluk ' + (i + 1));
+	const L = t === 'kazi' ? KAZI_SORULAR : SAMPLES[t] || []; // Kazı: görseli eksik olanlar da (kimlik sırası)
+	ok(L.length >= 30, t + ': en az 30 soru (' + L.length + ')');
+	const nos = L.map((q) => Number(String(q.id).replace('yn-' + t + '-', '')));
+	ok(new Set(L.map((q) => q.id)).size === L.length, t + ': kimlikler tekil');
+	L.forEach((q) => {
+		ok(/^yn-[a-z]+-\\d+$/.test(q.id) && q.id.startsWith('yn-' + t + '-'), q.id + ': kimlik biçimi');
+		ok([1, 2, 3].includes(q.diff), q.id + ': zorluk 1–3');
 		ok(!!CATS[q.cat], q.id + ': kategori');
 		ok(q.type === t, q.id + ': tip');
-		ok(!/'/.test(q.q), q.id + ': düz kesme işareti yerine ’');
+		ok(!/'/.test(JSON.stringify(q)), q.id + ': düz kesme işareti yerine ’');
 	});
-	ok(new Set(L.map((q) => q.cat)).size >= 2, t + ': örnekler en az iki kategoriden');
+	ok(nos.includes(1) && nos.includes(2) && nos.includes(3), t + ': eski üç kimlik (1–3) yerinde');
+	ok(new Set(L.map((q) => q.cat)).size >= 3, t + ': sorular en az üç kategoriden');
+	ok(new Set(L.map((q) => q.diff)).size === 3, t + ': üç zorluk da var');
 }
 
 // ---------------------------------------------------------------- Balon Patlat
@@ -107,24 +111,48 @@ const BY_NAME = new Map(DATA.provinces.map((p) => [p.name, p]));
 		}
 		ok(err[1] < err[0] * 0.75, q.id + ': usta bot belirgin daha iyi değil (' + err + ')');
 	}
-	ok(temalar.size === 3, 'balon: üç farklı tema');
+	ok(temalar.size >= 3, 'balon: en az üç farklı tema');
 }
 
 // ---------------------------------------------------------------- Kazı Kazan
-const ILI = new Map(SITES.map((s) => [s[0], s[5]]));
 {
 	const T = TYPES.kazi;
+	const IL_ADI = new Map(DATA.provinces.map((p) => [p.id, p.name]));
+	const IL_SET = new Set(DATA.provinces.map((p) => p.name));
 	ok(puanOf(0) === PUAN.tam && puanOf(PUAN.son) === PUAN.taban && puanOf(1) === PUAN.taban, 'kazi: puan kuralı uçları');
 	for (let s = 0; s < 1; s += 0.01) ok(puanOf(s + 0.01) <= puanOf(s), 'kazi: puan kazıdıkça artıyor (' + s.toFixed(2) + ')');
+	// 100 yapı, 100 soru, kimlikler 1–100; eksik görseller havuzda yok
+	ok(YAPILAR.length === 100 && new Set(YAPILAR.map((y) => y.no)).size === 100 && YAPILAR.every((y, i) => y.no === i + 1), 'kazi: 100 yapı, görsel sırası 1–100');
+	ok(KAZI_SORULAR.length === 100 && KAZI_SORULAR.every((q, i) => q.id === 'yn-kazi-' + (i + 1)), 'kazi: kimlikler yn-kazi-1…100');
+	ok(SAMPLES.kazi.length === 100 - EKSIK.size && SAMPLES.kazi.every((q) => !EKSIK.has(q.img)), 'kazi: eksik görselli soru havuzda');
+	const eski = { 'yn-kazi-1': 'Truva Atı', 'yn-kazi-2': 'Kız Kulesi', 'yn-kazi-3': 'Nemrut Dağı' };
+	for (const [id, ad] of Object.entries(eski)) ok(KAZI_SORULAR.find((q) => q.id === id)?.ad === ad, id + ': eski kimlik ' + ad + ' değil');
 	const folyo = new Set();
 	const tema = new Set();
-	for (const q of SAMPLES.kazi) {
+	for (const q of KAZI_SORULAR) {
 		folyo.add(q.folyo);
 		tema.add(q.tema);
-		ok(!!HEROES[q.model], q.id + ': maket yok (' + q.model + ')');
-		ok(ILI.get(q.model) === q.il, q.id + ': il plakası yapının haritadaki iliyle aynı değil (' + ILI.get(q.model) + ' / ' + q.il + ')');
-		ok(new Set(q.a).size === 4 && q.a[0] === q.ad, q.id + ': 4 farklı şık, ilki plakadaki ad');
-		ok(!!TEMA[q.tema], q.id + ': tema');
+		const no = Number(q.img);
+		const f = './dist/yapi/' + q.img + '.webp';
+		if (!EKSIK.has(q.img)) ok(existsSync(f) && statSync(f).size > 4000 && statSync(f).size < 80000, q.id + ': görsel yok ya da boyu tuhaf (' + f + ')');
+		ok(new Set(q.a).size === 4 && q.a.every((x) => typeof x === 'string' && x.trim() === x && x.length >= 1 && [...x].length <= 26), q.id + ': 4 farklı, kısa şık');
+		ok(typeof q.ad === 'string' && q.ad.length > 1 && typeof q.alt === 'string' && q.alt.length > 3 && [...q.alt].length <= 48, q.id + ': plaka adı ve bilgi satırı');
+		ok(/\\?$/.test(q.q) && [...q.q].length <= 46, q.id + ': soru cümlesi');
+		ok({ 1: 'gumus', 2: 'altin', 3: 'holo' }[q.diff] === q.folyo, q.id + ': folyo zorluğu söylemiyor');
+		ok(['gunduz', 'batim', 'gece'].includes(q.tema), q.id + ': tema');
+		if (no <= 40) {
+			ok(IL_ADI.has(q.il) && !q.yer, q.id + ': Türkiye yapısının il plakası');
+			if (/hangi ilimizde\\?$/.test(q.q)) {
+				ok(q.a[0] === IL_ADI.get(q.il), q.id + ': il sorusunun cevabı plakadaki il değil (' + q.a[0] + ' / ' + IL_ADI.get(q.il) + ')');
+				ok(q.a.every((x) => IL_SET.has(x)), q.id + ': il sorusunun şıkları il değil');
+			}
+		} else ok(!q.il && typeof q.yer === 'string' && q.yer.length > 2, q.id + ': yurt dışı yapının yeri');
+		// "hangi şehirde/ülkede" sorularında cevap plakadaki yerin bir parçası; yapı sorusunda cevabın ilk kelimesi adda geçer
+		if (/hangi (şehirde|ülkede)\\?$/.test(q.q)) ok((q.yer || '').split(' · ').includes(q.a[0]), q.id + ': cevap (' + q.a[0] + ') plakadaki yerde (' + q.yer + ') yok');
+		if (q.q === 'Folyonun altında hangi yapı var?') ok(q.ad.includes(q.a[0].split(' ')[0]), q.id + ': cevap (' + q.a[0] + ') plakadaki adla (' + q.ad + ') uyuşmuyor');
+	}
+	ok(folyo.size === 3 && tema.size === 3, 'kazi: üç folyo, üç tema');
+	for (const q of SAMPLES.kazi) {
 		const v = T.prepare(q, rng(5));
 		ok(v.opts[v.right] === q.a[0], q.id + ': doğru şık');
 		const g0 = T.judge(v, { i: v.right, s: 0 });
@@ -133,7 +161,12 @@ const ILI = new Map(SITES.map((s) => [s[0], s[5]]));
 		ok(g0.err === 0 && g0.score === 100 && g1.err > 0 && g1.err < 1 && b0.err > g1.err && !b0.correct, q.id + ': yargı (az kazıyan önde, yanlış en geride)');
 		ok(T.judge(v, { i: 9, s: 0 }).correct === false && T.judge(v, 3).correct === false, q.id + ': geçersiz değer');
 		const pv = T.publicView(v);
-		ok(pv.right == null && !pv.q.a && !pv.q.ad, q.id + ': publicView cevabı sızdırıyor');
+		ok(pv.right == null && !pv.q.a && !pv.q.ad && !pv.q.yer && !pv.q.il && !pv.q.alt, q.id + ': publicView cevabı sızdırıyor');
+	}
+	// bot: değer geçerli, usta daha az kazır (üç zorlukta birer soru)
+	for (const d of [1, 2, 3]) {
+		const q = SAMPLES.kazi.find((x) => x.diff === d);
+		const v = T.prepare(q, rng(7));
 		const sum = [0, 0];
 		for (let k = 0; k < 400; k++) {
 			const sk = k % 2 ? 0.9 : 0.25;
@@ -142,32 +175,27 @@ const ILI = new Map(SITES.map((s) => [s[0], s[5]]));
 			sum[k % 2] += b.value.s;
 		}
 		ok(sum[1] < sum[0], q.id + ': usta bot daha az kazımıyor (' + sum.map((x) => (x / 200).toFixed(2)) + ')');
-		// resim: küçük bir kartpostal çizilir; maket görünür (gök ve zeminden farklı, renkli pikseller)
-		const it = modelKur(q.model);
-		let st;
-		while (!(st = it.next()).done);
-		const g = st.value;
-		const geo = { pos: g.getAttribute('position').array, nor: g.getAttribute('normal').array, col: g.getAttribute('col').array, info: g.getAttribute('info').array };
-		const K = q.kadraj;
-		const L = [Math.cos(K.el) * Math.sin(K.az), Math.sin(K.el), Math.cos(K.el) * Math.cos(K.az)];
-		const out = {};
-		const r = ciz(geo, { W: 80, H: 56, ss: 1, yaw: K.yaw, pitch: K.pitch, fill: K.fill, box: K.box, panY: K.panY, groundY: K.gy, light: L, theme: { ...TEMA[q.tema], ...(K.ground ? { ground: K.ground } : {}) }, slice: 1e9 }, out);
-		while (!r.next().done);
-		ok(out.rgba && out.rgba.length === 80 * 56 * 4, q.id + ': resim boyu');
-		const cols = new Set();
-		let lum = 0;
-		let lum2 = 0;
-		for (let i = 0; i < out.rgba.length; i += 4) {
-			const y = (out.rgba[i] + out.rgba[i + 1] + out.rgba[i + 2]) / 3;
-			lum += y;
-			lum2 += y * y;
-			cols.add((out.rgba[i] >> 4) * 256 + (out.rgba[i + 1] >> 4) * 16 + (out.rgba[i + 2] >> 4));
-		}
-		const n = out.rgba.length / 4;
-		const sd = Math.sqrt(lum2 / n - (lum / n) ** 2);
-		ok(sd > 12 && cols.size > 40, q.id + ': resim tekdüze (sd ' + sd.toFixed(1) + ', renk ' + cols.size + ')');
 	}
-	ok(folyo.size === 3 && tema.size === 3, 'kazi: üç folyo, üç tema');
+	// otomatik kazıma yolu: pencerenin her noktası yoldan fırça yarıçapı içinde (folyo hiç ada bırakmaz)
+	for (const [w, h] of [[300, 180], [270, 120], [380, 260], [600, 330]]) {
+		const r = Math.max(20, Math.min(42, Math.min(w, h) * 0.13));
+		const { pts } = otoYol(w, h, r);
+		let worst = 0;
+		for (let y = 0; y <= h; y += 4)
+			for (let x = 0; x <= w; x += 4) {
+				let best = Infinity;
+				for (let i = 1; i < pts.length; i++) {
+					const [ax, ay] = pts[i - 1];
+					const [bx, by] = pts[i];
+					const dx = bx - ax;
+					const dy = by - ay;
+					const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy || 1)));
+					best = Math.min(best, Math.hypot(x - ax - t * dx, y - ay - t * dy));
+				}
+				worst = Math.max(worst, best);
+			}
+		ok(worst <= r * 0.86, 'kazi: otomatik kazıma ' + w + 'x' + h + ' penceresinde ' + worst.toFixed(1) + ' px boşluk bırakıyor (fırça ' + r.toFixed(1) + ')');
+	}
 }
 
 console.log(checks + ' denetim, ' + fails + ' hata');

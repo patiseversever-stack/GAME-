@@ -3,14 +3,15 @@
 // Süre profilleri timing.js PROFILE'a bu dosyadan eklenir (Object.assign).
 //
 //   balon   Balon Patlat   gökyüzüne yükselen yazılı balonlardan kurala uyanları patlat (15 sn'lik aksiyon turu)
-//   kazi    Kazı Kazan     gümüş folyoyu kazı, altındaki 3B yapıyı bil; az kazıyan çok kazanır, cevapta folyo soyulur
+//   kazi    Kazı Kazan     metal folyoyu kazı, altındaki yapıyı bil; az kazıyan çok kazanır, cevapta para kalanı kendisi kazır
 //
-// Örnekler elle yazıldı. Ege illeri src/data/turkiye.json bölgelerinden; Mimar Sinan, memeliler ve yapılar bankanın
-// doğrulanmış sorularıyla aynı bilgi (test/yeni2.test.mjs denetler: bölgeler, plakalar, yapıların maketi).
+// Örnekler elle yazıldı. Balon bilgileri test/yeni2.test.mjs'te oyunun verisiyle sınanır. Kazı Kazan'ın 100 sorusu
+// src/data/ek/kazi.js'te (görseller dist/yapi/; test: görsel var, plaka il adıyla tutarlı, şıklar tekil).
 
 import { PROFILE } from './timing.js';
 import { balon } from './d_balon.js';
 import { kazi } from './d_kazi.js';
+import { KAZI_SORULAR, EKSIK } from '../data/ek/kazi.js';
 
 // süre profilleri (d_ortak.js stamp → timing.js formülü): Balon sabit 16 sn'lik tur; Kazı Kazan görsel tanıma + kazıma
 Object.assign(PROFILE, {
@@ -25,9 +26,6 @@ export const ORDER = [
 ];
 
 const BL = (id, cat, diff, q, dogru, yanlis, tema, ufuk) => ({ id, cat, diff, type: 'balon', q, dogru, yanlis, tema, ufuk });
-// Kazı Kazan: kadraj = kamera (yaw, pitch), ışık (az, el: güneşin ya da ayın yönü), kutu (resmin dolduracağı parça),
-// fill (kutunun kadraj payı), panY (mercek kaydırma: ufuk yukarıda kalsın), gy (zemin/deniz yüksekliği), ground (zemin rengi)
-const KZ = (id, cat, diff, q, model, a, il, ad, alt, tema, folyo, kadraj) => ({ id, cat, diff, type: 'kazi', q, model, a, il, ad, alt, tema, folyo, kadraj });
 
 export const SAMPLES = {
 	balon: [
@@ -40,8 +38,8 @@ export const SAMPLES = {
 		BL('yn-balon-1', 'cografya', 1, 'Ege Bölgesi’ndeki illeri patlat!', ['Manisa', 'Uşak', 'Kütahya', 'Denizli'], ['Antalya', 'Bursa', 'Eskişehir', 'Konya', 'Tekirdağ'], 'gunduz', 'ege'),
 		// Karadeniz'e kıyısı olan altı ülkeden dördü (Türkiye ve Rusya yok); tuzaklar bölgenin denize kıyısı olmayan ya da başka denize bakan ülkeleri
 		BL('yn-balon-4', 'cografya', 2, 'Karadeniz’e kıyısı olan ülkeleri patlat!', ['Bulgaristan', 'Romanya', 'Ukrayna', 'Gürcistan'], ['Moldova', 'Yunanistan', 'Ermenistan', 'Azerbaycan', 'Sırbistan'], 'batim', 'kiyi'),
-		// Akdeniz kıyısındaki dört il (iki denize bakan Muğla bilerek yok); tuzaklar Akdeniz Bölgesi'nin ve komşularının denizsiz illeri
-		BL('yn-balon-5', 'cografya', 1, 'Akdeniz’e kıyısı olan illeri patlat!', ['Antalya', 'Mersin', 'Adana', 'Hatay'], ['Isparta', 'Burdur', 'Karaman', 'Gaziantep', 'Kahramanmaraş'], 'gunduz', 'ege'),
+		// Akdeniz kıyısındaki dört il (iki denize bakan Muğla bilerek yok); tuzaklar Akdeniz Bölgesi'nin ve komşularının denizsiz illeri (Kahramanmaraş 13 harf: balona sığmaz)
+		BL('yn-balon-5', 'cografya', 1, 'Akdeniz’e kıyısı olan illeri patlat!', ['Antalya', 'Mersin', 'Adana', 'Hatay'], ['Isparta', 'Burdur', 'Karaman', 'Gaziantep', 'Niğde'], 'gunduz', 'ege'),
 		// kara sınırı: Nahçıvan'dan Azerbaycan ve kapalı sınırlı Ermenistan dahil; tuzaklar yalnız denizden komşu ya da yakın ülkeler
 		BL('yn-balon-6', 'cografya', 2, 'Türkiye’yle kara sınırı olan ülkeleri patlat!', ['Bulgaristan', 'Ermenistan', 'İran', 'Azerbaycan'], ['Rusya', 'Romanya', 'Lübnan', 'Ürdün', 'Türkmenistan'], 'safak', 'kapadokya'),
 		// Afrika ülkeleri; tuzaklar Arap Yarımadası ve Güney Asya'dan (iki kıtaya yayılan ülke yok)
@@ -132,18 +130,5 @@ export const SAMPLES = {
 		// gökkuşağının yedi renginden dördü; tuzaklar gökkuşağında olmayan renkler
 		BL('yn-balon-42', 'eglence', 1, 'Gökkuşağının renklerini patlat!', ['Turuncu', 'Yeşil', 'Mor', 'Sarı'], ['Pembe', 'Kahverengi', 'Gri', 'Siyah', 'Beyaz'], 'gunduz', 'ege'),
 	],
-	kazi: [
-		// gündüz, gümüş folyo: ahşap at (antik kentin girişi), yanlışlar da ören yerleri
-		KZ('yn-kazi-1', 'tarih', 1, 'Folyonun altında hangi yapı var?', 'truva', ['Truva Atı', 'Nemrut Dağı', 'Göbeklitepe', 'Hattuşa'], 17, 'Truva Atı', 'Truva Antik Kenti', 'gunduz', 'gumus', {
-			yaw: 0.8, pitch: 0.13, az: 1.45, el: 0.8, box: [[-0.33, 0, -0.16], [0.33, 0.74, 0.16]], fill: 0.8, panY: 0.05, ground: [0.17, 0.24, 0.07],
-		}),
-		// mehtap, hologram folyo: denizdeki kule; yanlışlar adı ve biçimi benzeyen kuleler ve denizdeki kale
-		KZ('yn-kazi-2', 'cografya', 2, 'Mehtapta parlayan bu yapı hangisi?', 'kizkulesi', ['Kız Kulesi', 'Galata Kulesi', 'Kızıl Kule', 'Kız Kalesi'], 34, 'Kız Kulesi', 'Üsküdar açıkları', 'gece', 'holo', {
-			yaw: 0.55, pitch: 0.07, az: -2.35, el: 0.11, box: [[-0.22, -0.03, -0.2], [0.24, 0.4, 0.22]], fill: 0.8, panY: 0.07, gy: -0.012,
-		}),
-		// gün batımı, altın folyo: dev taş başlar ve tümülüs; yanlışlar Güneydoğu ve Hitit ören yerleri
-		KZ('yn-kazi-3', 'tarih', 3, 'Gün batımındaki ören yeri hangisi?', 'nemrut', ['Nemrut Dağı', 'Göbeklitepe', 'Zeugma', 'Hattuşa'], 2, 'Nemrut Dağı', 'Kommagene Krallığı', 'batim', 'altin', {
-			yaw: 0.3, pitch: 0.1, az: -1.15, el: 0.12, box: [[-0.55, 0, -0.45], [0.55, 0.62, 0.6]], fill: 0.82, panY: 0.07,
-		}),
-	],
+	kazi: KAZI_SORULAR.filter((q) => !EKSIK.has(q.img)),
 };
