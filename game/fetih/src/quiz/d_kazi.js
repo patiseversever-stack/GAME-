@@ -136,7 +136,7 @@ const CSS = /* css */ `
 .yn-kz.f-altin{--ac:#ffd25a;--ac2:#ff9a1f}
 .yn-kz.f-holo{--ac:#8af3ff;--ac2:#ff7ad8}
 /* bilet: koyu lacivert, altın kılçık çizgiler, yanlarda kesik, üstte logo ve kalan puan, altta oyuncular */
-.yn-kz-bilet{position:relative;flex:1 1 auto;display:flex;flex-direction:column;gap:7px;padding:8px 10px 8px;border-radius:14px;isolation:isolate;
+.yn-kz-bilet{position:relative;flex:1 1 auto;container-type:inline-size;display:flex;flex-direction:column;gap:7px;padding:8px 10px 8px;border-radius:14px;isolation:isolate;
   background:
     radial-gradient(120% 70% at 50% 0%,color-mix(in srgb,var(--ac) 16%,transparent),transparent 60%),
     repeating-linear-gradient(115deg,rgba(255,255,255,.028) 0 1px,transparent 1px 7px),
@@ -149,8 +149,8 @@ const CSS = /* css */ `
 .yn-kz-logo{flex:none;display:flex;align-items:center;gap:6px;transform:skewX(-8deg)}
 .yn-kz-logo b{font:400 21px/1 'Lilita One',sans-serif;letter-spacing:.02em;background:linear-gradient(180deg,#fff 0%,var(--ac) 60%,var(--ac2) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 rgba(0,0,0,.5)) drop-shadow(0 0 10px color-mix(in srgb,var(--ac) 40%,transparent))}
 .yn-kz-logo small{padding:3px 6px 2px;font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:#0a0f24;background:linear-gradient(180deg,#fff,var(--ac));box-shadow:0 0 10px color-mix(in srgb,var(--ac) 45%,transparent)}
-.yn-kz-puan{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;align-items:end;column-gap:7px;row-gap:3px}
-.yn-kz-puan small{grid-column:1;grid-row:1;justify-self:end;font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:rgba(220,230,255,.72);white-space:nowrap}
+.yn-kz-puan{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:end;column-gap:7px;row-gap:3px}
+.yn-kz-puan small{grid-column:1;grid-row:1;justify-self:end;max-width:100%;overflow:hidden;font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:rgba(220,230,255,.72);white-space:nowrap}
 .yn-kz-puan b{grid-column:2;grid-row:1/3;min-width:2.1em;text-align:right;font:italic 900 30px/.9 'Barlow Condensed','Lilita One',sans-serif;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.5),0 0 14px color-mix(in srgb,var(--ac) 55%,transparent);transition:color .3s}
 .yn-kz-puan b.bump{animation:ynKzBump .32s cubic-bezier(.3,1.6,.5,1)}
 .yn-kz-puan i{grid-column:1;grid-row:2;justify-self:stretch;height:8px;display:flex;gap:2px;transform:skewX(-12deg)}
@@ -246,6 +246,10 @@ const CSS = /* css */ `
   .yn-kz-oy>small{display:none}
   .yn-kz.rv .yn-kz-oy{grid-column:1/3}
   .yn-kz-pen{grid-column:1/3;grid-row:2;min-height:84px}
+}
+@media (max-height:600px){
+  .yn-kz{gap:5px}
+  .yn-kz-pen{min-height:72px}
   .yn-kz .fl-opts{gap:6px}
   .yn-kz .fl-opt{min-height:38px;font-size:16px}
 }
@@ -254,7 +258,13 @@ const CSS = /* css */ `
   .yn-kz-pl b{font-size:15px}
   .yn-kz-pl i{display:none}
 }
-@container (max-width:370px){
+/* dar bilet (masaüstü telefon çerçevesi, 320 genişlik): folyo rozeti gider, logo küçülür; puan hep görünür */
+@container (max-width:330px){
+  .yn-kz-logo small{display:none}
+  .yn-kz-logo b{font-size:18px}
+  .yn-kz-puan small{letter-spacing:.08em}
+}
+@container (max-width:346px){
   .yn-kz.rv .yn-kz-c small,.yn-kz.rv .yn-kz-c i{display:none}
   .yn-kz.rv .yn-kz-c{padding-right:8px}
   .yn-kz.rv .yn-kz-c.no{box-shadow:inset 0 0 0 1.5px #ff7a66;background:rgba(120,20,10,.45)}
