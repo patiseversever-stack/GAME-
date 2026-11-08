@@ -5,13 +5,13 @@
 //   balon   Balon Patlat   gökyüzüne yükselen yazılı balonlardan kurala uyanları patlat (15 sn'lik aksiyon turu)
 //   kazi    Kazı Kazan     metal folyoyu kazı, altındaki yapıyı bil; az kazıyan çok kazanır, cevapta para kalanı kendisi kazır
 //
-// Örnekler elle yazıldı. Balon bilgileri test/yeni2.test.mjs'te oyunun verisiyle sınanır. Kazı Kazan'ın 100 sorusu
+// Örnekler elle yazıldı. Balon bilgileri test/yeni2.test.mjs'te oyunun verisiyle sınanır. Kazı Kazan'ın 99 sorusu
 // src/data/ek/kazi.js'te (görseller dist/yapi/; test: görsel var, plaka il adıyla tutarlı, şıklar tekil).
 
 import { PROFILE } from './timing.js';
 import { balon } from './d_balon.js';
 import { kazi } from './d_kazi.js';
-import { KAZI_SORULAR, EKSIK } from '../data/ek/kazi.js';
+import { KAZI_SORULAR } from '../data/ek/kazi.js';
 
 // süre profilleri (d_ortak.js stamp → timing.js formülü): Balon sabit 16 sn'lik tur; Kazı Kazan görsel tanıma + kazıma
 Object.assign(PROFILE, {
@@ -130,5 +130,5 @@ export const SAMPLES = {
 		// gökkuşağının yedi renginden dördü; tuzaklar gökkuşağında olmayan renkler
 		BL('yn-balon-42', 'eglence', 1, 'Gökkuşağının renklerini patlat!', ['Turuncu', 'Yeşil', 'Mor', 'Sarı'], ['Pembe', 'Kahverengi', 'Gri', 'Siyah', 'Beyaz'], 'gunduz', 'ege'),
 	],
-	kazi: KAZI_SORULAR.filter((q) => !EKSIK.has(q.img)),
+	kazi: KAZI_SORULAR,
 };

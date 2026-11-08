@@ -1,4 +1,4 @@
-// KAZI KAZAN: 100 yapı görseli, 100 soru. Görsel: dist/yapi/<no>.webp (tools/yapi/hazirla.py: beyaz zemin saydam, kırpık).
+// KAZI KAZAN: 99 yapı görseli, 99 soru (05 Kız Kulesi çıkarıldı: görseli bozuk geldi). Görsel: dist/yapi/<no>.webp (tools/yapi/hazirla.py: beyaz zemin saydam, kırpık).
 // 01–40 Türkiye, 41–100 yurt dışı. Görseller kullanıcının ürettirdiği resimler; her soru resmin konusu üzerine.
 //
 // Alanlar: no (görsel numarası), cat, diff, q (soru), a [doğru, y1, y2, y3], ad (plakadaki yapı adı),
@@ -8,7 +8,7 @@
 //    kırmızı asma köprüsü, Osaka Kalesi, Ortahisar, Beypazarı evleri) bilerek şık yapılmadı: hiçbir soru iki cevaba açık değil.
 //  - Bilgiler kesin olanlar (yapım yılı, mimar, yer). Tartışmalı, değişebilecek ya da emin olunmayan bilgi plakaya yazılmadı.
 //  - Zorluk: 1 herkesin tanıdığı, 2 biraz kültür ister, 3 uzmanı ayırır. Folyo zorluğu söyler: gümüş 1, altın 2, hologram 3.
-//  - Kimlikler: yn-kazi-1 Truva Atı, -2 Kız Kulesi, -3 Nemrut (eski üç örnek); gerisi görsel sırasıyla -4’ten.
+//  - Kimlikler: yn-kazi-1 Truva Atı, -3 Nemrut (eski örnekler; -2 Kız Kulesi’ydi, boş kalır); gerisi görsel sırasıyla -4’ten.
 
 const Y = 'Folyonun altında hangi yapı var?';
 const IL = 'Bu yapı hangi ilimizde?';
@@ -26,7 +26,6 @@ export const YAPILAR = [
 	T(3, 'tarih', 1, Y, ['Ayasofya', 'Sultanahmet Camii', 'Süleymaniye Camii', 'Yeni Cami'], 'Ayasofya', 34, '537’de tamamlandı · Justinianus'),
 	// resimde altı minare: dört minareli Süleymaniye ve Selimiye’den ayrılır
 	T(4, 'sanat', 2, Y, ['Sultanahmet Camii', 'Süleymaniye Camii', 'Selimiye Camii', 'Yeni Cami'], 'Sultanahmet Camii', 34, 'Altı minaresiyle ünlü · 1617'),
-	T(5, 'cografya', 1, 'Mehtapta parlayan bu yapı hangisi?', ['Kız Kulesi', 'Galata Kulesi', 'Kızıl Kule', 'Kız Kalesi'], 'Kız Kulesi', 34, 'Üsküdar açıklarında, Boğaz’da'),
 	T(6, 'tarih', 2, Y, ['Dolmabahçe Sarayı', 'Topkapı Sarayı', 'Çırağan Sarayı', 'Beylerbeyi Sarayı'], 'Dolmabahçe Sarayı', 34, 'Atatürk 1938’de burada vefat etti'),
 	// dört minare: iki minareli Yeni Cami ve Fatih, altı minareli Sultanahmet ayrılır
 	T(7, 'sanat', 2, Y, ['Süleymaniye Camii', 'Sultanahmet Camii', 'Yeni Cami', 'Fatih Camii'], 'Süleymaniye Camii', 34, 'Mimar Sinan · 1557'),
@@ -148,11 +147,8 @@ export const YAPILAR = [
 	D(100, 'sanat', 2, Y, ['Lotus Tapınağı', 'Sidney Opera Binası', 'Tac Mahal', 'Şeyh Zayed Camii'], 'Lotus Tapınağı', 'Yeni Delhi · Hindistan', 'Nilüfer çiçeği biçimi · 1986'),
 ];
 
-/** Görseli henüz gelmeyenler (dosya bozuk geldi): görsel gelene dek soru havuza girmez. */
-export const EKSIK = new Set(['05']);
-
-/** Soru kimliği: eski üç örnek 1–3’te kalır; gerisi görsel sırasıyla 4’ten. */
-const ESKI = { 15: 1, 5: 2, 9: 3 };
+/** Soru kimliği: eski örnekler 1 ve 3’te kalır (2 boş); gerisi görsel sırasıyla 4’ten. */
+const ESKI = { 15: 1, 9: 3 };
 const TEMA = ['gunduz', 'batim', 'gece'];
 const FOLYO = { 1: 'gumus', 2: 'altin', 3: 'holo' };
 let n = 4;
@@ -167,6 +163,6 @@ export const KAZI_SORULAR = YAPILAR.map((y) => ({
 	ad: y.ad,
 	...(y.il ? { il: y.il } : { yer: y.yer }),
 	alt: y.alt,
-	tema: y.no === 5 ? 'gece' : y.no === 9 ? 'batim' : TEMA[y.no % 3],
+	tema: y.no === 9 ? 'batim' : TEMA[y.no % 3],
 	folyo: FOLYO[y.diff],
 })).sort((a, b) => Number(a.id.split('-')[2]) - Number(b.id.split('-')[2]));

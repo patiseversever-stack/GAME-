@@ -15,7 +15,7 @@ const BODY = /* js */ `
 import { TYPES, SAMPLES, ORDER } from './src/quiz/deneme-yeni2.js';
 import { TUR, sayim } from './src/quiz/d_balon.js';
 import { puanOf, PUAN, otoYol } from './src/quiz/d_kazi.js';
-import { KAZI_SORULAR, EKSIK, YAPILAR } from './src/data/ek/kazi.js';
+import { KAZI_SORULAR, YAPILAR } from './src/data/ek/kazi.js';
 import { existsSync, statSync } from 'node:fs';
 import { CATS } from './src/quiz/categories.js';
 import { rng } from './src/core/math.js';
@@ -34,7 +34,7 @@ const ok = (c, m) => {
 // ---------------------------------------------------------------- ortak
 ok(ORDER.map((o) => o[0]).join() === 'balon,kazi', 'ORDER: balon, kazi');
 for (const t of ['balon', 'kazi']) {
-	const L = t === 'kazi' ? KAZI_SORULAR : SAMPLES[t] || []; // Kazı: görseli eksik olanlar da (kimlik sırası)
+	const L = SAMPLES[t] || [];
 	ok(L.length >= 30, t + ': en az 30 soru (' + L.length + ')');
 	const nos = L.map((q) => Number(String(q.id).replace('yn-' + t + '-', '')));
 	ok(new Set(L.map((q) => q.id)).size === L.length, t + ': kimlikler tekil');
@@ -45,7 +45,7 @@ for (const t of ['balon', 'kazi']) {
 		ok(q.type === t, q.id + ': tip');
 		ok(!/'/.test(JSON.stringify(q)), q.id + ': düz kesme işareti yerine ’');
 	});
-	ok(nos.includes(1) && nos.includes(2) && nos.includes(3), t + ': eski üç kimlik (1–3) yerinde');
+	ok(nos.includes(1) && (nos.includes(2) || t === 'kazi') && nos.includes(3), t + ': eski kimlikler yerinde (Kazı 2 = Kız Kulesi çıkarıldı)');
 	ok(new Set(L.map((q) => q.cat)).size >= 3, t + ': sorular en az üç kategoriden');
 	ok(new Set(L.map((q) => q.diff)).size === 3, t + ': üç zorluk da var');
 }
@@ -121,11 +121,13 @@ const BY_NAME = new Map(DATA.provinces.map((p) => [p.name, p]));
 	const IL_SET = new Set(DATA.provinces.map((p) => p.name));
 	ok(puanOf(0) === PUAN.tam && puanOf(PUAN.son) === PUAN.taban && puanOf(1) === PUAN.taban, 'kazi: puan kuralı uçları');
 	for (let s = 0; s < 1; s += 0.01) ok(puanOf(s + 0.01) <= puanOf(s), 'kazi: puan kazıdıkça artıyor (' + s.toFixed(2) + ')');
-	// 100 yapı, 100 soru, kimlikler 1–100; eksik görseller havuzda yok
-	ok(YAPILAR.length === 100 && new Set(YAPILAR.map((y) => y.no)).size === 100 && YAPILAR.every((y, i) => y.no === i + 1), 'kazi: 100 yapı, görsel sırası 1–100');
-	ok(KAZI_SORULAR.length === 100 && KAZI_SORULAR.every((q, i) => q.id === 'yn-kazi-' + (i + 1)), 'kazi: kimlikler yn-kazi-1…100');
-	ok(SAMPLES.kazi.length === 100 - EKSIK.size && SAMPLES.kazi.every((q) => !EKSIK.has(q.img)), 'kazi: eksik görselli soru havuzda');
-	const eski = { 'yn-kazi-1': 'Truva Atı', 'yn-kazi-2': 'Kız Kulesi', 'yn-kazi-3': 'Nemrut Dağı' };
+	// 99 yapı (05 Kız Kulesi çıkarıldı), kimlikler 1–100 içinde 2 boş
+	const NOS = Array.from({ length: 100 }, (_, i) => i + 1).filter((n) => n !== 5);
+	ok(YAPILAR.length === 99 && YAPILAR.every((y, i) => y.no === NOS[i]), 'kazi: 99 yapı, görsel sırası (05 yok)');
+	const IDS = Array.from({ length: 100 }, (_, i) => 'yn-kazi-' + (i + 1)).filter((x) => x !== 'yn-kazi-2');
+	ok(KAZI_SORULAR.length === 99 && KAZI_SORULAR.every((q, i) => q.id === IDS[i]), 'kazi: kimlikler yn-kazi-1…100 (2 boş)');
+	ok(SAMPLES.kazi === KAZI_SORULAR, 'kazi: havuz bütün sorular');
+	const eski = { 'yn-kazi-1': 'Truva Atı', 'yn-kazi-3': 'Nemrut Dağı' };
 	for (const [id, ad] of Object.entries(eski)) ok(KAZI_SORULAR.find((q) => q.id === id)?.ad === ad, id + ': eski kimlik ' + ad + ' değil');
 	const folyo = new Set();
 	const tema = new Set();
@@ -134,7 +136,7 @@ const BY_NAME = new Map(DATA.provinces.map((p) => [p.name, p]));
 		tema.add(q.tema);
 		const no = Number(q.img);
 		const f = './dist/yapi/' + q.img + '.webp';
-		if (!EKSIK.has(q.img)) ok(existsSync(f) && statSync(f).size > 4000 && statSync(f).size < 80000, q.id + ': görsel yok ya da boyu tuhaf (' + f + ')');
+		ok(existsSync(f) && statSync(f).size > 4000 && statSync(f).size < 80000, q.id + ': görsel yok ya da boyu tuhaf (' + f + ')');
 		ok(new Set(q.a).size === 4 && q.a.every((x) => typeof x === 'string' && x.trim() === x && x.length >= 1 && [...x].length <= 26), q.id + ': 4 farklı, kısa şık');
 		ok(typeof q.ad === 'string' && q.ad.length > 1 && typeof q.alt === 'string' && q.alt.length > 3 && [...q.alt].length <= 48, q.id + ': plaka adı ve bilgi satırı');
 		ok(/\\?$/.test(q.q) && [...q.q].length <= 46, q.id + ': soru cümlesi');
