@@ -37,6 +37,7 @@ import { UIController, BotController, RemoteController, publicView, PROTOCOL } f
 import { botLook } from './commanders.js';
 import { clock, setTimeout, clearTimeout } from '../core/clock.js';
 import { gkHazir, gkOnyukle } from '../quiz/d_gozkarari.js';
+import { yapiHazir, yapiOnyukle } from '../quiz/d_kazi.js';
 import { Hafiza, kardes, bayat, eskilik, ikizler } from '../quiz/hafiza.js';
 
 export const MODES = {
@@ -572,6 +573,7 @@ export class Match {
 	askable(q) {
 		// Göz Kararı: görseller sayfanın yanında yoksa soru hiç çıkmaz (yedek çizim yok; KARARLAR v1.6)
 		if (q.type === 'gozkarari' && !gkHazir()) return false;
+		if (q.type === 'kazi' && !yapiHazir()) return false; // Kazı Kazan: yapi/ görselleri yoksa
 		return !(q.src && this.used.has(q.src)) && kusbakisiUygun(q, this);
 	}
 
@@ -672,6 +674,7 @@ export class Match {
 		const diff = clamp(base + egri(this.progressOf(), moment, first), 1, 3);
 		const q = this.pick({ cat: tie ? null : cat, types: [type], who, diff, moment });
 		if (q.type === 'gozkarari') gkOnyukle(q); // görsel VS girişi sırasında insin
+		if (q.type === 'kazi') yapiOnyukle(q);
 		// sayaçlar sorulan sorunun tipiyle (soru bulunamazsa havuz başka tipe düşebilir)
 		const t = q.type;
 		this.recent.push(t);

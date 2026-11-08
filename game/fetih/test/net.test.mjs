@@ -218,6 +218,8 @@ for (const q of [...BANK, ...SAMPLES]) {
 				return has2(pv, 'right') || has2(q, 'site', 'il', 'a') || q.sid !== MAC.sidOf(full.q.site, salt) || MAC.siteOfSid(q.sid, salt, [full.q.site, 'galata', 'nemrut']) !== full.q.site;
 			case 'penalti':
 				return has2(pv, 'right') || has2(q, 'a');
+			case 'kazi':
+				return has2(pv, 'right') || has2(q, 'a', 'ad', 'il', 'yer', 'alt');
 			case 'golge':
 				return has2(pv, 'right') || has2(q, 'model', 'a') || !q.sid;
 			case 'ilavi':

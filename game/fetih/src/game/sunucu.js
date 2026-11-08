@@ -340,6 +340,8 @@ export const ADIM = {
 	kusbakisi: { final: (S, x) => choice(S, x) },
 	golge: { final: (S, x) => choice(S, x) },
 	penalti: { final: (S, x) => choice(S, x) },
+	// Kazı Kazan: { i: şık, s: kazınan pay } (pay istemcinin ölçümü; 0..1'e kırpılır, binde bire yuvarlanır)
+	kazi: { final: (S, x) => (x && typeof x === 'object' && choice(S, x.i) !== null ? { i: x.i, s: Math.round(Math.min(1, Math.max(0, Number(x.s) || 0)) * 1000) / 1000 } : null) },
 	ikidogru: { final: (S, x) => choice(S, x) },
 };
 
