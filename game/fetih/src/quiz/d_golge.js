@@ -12,7 +12,6 @@
 // Görseller sayfanın yanında yoksa (yapiHazir() false) tip maçta seçilmez. Harita arkada çizilmez (tam ekran kart).
 
 import { css, esc, shuffle, pCorrect, mountChoice, clamp } from './util.js';
-import { heceli } from './d_gozkarari.js';
 import { botTime } from './timing.js';
 import { appOf, stamp, onClose, onOpen, sfx, rule, stampLater, LOOK, DENEME_CSS } from './d_ortak.js';
 import { setTimeout, clearTimeout } from '../core/clock.js';
@@ -79,7 +78,7 @@ const CSS = /* css */ `
 .gg{--film:20s;display:flex;flex-direction:column;gap:8px;min-height:0}
 .fl-q.cover .gg{flex:1 1 auto}
 /* sahne: çerçeve, perdenin arkası (altın ışıklı oda ve yapı), perde (iki kanat), gölge, fener ışığı, plaka */
-.gg-sah{position:relative;flex:1 1 auto;min-height:110px;max-height:92cqw;border-radius:10px;overflow:hidden;container-type:size;background:#140a04;
+.gg-sah{position:relative;flex:1 1 auto;min-height:110px;max-height:74cqw;border-radius:10px;overflow:hidden;container-type:size;background:#140a04;
   box-shadow:0 0 0 2px #2a1406,0 0 0 4px #c8962e,0 0 0 5.5px #5a1a0e,0 14px 28px rgba(0,0,0,.55),0 0 30px rgba(255,150,60,.18)}
 .gg-arka{position:absolute;inset:0;background:radial-gradient(70% 60% at 50% 62%,#6a3a14 0%,#2a1408 55%,#0d0703 100%)}
 .gg-hz{position:absolute;left:50%;top:60%;width:180cqmax;height:180cqmax;margin:-90cqmax 0 0 -90cqmax;border-radius:50%;opacity:0;transition:opacity 1.2s .4s;
@@ -146,6 +145,7 @@ const CSS = /* css */ `
 .gg .fl-opts.one{grid-template-columns:1fr 1fr}
 .gg .fl-opt{min-height:46px}
 .gg .fl-opts.one .fl-opt{font-size:16.5px;line-height:1.12}
+.gg .fl-opt>span{overflow-wrap:normal;word-break:normal;hyphens:none;line-height:1.12} /* kelime ortadan bölünmez; sığmazsa yazı küçülür (sigdir) */
 @media (max-height:700px){
   .gg{gap:6px}
   .gg .fl-opt{min-height:42px;font-size:16.5px}
@@ -224,10 +224,31 @@ export const golge = {
 		const plaka = sah.querySelector('.gg-pl2');
 		const ips = [...root.querySelectorAll('.gg-i')];
 		const c = mountChoice(root.querySelector('[data-r=o]'), v, api, { onPick: () => sfx(app, 'tap') });
-		// uzun kelimeli şıklar gerekirse hecesinden bölünsün (yazı küçülmez, kesilmez)
-		queueMicrotask(() => {
-			for (const sp of root.querySelectorAll('[data-r=o] .fl-opt>span')) sp.innerHTML = heceli(sp.textContent);
-		});
+		// şık yazısı kelime ortasından bölünmez: bir kelime sığmıyorsa ya da ad iki satırı aşıyorsa o şıkkın yazısı
+		// yarım piksel adımlarla küçülür (en az 11 px). Boy değişince, yazı tipi yüklenince yeniden ölçülür.
+		const opts = root.querySelector('[data-r=o]');
+		const sigdir = () => {
+			for (const sp of opts.querySelectorAll('.fl-opt>span')) {
+				sp.style.fontSize = '';
+				let fs = parseFloat(getComputedStyle(sp).fontSize) || 16;
+				const tasar = () => sp.scrollWidth > sp.clientWidth + 0.5 || sp.getClientRects().length === 0 || sp.offsetHeight > fs * 1.2 * 2 + 1;
+				while (fs > 11 && tasar()) {
+					fs -= 0.5;
+					sp.style.fontSize = fs + 'px';
+				}
+			}
+		};
+		queueMicrotask(sigdir);
+		requestAnimationFrame(() => el.isConnected && sigdir());
+		document.fonts?.ready?.then(() => el.isConnected && sigdir());
+		let optW = 0;
+		const roOpt = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => {
+			const w = Math.round(opts.clientWidth);
+			if (w === optW || !el.isConnected) return; // yalnız genişlik değişince (küçültme yüksekliği değiştirir: döngü olmasın)
+			optW = w;
+			sigdir();
+		}) : null;
+		roOpt?.observe(opts);
 		// görsel: gölge ve gerçek resim aynı dosya (önden indirilmiş olabilir)
 		const im = yapiOnyukle(q);
 		const src = im ? im.src : `${YAPI_BASE}${q.img}.webp`;
@@ -248,6 +269,7 @@ export const golge = {
 		});
 		const close = onClose(el, () => {
 			stopOpen();
+			roOpt?.disconnect();
 			for (const t of timers) clearTimeout(t);
 			if (LIVE === me) LIVE++;
 		});
