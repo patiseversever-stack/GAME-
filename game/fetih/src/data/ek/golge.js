@@ -22,7 +22,7 @@ const OK = { kita: 'Okyanusya' };
 
 export const GOLGELER = [
 	// ---------------------------------------------------------------- Türkiye
-	G(1, 1, ['Anıtkabir', 'Çanakkale Şehitler Abidesi', 'Galata Kulesi', 'Rumeli Hisarı'], 'Anıt mezar'),
+	G(1, 1, ['Anıtkabir', 'Şehitler Abidesi', 'Galata Kulesi', 'Rumeli Hisarı'], 'Anıt mezar'),
 	// Kızıl Kule’nin tepesi düz mazgallı, Galata’nınki konik külah
 	G(2, 1, ['Galata Kulesi', 'Kızıl Kule', 'İzmir Saat Kulesi', 'Rumeli Hisarı'], 'Kule'),
 	// minare sayısı ayırır: Ayasofya 4, Sultanahmet 6
@@ -38,8 +38,8 @@ export const GOLGELER = [
 	G(12, 2, ['Celsus Kütüphanesi', 'Aspendos Tiyatrosu', 'Nemrut Dağı', 'Bodrum Kalesi'], 'Kütüphane'),
 	G(13, 2, ['Aspendos Tiyatrosu', 'Celsus Kütüphanesi', 'Truva Atı', 'Kızıl Kule'], 'Antik tiyatro'),
 	G(14, 2, ['Kızıl Kule', 'Galata Kulesi', 'İzmir Saat Kulesi', 'Bodrum Kalesi'], 'Kule'),
-	G(15, 1, ['Truva Atı', 'Nemrut Dağı', 'Çanakkale Şehitler Abidesi', 'Aspendos Tiyatrosu'], 'Anıt'),
-	G(16, 1, ['Çanakkale Şehitler Abidesi', 'Anıtkabir', 'Galata Kulesi', 'Truva Atı'], 'Anıt'),
+	G(15, 1, ['Truva Atı', 'Nemrut Dağı', 'Şehitler Abidesi', 'Aspendos Tiyatrosu'], 'Anıt'),
+	G(16, 1, ['Şehitler Abidesi', 'Anıtkabir', 'Galata Kulesi', 'Truva Atı'], 'Anıt'),
 	G(17, 2, ['Göbeklitepe', 'Nemrut Dağı', 'Aspendos Tiyatrosu', 'Harran Evleri'], 'Ören yeri'),
 	G(18, 3, ['Hattuşa', 'Göbeklitepe', 'Truva Atı', 'Celsus Kütüphanesi'], 'Ören yeri'),
 	G(19, 1, ['Peribacaları', 'Nemrut Dağı', 'Göbeklitepe', 'Kızıl Kule'], 'Doğal oluşum'),
@@ -53,10 +53,10 @@ export const GOLGELER = [
 	G(27, 2, ['Bursa Ulu Camii', 'Sultanahmet Camii', 'Galata Kulesi', 'Anıtkabir'], 'Cami'),
 	G(28, 1, ['İzmir Saat Kulesi', 'Galata Kulesi', 'Kızıl Kule', 'Truva Atı'], 'Saat kulesi'),
 	G(29, 2, ['Safranbolu Evleri', 'Harran Evleri', 'Galata Kulesi', 'Ortaköy Camii'], 'Konak'),
-	G(30, 3, ['Kasımiye Medresesi', 'Galata Kulesi', 'Truva Atı', 'Çanakkale Şehitler Abidesi'], 'Medrese'),
+	G(30, 3, ['Kasımiye Medresesi', 'Galata Kulesi', 'Truva Atı', 'Şehitler Abidesi'], 'Medrese'),
 	G(31, 2, ['On Gözlü Köprü', 'Rumeli Hisarı', 'Galata Kulesi', 'Truva Atı'], 'Köprü'),
 	G(32, 2, ['Çifte Minareli Medrese', 'Sultanahmet Camii', 'Galata Kulesi', 'Anıtkabir'], 'Medrese'),
-	G(33, 3, ['Amasya Kral Kaya Mezarları', 'Nemrut Dağı', 'Galata Kulesi', 'Truva Atı'], 'Kaya mezarı'),
+	G(33, 3, ['Amasya Kaya Mezarları', 'Nemrut Dağı', 'Galata Kulesi', 'Truva Atı'], 'Kaya mezarı'),
 	G(34, 2, ['Bodrum Kalesi', 'Galata Kulesi', 'Pamukkale', 'Ayasofya'], 'Kale'),
 	G(35, 2, ['Uçhisar Kalesi', 'Galata Kulesi', 'Ayasofya', 'Truva Atı'], 'Kaya kale'),
 	G(36, 2, ['Ankara Kalesi', 'Galata Kulesi', 'Ortaköy Camii', 'Truva Atı'], 'Kale'),
@@ -109,7 +109,8 @@ export const GOLGELER = [
 	G(78, 2, ['CN Kulesi', 'Space Needle', 'Eyfel Kulesi', 'Burj Halife'], 'Kule', KA),
 	G(79, 2, ['Space Needle', 'CN Kulesi', 'Eyfel Kulesi', 'Atomium'], 'Kule', KA),
 	G(80, 2, ['Himeji Kalesi', 'Neuschwanstein Şatosu', 'Kolezyum', 'Eyfel Kulesi'], 'Kale', AS),
-	G(81, 2, ['Fuji ve Chureito Pagodası', 'Himeji Kalesi', 'Potala Sarayı', 'Big Ben'], 'Pagoda', AS),
+	// şık kısa (dar ekranda sığsın); plakada tam adı: Fuji Dağı ve Chureito Pagodası
+	G(81, 2, ['Chureito Pagodası', 'Himeji Kalesi', 'Potala Sarayı', 'Big Ben'], 'Pagoda', AS),
 	G(82, 2, ['Yasak Şehir', 'Himeji Kalesi', 'Kolezyum', 'Partenon'], 'Saray', AS),
 	G(83, 3, ['Potala Sarayı', 'Atomium', 'Stonehenge', 'Notre-Dame Katedrali'], 'Saray', AS),
 	G(84, 3, ['Bagan Tapınakları', 'Kolezyum', 'Eyfel Kulesi', 'Partenon'], 'Tapınak', AS),

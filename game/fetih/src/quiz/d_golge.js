@@ -231,7 +231,7 @@ export const golge = {
 			for (const sp of opts.querySelectorAll('.fl-opt>span')) {
 				sp.style.fontSize = '';
 				let fs = parseFloat(getComputedStyle(sp).fontSize) || 16;
-				const tasar = () => sp.scrollWidth > sp.clientWidth + 0.5 || sp.getClientRects().length === 0 || sp.offsetHeight > fs * 1.2 * 2 + 1;
+				const tasar = () => sp.scrollWidth > sp.clientWidth + 0.5 || Math.round(sp.offsetHeight / (fs * 1.12)) > 2;
 				while (fs > 11 && tasar()) {
 					fs -= 0.5;
 					sp.style.fontSize = fs + 'px';
@@ -240,6 +240,16 @@ export const golge = {
 		};
 		queueMicrotask(sigdir);
 		requestAnimationFrame(() => el.isConnected && sigdir());
+		// ortak arayüz uzun adda şık ızgarasına sınıf ekler (yazı boyu değişir): sınıf değişince ve kart oturunca yeniden ölç
+		const moOpt = typeof MutationObserver !== 'undefined' ? new MutationObserver(() => el.isConnected && sigdir()) : null;
+		const os0 = opts.querySelector('.fl-opts');
+		if (os0) moOpt?.observe(os0, { attributes: true, attributeFilter: ['class'] });
+		const card0 = el.closest('.fl-q');
+		if (card0) moOpt?.observe(card0, { attributes: true, attributeFilter: ['class'] });
+		// gerçek saatle (oyun saati duraklayınca da: galeri, duraklatma) ve yazı tipleri yüklenince
+		for (const ms of [120, 450, 1200]) globalThis.setTimeout(() => el.isConnected && sigdir(), ms);
+		const fontYuk = () => el.isConnected && sigdir();
+		document.fonts?.addEventListener?.('loadingdone', fontYuk);
 		document.fonts?.ready?.then(() => el.isConnected && sigdir());
 		let optW = 0;
 		const roOpt = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => {
@@ -270,6 +280,8 @@ export const golge = {
 		const close = onClose(el, () => {
 			stopOpen();
 			roOpt?.disconnect();
+			moOpt?.disconnect();
+			document.fonts?.removeEventListener?.('loadingdone', fontYuk);
 			for (const t of timers) clearTimeout(t);
 			if (LIVE === me) LIVE++;
 		});
