@@ -1786,6 +1786,16 @@ export class UI {
 			this._cardBot = c && c.offsetHeight ? c.offsetTop + c.offsetHeight + 6 : 0;
 		}
 		if (this.el.classList.contains('qmap') && this._cardBot) cutY = Math.max(cutY, this._cardBot);
+		// haritalı soruda bildirim (alttaki düğme sırasında) de engel: altında kalan yazı rozeti kayar, yer yoksa söner
+		let tb = null;
+		if (P.length && this.el.classList.contains('toaston') && this.el.classList.contains('qmap')) {
+			const tr = this.$.toasts.getBoundingClientRect();
+			if (tr.height > 0) {
+				const u = this.el.getBoundingClientRect();
+				tb = { l: tr.left - u.left - 4, r: tr.right - u.left + 4, t: tr.top - u.top - 4, b: tr.bottom - u.top + 4 };
+				boxes.push(tb);
+			}
+		}
 		const tags = P.filter((p) => p.w);
 		for (const p of tags) p.big ??= p.el.classList.contains('big');
 		if (tags.length > 1) tags.sort((x, y) => y.big - x.big);
@@ -1855,7 +1865,13 @@ export class UI {
 				p.dy = (p.dy ?? p.loy) + (p.loy - (p.dy ?? p.loy)) * k;
 				// haritalı soruda kartın altına giren yazı rozeti gizlenir (kartın üstüne binmesin)
 				const off = p.sx < -4 || p.sx > SW + 4 || p.sy < -4 || p.sy > SH + 4; // ait olduğu yer ekranın dışında
-				const hide = off || (!p.big && p.sy + p.dy - 6 - (p.h || 0) < cutY);
+				let hide = off || (!p.big && p.sy + p.dy - 6 - (p.h || 0) < cutY);
+				if (!hide && tb && !p.big) {
+					const x0 = p.bx + p.dx - (p.w + 6) / 2;
+					const y1 = p.sy + p.dy - 4;
+					const y0 = y1 - (p.h || 0) - 2;
+					hide = x0 < tb.r && tb.l < x0 + p.w + 6 && y0 < tb.b && tb.t < y1;
+				}
 				if (hide !== p.hid) {
 					p.hid = hide;
 					p.el.style.opacity = hide ? '0' : '';
