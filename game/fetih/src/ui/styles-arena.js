@@ -115,6 +115,10 @@ export const CSS_ARENA = /* css */ `
 .fl-toasts{z-index:60}
 .fl-ui.toaston .fl-q.cover .fl-cvt{opacity:0;transition:opacity .2s} /* bildirim tam ekran kartın başlığına binmesin */
 .fl-ui.qon .fl-toasts{top:calc(var(--sat) + min(calc(100 * var(--vw)),560px) * .23 + 32px)}
+/* soru sırasında bildirim haritanın üst şeridinde durur: o an il etiketleri (SALDIRAN/SAVUNAN) altında kalıp yazı yazıya binmesin */
+.fl-ui.qon.toaston .fl-tags{opacity:0}
+/* soru sırasında bildirim, yandaki duraklat ve menü düğmelerinin arasına sığar (dar ekranda altlarına girmesin) */
+.fl-ui.qon .fl-toasts{width:min(calc(calc(100 * var(--vw)) - 112px),420px)}
 .fl-ui.qmap .fl-toasts{top:auto;bottom:calc(var(--sab) + 66px)}
 /* ---------------------------------------------------------------- jokerler: renkli eğik karolar, simge + kalın küçük ad */
 .fl-jk{gap:7px;margin-top:14px}
