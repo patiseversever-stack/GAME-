@@ -118,7 +118,7 @@ export const CSS_ARENA = /* css */ `
 /* soru sırasında bildirim haritanın üst şeridinde durur: o an il etiketleri (SALDIRAN/SAVUNAN) altında kalıp yazı yazıya binmesin */
 .fl-ui.qon.toaston .fl-tags{opacity:0}
 /* soru sırasında bildirim, yandaki duraklat ve menü düğmelerinin arasına sığar (dar ekranda altlarına girmesin) */
-.fl-ui.qon .fl-toasts{width:min(calc(calc(100 * var(--vw)) - 112px),420px)}
+.fl-ui.qon .fl-toasts,.fl-ui.qmap .fl-toasts{width:min(calc(calc(100 * var(--vw)) - 112px),420px)}
 /* haritalı soruda (kart üstte, harita altta) bildirim en alttaki düğme sırasına iner: haritadaki şık/il etiketlerinin üstüne binmesin */
 .fl-ui.qmap .fl-toasts{top:auto;bottom:calc(var(--sab) + 14px)}
 /* ---------------------------------------------------------------- jokerler: renkli eğik karolar, simge + kalın küçük ad */

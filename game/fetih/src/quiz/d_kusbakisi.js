@@ -126,6 +126,8 @@ const CSS = /* css */ `
 .dn-vf .bz::after{content:'';position:absolute;left:50%;top:-1%;width:0;height:0;margin-left:-6px;border:6px solid transparent;border-top:9px solid #ff5a46}
 .dn-vf .ch{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;opacity:.85;
   background:linear-gradient(#fff,#fff) 50% 0/2px 7px no-repeat,linear-gradient(#fff,#fff) 50% 100%/2px 7px no-repeat,linear-gradient(#fff,#fff) 0 50%/7px 2px no-repeat,linear-gradient(#fff,#fff) 100% 50%/7px 2px no-repeat}
+/* vizörün alt okuması kartın İRTİFA'sının kopyası: joker bildirimi alt sırada belirince o an söner (üst üste binmesin) */
+.fl-ui.toaston .dn-vf .rd{opacity:0}
 .dn-vf .rd{position:absolute;left:50%;bottom:-6px;transform:translate(-50%,100%);display:flex;gap:10px;align-items:center;white-space:nowrap;padding:4px 10px;background:rgba(7,8,15,.82);
   font:italic 800 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:#fff;font-variant-numeric:tabular-nums}
 .dn-vf .rd b{font-weight:800;color:#ffd25a}
