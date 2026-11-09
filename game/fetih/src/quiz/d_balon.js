@@ -352,8 +352,16 @@ const CSS = /* css */ `
 .yn-bl-bitti small{padding:3px 10px;border-radius:999px;font:600 13px/1.2 'Fredoka',sans-serif;color:#fff;background:rgba(8,12,30,.7);white-space:nowrap}
 .yn-bl-bitti .fl-send{min-width:150px;height:46px;padding:0 18px}
 /* cevap: sonuç tahtası (doğru balonlar ve herkesin sayımı) */
-.yn-bl-son{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;justify-content:center;gap:max(6px,2.2cqw);padding:10px 10px 12px;opacity:0;pointer-events:none;
-  background:linear-gradient(180deg,rgba(5,8,24,.55),rgba(5,8,24,.78))}
+.yn-bl-son{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;justify-content:safe center;overflow:hidden;gap:max(6px,2.2cqw);padding:10px 10px 12px;opacity:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(5,8,24,.82),rgba(5,8,24,.92))}
+/* sonuçta üst sayaç satırı gizlenir (tahtada var) */
+.yn-bl.rv .yn-bl-hud{visibility:hidden}
+/* doğru cevaplar: okunaklı haplar */
+.yn-bl-cv{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;padding:0 4px}
+.yn-bl-cv .c{display:inline-flex;align-items:center;gap:5px;padding:6px 13px 7px;border-radius:999px;font:600 15px/1.1 'Fredoka',sans-serif;color:#fff;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4);animation:ynBlUp .45s calc(.45s + var(--k) * .07s) cubic-bezier(.2,.9,.3,1.25) both}
+.yn-bl-cv .c.ok{background:#1fae55;box-shadow:0 0 14px rgba(40,200,100,.45)}
+.yn-bl-cv .c svg{width:15px;height:15px}
+.yn-bl-cv .c.kac{color:rgba(255,255,255,.85)}
 .yn-bl.rv .yn-bl-son{animation:ynBlIn .45s .35s ease-out both}
 .yn-bl-son h5{margin:0;text-align:center;font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.2em;color:rgba(255,255,255,.8)}
 .yn-bl-son h5 em{font-style:normal;color:#ffd25a;letter-spacing:.12em}
@@ -362,21 +370,6 @@ const CSS = /* css */ `
   background:rgba(8,12,30,.72);box-shadow:inset 0 0 0 1px rgba(255,210,90,.38);border-radius:8px;animation:ynBlIn .45s .95s ease-out both}
 .yn-bl-tr .pt{margin-left:auto;min-width:2.2em;justify-content:flex-end;font:italic 900 22px/1 'Barlow Condensed','Lilita One',sans-serif;color:#ffe7a0}
 .yn-bl-tr.win .pt{color:#1a1200}
-.yn-bl-dg{display:flex;justify-content:center;align-items:flex-start;gap:var(--g,10px)}
-.yn-bl-dk{position:relative;flex:0 0 var(--sw);display:flex;flex-direction:column;align-items:center;gap:5px;animation:ynBlUp .55s calc(.45s + var(--k) * .08s) cubic-bezier(.2,.9,.3,1.25) both}
-.yn-bl-dk .bb{position:relative;width:var(--sw);height:calc(var(--sw) * 1.18);border-radius:50% 50% 50% 50%/58% 58% 42% 42%;
-  background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.95) 0 6%,var(--bl) 16%,var(--bc) 48%,var(--bd) 100%);box-shadow:inset -4px -7px 12px rgba(0,0,0,.22)}
-.yn-bl-dk .bb::before{content:'';position:absolute;left:16%;top:9%;width:30%;height:34%;border-radius:50%;background:radial-gradient(ellipse at 40% 35%,rgba(255,255,255,.85),rgba(255,255,255,0) 70%);transform:rotate(-24deg)}
-.yn-bl-dk .bb::after{content:'';position:absolute;left:50%;bottom:-5px;width:10px;height:7px;margin-left:-5px;background:var(--bd);clip-path:polygon(50% 0,100% 100%,0 100%)}
-.yn-bl-dk .bb b{position:absolute;left:50%;top:44%;width:var(--lw,100%);transform:translate(-50%,-50%);text-align:center;font:italic 800 var(--fs,13px)/1.02 'Barlow Condensed',sans-serif;color:var(--bt);text-shadow:0 1px 0 var(--bd),0 0 3px var(--bd)}
-.yn-bl-dk.kac .bb{opacity:.5;filter:saturate(.55)}
-.yn-bl-dk.vur .bb{box-shadow:inset -4px -7px 12px rgba(0,0,0,.22),0 0 0 3px #0a0d1c,0 0 0 5.5px #3bd16f,0 0 18px rgba(60,210,110,.7)}
-.yn-bl-dk.vur::after{content:'';position:absolute;right:-3px;top:-3px;width:20px;height:20px;border-radius:50%;background:#22b85a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;box-shadow:0 0 0 2px #0a0d1c}
-.yn-bl-dk .tg{padding:1px 6px;border-radius:4px;font:italic 900 10.5px/1.25 'Barlow Condensed',sans-serif;letter-spacing:.12em;white-space:nowrap;color:#1a1200;background:#ffd25a}
-.yn-bl-dk .tg.ok{color:#fff;background:#22b85a}
-.yn-bl-dk .av{display:flex;justify-content:center;gap:2px;min-height:18px}
-.yn-bl-dk .av .fl-av{width:18px;height:18px;border-radius:5px;overflow:hidden;box-shadow:0 0 0 1.5px #fff}
-.yn-bl-dk .av .fl-av svg{display:block;width:100%;height:100%}
 .yn-bl-tl{display:grid;grid-template-columns:1fr;gap:5px 10px}
 .yn-bl-tl.two{grid-template-columns:1fr 1fr}
 .yn-bl-tl.two .yn-bl-tr{justify-content:space-between;padding-right:12px}
@@ -387,11 +380,8 @@ const CSS = /* css */ `
 .yn-bl-tr .fl-av svg{display:block;width:100%;height:100%}
 .yn-bl-tr b{flex:1 1 auto;min-width:0;font:700 15px/1.1 'Fredoka',sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .yn-bl-tr span{flex:none;display:flex;align-items:center;gap:3px;font:italic 900 16px/1 'Barlow Condensed','Lilita One',sans-serif;color:#fff}
-.yn-bl-tr span svg{width:13px;height:13px}
-.yn-bl-tr span.ok svg{color:#7dff9a}.yn-bl-tr span.no svg{color:#ff7a66}.yn-bl-tr span.ms svg{color:#ffd25a}
 .yn-bl-tr.win{background:linear-gradient(90deg,#ffe066,#ffbb1f);box-shadow:inset 0 0 0 1.5px #fff,0 0 16px rgba(255,210,90,.5)}
 .yn-bl-tr.win b,.yn-bl-tr.win span{color:#1a1200}
-.yn-bl-tr.win span.ok svg{color:#137a35}.yn-bl-tr.win span.no svg{color:#b8261a}.yn-bl-tr.win span.ms svg{color:#7a5200}
 .yn-bl-tr.me{box-shadow:inset 0 0 0 2px #ffd25a}
 .yn-bl-tr.me.win{box-shadow:inset 0 0 0 2px #fff,0 0 16px rgba(255,210,90,.5)}
 @container (max-width:370px){
@@ -408,6 +398,10 @@ const CSS = /* css */ `
   .yn-bl-tr .fl-av{width:20px;height:20px}
   .yn-bl-tr b{font-size:13.5px}
   .yn-bl-not{font-size:12px;padding:4px 8px 5px}
+  .yn-bl-son{gap:6px;padding:8px 8px 10px}
+  .yn-bl-cv{gap:5px}
+  .yn-bl-cv .c{padding:4px 10px 5px;font-size:13.5px}
+  .yn-bl-cv .c svg{width:13px;height:13px}
 }
 @keyframes ynBlSlot{0%{transform:scale(1.6)}100%{transform:none}}
 @keyframes ynBlShake{20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
@@ -435,6 +429,7 @@ const CSS = /* css */ `
 @media (prefers-reduced-motion:reduce){.yn-bl-bulut,.yn-bl-yildiz,.yn-bl-ufuk *{animation:none!important}}
 `;
 
+const CHK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const NO_I = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/></svg>';
 const trUp = (s) => String(s).toLocaleUpperCase('tr-TR');
 /**
@@ -867,7 +862,8 @@ export const balon = {
 						const [c0, c1, c2, ct] = RENK[b.c % RENK.length];
 						const missed = !!meR && !mine.has(k);
 						const vur = !!meR && mine.has(k);
-						return `<div class="yn-bl-dk${missed ? ' kac' : ''}${vur ? ' vur' : ''}" style="--sw:${sw}px;--k:${i};--bc:${c0};--bd:${c1};--bl:${c2};--bt:${ct};--fs:${fsOf(b.w, sw + g - 4, sw * 0.3).toFixed(1)}px;--lw:${(sw + g - 4).toFixed(0)}px"><div class="bb"><b>${esc(b.w)}</b></div></div>`;
+						// okunaklı hap: patlattığın yeşil ve tikli, kaçırdığın sade çerçeveli
+						return `<span class="c${vur ? ' ok' : ''}${missed ? ' kac' : ''}" style="--k:${i}">${vur ? CHK : ''}${esc(b.w)}</span>`;
 					})
 					.join('');
 				const tl = order
@@ -884,7 +880,7 @@ export const balon = {
 					bad = s0.bad;
 					hud();
 				}
-				son.innerHTML = `<h5>DOĞRU CEVAPLAR</h5><div class="yn-bl-dg" style="--g:${g.toFixed(0)}px">${dg}</div>${v.q.not ? `<p class="yn-bl-not">${esc(v.q.not)}</p>` : ''}<div class="yn-bl-tl${two ? ' two' : ''}">${tl}</div>`;
+				son.innerHTML = `<h5>DOĞRU CEVAPLAR</h5><div class="yn-bl-cv">${dg}</div>${v.q.not ? `<p class="yn-bl-not">${esc(v.q.not)}</p>` : ''}<div class="yn-bl-tl${two ? ' two' : ''}">${tl}</div>`;
 				root.classList.add('rv');
 				msg.classList.remove('on');
 				if (meR && app) {
