@@ -269,7 +269,7 @@ const CSS = /* css */ `
 /* üst şerit: hedef yuvaları, yanlış sayacı, rakipler */
 .yn-bl-hud{flex:none;display:flex;align-items:center;gap:10px;min-height:32px;padding:0 2px}
 .yn-bl-hd{flex:none;display:flex;align-items:center;gap:6px}
-.yn-bl-hd small,.yn-bl-yn small{font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:rgba(255,255,255,.7)}
+.yn-bl-hd small,.yn-bl-yn small{display:none} /* sade: noktalar ve sayılar yeter */
 .yn-bl-hd>span{display:flex;gap:4px}
 .yn-bl-hd>span i{width:16px;height:20px;border-radius:50% 50% 50% 50%/58% 58% 42% 42%;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35);transition:background .2s,box-shadow .2s}
 .yn-bl-hd>span i.on{background:radial-gradient(circle at 35% 30%,#fff 0 10%,var(--pc,#ffd25a) 38%,color-mix(in srgb,var(--pc,#ffd25a) 60%,#000) 100%);box-shadow:0 0 0 1.5px #fff,0 0 10px var(--pc,#ffd25a);animation:ynBlSlot .4s cubic-bezier(.3,1.8,.5,1)}
@@ -337,6 +337,8 @@ const CSS = /* css */ `
 .yn-bl-sky.kirmizi::after{content:'';position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:16px;box-shadow:inset 0 0 0 3px rgba(255,70,50,.85),inset 0 0 40px rgba(255,40,20,.55);animation:ynBlKirmizi .45s ease-out forwards}
 .yn-bl-fx .yz{transform:translate(-50%,-50%);font:italic 900 26px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.03em;white-space:nowrap;color:#ffd25a;
   text-shadow:0 2px 0 #5a2a00,0 0 10px rgba(255,190,60,.6);animation:ynBlYazi .9s cubic-bezier(.2,.8,.3,1) forwards}
+.yn-bl-fx .yz.bg{font-size:34px;color:#fff3b0;text-shadow:0 3px 0 #5a2a00,0 0 18px rgba(255,200,60,.9)}
+.yn-bl-sky.seri::before{content:'';position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:16px;box-shadow:inset 0 0 0 3px rgba(255,214,90,.95),inset 0 0 46px rgba(255,200,60,.6);animation:ynBlKirmizi .9s ease-out forwards}
 .yn-bl-fx .yz.no{color:#ff7a66;text-shadow:0 2px 0 #5a0a04,0 0 10px rgba(255,60,40,.6)}
 .yn-bl-fx .kc{transform:translate(-50%,0);padding:2px 7px;border-radius:5px;font:italic 900 11px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#fff;background:rgba(200,40,30,.85);animation:ynBlKacti 1.1s ease-out forwards}
 /* başlangıç ve "HEPSİ" yazısı */
@@ -354,6 +356,12 @@ const CSS = /* css */ `
   background:linear-gradient(180deg,rgba(5,8,24,.55),rgba(5,8,24,.78))}
 .yn-bl.rv .yn-bl-son{animation:ynBlIn .45s .35s ease-out both}
 .yn-bl-son h5{margin:0;text-align:center;font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.2em;color:rgba(255,255,255,.8)}
+.yn-bl-son h5 em{font-style:normal;color:#ffd25a;letter-spacing:.12em}
+/* açıklama: tuzaklar neden yanlış, şaşırtıcı doğrular neden doğru (en çok iki satır) */
+.yn-bl-not{margin:0 auto;max-width:min(100%,46ch);padding:5px 10px 6px;text-align:center;font:500 13px/1.3 'Fredoka',sans-serif;color:rgba(255,242,215,.95);text-wrap:balance;
+  background:rgba(8,12,30,.72);box-shadow:inset 0 0 0 1px rgba(255,210,90,.38);border-radius:8px;animation:ynBlIn .45s .95s ease-out both}
+.yn-bl-tr .pt{margin-left:auto;min-width:2.2em;justify-content:flex-end;font:italic 900 22px/1 'Barlow Condensed','Lilita One',sans-serif;color:#ffe7a0}
+.yn-bl-tr.win .pt{color:#1a1200}
 .yn-bl-dg{display:flex;justify-content:center;align-items:flex-start;gap:var(--g,10px)}
 .yn-bl-dk{position:relative;flex:0 0 var(--sw);display:flex;flex-direction:column;align-items:center;gap:5px;animation:ynBlUp .55s calc(.45s + var(--k) * .08s) cubic-bezier(.2,.9,.3,1.25) both}
 .yn-bl-dk .bb{position:relative;width:var(--sw);height:calc(var(--sw) * 1.18);border-radius:50% 50% 50% 50%/58% 58% 42% 42%;
@@ -361,7 +369,9 @@ const CSS = /* css */ `
 .yn-bl-dk .bb::before{content:'';position:absolute;left:16%;top:9%;width:30%;height:34%;border-radius:50%;background:radial-gradient(ellipse at 40% 35%,rgba(255,255,255,.85),rgba(255,255,255,0) 70%);transform:rotate(-24deg)}
 .yn-bl-dk .bb::after{content:'';position:absolute;left:50%;bottom:-5px;width:10px;height:7px;margin-left:-5px;background:var(--bd);clip-path:polygon(50% 0,100% 100%,0 100%)}
 .yn-bl-dk .bb b{position:absolute;left:50%;top:44%;width:var(--lw,100%);transform:translate(-50%,-50%);text-align:center;font:italic 800 var(--fs,13px)/1.02 'Barlow Condensed',sans-serif;color:var(--bt);text-shadow:0 1px 0 var(--bd),0 0 3px var(--bd)}
-.yn-bl-dk.kac .bb{box-shadow:inset -4px -7px 12px rgba(0,0,0,.22),0 0 0 3px #0a0d1c,0 0 0 6px #ffd25a,0 0 22px rgba(255,210,90,.85);animation:ynBlRing 1s ease-in-out infinite alternate}
+.yn-bl-dk.kac .bb{opacity:.5;filter:saturate(.55)}
+.yn-bl-dk.vur .bb{box-shadow:inset -4px -7px 12px rgba(0,0,0,.22),0 0 0 3px #0a0d1c,0 0 0 5.5px #3bd16f,0 0 18px rgba(60,210,110,.7)}
+.yn-bl-dk.vur::after{content:'';position:absolute;right:-3px;top:-3px;width:20px;height:20px;border-radius:50%;background:#22b85a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;box-shadow:0 0 0 2px #0a0d1c}
 .yn-bl-dk .tg{padding:1px 6px;border-radius:4px;font:italic 900 10.5px/1.25 'Barlow Condensed',sans-serif;letter-spacing:.12em;white-space:nowrap;color:#1a1200;background:#ffd25a}
 .yn-bl-dk .tg.ok{color:#fff;background:#22b85a}
 .yn-bl-dk .av{display:flex;justify-content:center;gap:2px;min-height:18px}
@@ -397,6 +407,7 @@ const CSS = /* css */ `
   .yn-bl-tr{min-height:26px}
   .yn-bl-tr .fl-av{width:20px;height:20px}
   .yn-bl-tr b{font-size:13.5px}
+  .yn-bl-not{font-size:12px;padding:4px 8px 5px}
 }
 @keyframes ynBlSlot{0%{transform:scale(1.6)}100%{transform:none}}
 @keyframes ynBlShake{20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
@@ -421,13 +432,10 @@ const CSS = /* css */ `
 @keyframes ynBlIn{from{opacity:0}to{opacity:1}}
 @keyframes ynBlUp{0%{opacity:0;transform:translateY(40px) scale(.7)}100%{opacity:1;transform:none}}
 @keyframes ynBlRow{0%{opacity:0;transform:skewX(-8deg) translateX(-24px)}100%{opacity:1;transform:skewX(-8deg)}}
-@keyframes ynBlRing{from{filter:brightness(1)}to{filter:brightness(1.25)}}
 @media (prefers-reduced-motion:reduce){.yn-bl-bulut,.yn-bl-yildiz,.yn-bl-ufuk *{animation:none!important}}
 `;
 
-const OK_I = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const NO_I = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/></svg>';
-const MS_I = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V8M6.5 13.5L12 8l5.5 5.5M5 4h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const trUp = (s) => String(s).toLocaleUpperCase('tr-TR');
 /**
  * Etiketin yazı boyu: en uzun kelime maxW'ye sığsın (Barlow Condensed 800 italik, harf başına ~0,46 em). Yazı gövdeden biraz
@@ -620,8 +628,8 @@ export const balon = {
 			}
 			add('hl', x, y, `--c:${col}`, 460);
 		};
-		const yazi = (x, y, text, no = false) => {
-			const e = add(`yz${no ? ' no' : ''}`, x, y, '', 900);
+		const yazi = (x, y, text, no = false, buyuk = false) => {
+			const e = add(`yz${no ? ' no' : ''}${buyuk ? ' bg' : ''}`, x, y, '', 900);
 			e.textContent = text;
 		};
 		const say = (text, gold = false) => {
@@ -649,7 +657,12 @@ export const balon = {
 				seri++;
 				B.el.classList.add('pat');
 				confetti(cx, cy, RENK[B.b.c % RENK.length][0]);
-				yazi(cx, cy - bh * 0.2, seri >= 2 ? `SERİ ×${seri}` : '+1');
+				yazi(cx, cy - bh * 0.2, seri >= 2 ? `SERİ ×${seri}` : '+1', false, seri >= 3);
+				if (seri >= 3) {
+					sky.classList.remove('seri');
+					void sky.offsetWidth;
+					sky.classList.add('seri');
+				}
 				sesA.pat(seri - 1, pan);
 				buzz(12);
 				later(() => (B.el.style.display = 'none'), 140);
@@ -659,6 +672,11 @@ export const balon = {
 					later(() => {
 						say('HEPSİ!', true);
 						sesA.hepsi();
+						// iki alt köşeden konfeti topları ve altın kenar
+						for (const [x, d] of [[Wc * 0.12, 0], [Wc * 0.88, 120], [Wc * 0.3, 240], [Wc * 0.7, 360]]) later(() => confetti(x, Hc * 0.86, '#ffd25a'), d);
+						sky.classList.remove('seri');
+						void sky.offsetWidth;
+						sky.classList.add('seri');
 					}, 220);
 					later(finish, 900);
 				}
@@ -839,24 +857,24 @@ export const balon = {
 				// balon boyu: genişlik ve yükseklik payına göre. Sabit pay: iç boşluk 22, başlık 12, üç aralık, sütun başına etiket
 				// 15 + portre 18 + iki aralık 10, sayım satırları (30 + 5), halka ve parıltı payı 16
 				const gv = Math.max(6, W * 0.022);
-				const fixed = 22 + 12 + gv * 2 + 15 + 18 + 10 + rows * 30 + (rows - 1) * 5 + 16;
+				const notH = v.q.not ? (W < 360 ? 46 : 38) : 0; // açıklama satırı (en çok iki satır)
+				const fixed = 22 + 12 + gv * 2 + 10 + rows * 34 + (rows - 1) * 5 + 16 + notH;
 				const sw = Math.round(clamp(Math.min((W - 28 - g * (n - 1)) / n, (H - fixed) / 1.18), 30, 66));
 				const mine = meR ? cnt.get(meR).seen : new Set();
 				const dg = okIdx
 					.map((k, i) => {
 						const b = v.b[k];
 						const [c0, c1, c2, ct] = RENK[b.c % RENK.length];
-						const by = results.filter((r) => cnt.get(r).seen.has(k));
 						const missed = !!meR && !mine.has(k);
-						const tag = meR ? (missed ? '<i class="tg">KAÇTI</i>' : '<i class="tg ok">PATLADI</i>') : '';
-						return `<div class="yn-bl-dk${missed ? ' kac' : ''}" style="--sw:${sw}px;--k:${i};--bc:${c0};--bd:${c1};--bl:${c2};--bt:${ct};--fs:${fsOf(b.w, sw + g - 4, sw * 0.3).toFixed(1)}px;--lw:${(sw + g - 4).toFixed(0)}px"><div class="bb"><b>${esc(b.w)}</b></div>${tag}<div class="av">${by.map((r) => avOf(card, r.p)).join('')}</div></div>`;
+						const vur = !!meR && mine.has(k);
+						return `<div class="yn-bl-dk${missed ? ' kac' : ''}${vur ? ' vur' : ''}" style="--sw:${sw}px;--k:${i};--bc:${c0};--bd:${c1};--bl:${c2};--bt:${ct};--fs:${fsOf(b.w, sw + g - 4, sw * 0.3).toFixed(1)}px;--lw:${(sw + g - 4).toFixed(0)}px"><div class="bb"><b>${esc(b.w)}</b></div></div>`;
 					})
 					.join('');
 				const tl = order
 					.map((r, k) => {
 						const s = cnt.get(r);
 						const win = k === 0 && r.value != null;
-						return `<div class="yn-bl-tr${win ? ' win' : ''}${r.p?.human ? ' me' : ''}" style="--c:${esc(r.color)};--k:${k}"><span class="rk">${k + 1}</span>${avOf(card, r.p)}${two ? '' : `<b>${esc(r.name)}</b>`}<span class="ok">${OK_I}${s.ok}/${v.n}</span><span class="no">${NO_I}${s.bad}</span>${two ? '' : `<span class="ms">${MS_I}${s.miss}</span>`}</div>`;
+						return `<div class="yn-bl-tr${win ? ' win' : ''}${r.p?.human ? ' me' : ''}" style="--c:${esc(r.color)};--k:${k}"><span class="rk">${k + 1}</span>${avOf(card, r.p)}${two ? '' : `<b>${esc(r.name)}</b>`}<span class="pt" title="${s.ok} doğru, ${s.bad} yanlış">${s.ok - s.bad > 0 ? '+' : ''}${s.ok - s.bad}</span></div>`;
 					})
 					.join('');
 				if (meR) {
@@ -866,16 +884,17 @@ export const balon = {
 					bad = s0.bad;
 					hud();
 				}
-				son.innerHTML = `<h5>DOĞRU BALONLAR</h5><div class="yn-bl-dg" style="--g:${g.toFixed(0)}px">${dg}</div><div class="yn-bl-tl${two ? ' two' : ''}">${tl}</div>`;
+				son.innerHTML = `<h5>DOĞRU CEVAPLAR</h5><div class="yn-bl-dg" style="--g:${g.toFixed(0)}px">${dg}</div>${v.q.not ? `<p class="yn-bl-not">${esc(v.q.not)}</p>` : ''}<div class="yn-bl-tl${two ? ' two' : ''}">${tl}</div>`;
 				root.classList.add('rv');
 				msg.classList.remove('on');
 				if (meR && app) {
 					const s = cnt.get(meR);
 					const first = order[0] === meR;
 					const sub = [s.bad ? `${s.bad} yanlış` : '', s.miss ? `${s.miss} kaçtı` : ''].filter(Boolean).join(' · ') || 'hatasız';
+					const pt = s.ok - s.bad;
 					if (meR.value == null) stampLater(app, 'BALON YOK', 'warn', `${v.n} doğru balon kaçtı`);
 					else if (s.ok === v.n && !s.bad) stampLater(app, 'HEPSİ!', 'gold', 'Hiç kaçırmadın, hiç yanılmadın');
-					else stampLater(app, `${s.ok}/${v.n} BALON`, first ? 'gold' : 'bad', first ? `${sub} · en iyisi sensin` : `${sub} · ${order[0].name} önde`);
+					else stampLater(app, `${pt > 0 ? '+' : ''}${pt} PUAN`, first ? 'gold' : 'bad', `${s.ok} doğru · ${s.bad} yanlış`);
 				}
 			},
 			destroy: close,

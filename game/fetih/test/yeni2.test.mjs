@@ -63,6 +63,7 @@ const BY_NAME = new Map(DATA.provinces.map((p) => [p.name, p]));
 		const all = [...q.dogru, ...q.yanlis];
 		ok(q.dogru.length >= 3 && q.dogru.length <= 4, q.id + ': 3–4 doğru balon');
 		ok(all.length >= 8 && all.length <= 10, q.id + ': 8–10 balon');
+		ok(typeof q.not === 'string' && q.not.length >= 20 && [...q.not].length <= 92, q.id + ': açıklama satırı yok ya da uzun (' + [...(q.not || '')].length + ')');
 		ok(new Set(all).size === all.length, q.id + ': etiketler tekil değil');
 		ok(all.every((w) => w.split(/\\s+/).every((x) => [...x].length <= 12)), q.id + ': etiket kelimesi 12 harfi aşıyor (balona sığmaz)');
 		for (let seed = 1; seed <= 40; seed++) {
