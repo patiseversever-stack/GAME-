@@ -119,7 +119,8 @@ export const CSS_ARENA = /* css */ `
 .fl-ui.qon.toaston .fl-tags{opacity:0}
 /* soru sırasında bildirim, yandaki duraklat ve menü düğmelerinin arasına sığar (dar ekranda altlarına girmesin) */
 .fl-ui.qon .fl-toasts{width:min(calc(calc(100 * var(--vw)) - 112px),420px)}
-.fl-ui.qmap .fl-toasts{top:auto;bottom:calc(var(--sab) + 66px)}
+/* haritalı soruda (kart üstte, harita altta) bildirim en alttaki düğme sırasına iner: haritadaki şık/il etiketlerinin üstüne binmesin */
+.fl-ui.qmap .fl-toasts{top:auto;bottom:calc(var(--sab) + 14px)}
 /* ---------------------------------------------------------------- jokerler: renkli eğik karolar, simge + kalın küçük ad */
 .fl-jk{gap:7px;margin-top:14px}
 .fl-jkb{max-width:none;min-width:0;height:56px;padding:0;justify-content:center;gap:2px;border-radius:0;border:1.5px solid rgba(255,255,255,.5);transform:skewX(-8deg);

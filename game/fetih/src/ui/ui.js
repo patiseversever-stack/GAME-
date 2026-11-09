@@ -1764,7 +1764,7 @@ export class UI {
 		const SW = this.el.clientWidth || innerWidth;
 		const SH = this.el.clientHeight || innerHeight;
 		const nowT = performance.now();
-		const cutY = this.el.classList.contains('qmap') && this._mapTop ? this._mapTop * SH - 8 : -1e9;
+		let cutY = this.el.classList.contains('qmap') && this._mapTop ? this._mapTop * SH - 8 : -1e9;
 		const boxes = this._stampBox ? [this._stampBox] : [];
 		// duraklat düğmesi de engel: rozet onun altına girmesin (yeri yarım saniyede bir ölçülür; her kare yerleşim okutmaz)
 		if (!this._pbT || nowT - this._pbT > 500) {
@@ -1778,6 +1778,14 @@ export class UI {
 			} else this._pbBox = null;
 		}
 		if (this._pbBox) boxes.push(this._pbBox);
+		// kartın gerçek alt kenarı: kadraj payı (_mapTop) %62'de kırpılır ve kart sonradan uzayabilir (joker çubukları,
+		// ipucu satırı); yazı rozetleri bu gerçek kenarın altına inmezse kartın üstüne binerdi
+		if (this.el.classList.contains('qmap') && (!this._cbT || nowT - this._cbT > 500)) {
+			this._cbT = nowT;
+			const c = this.$.q;
+			this._cardBot = c && c.offsetHeight ? c.offsetTop + c.offsetHeight + 6 : 0;
+		}
+		if (this.el.classList.contains('qmap') && this._cardBot) cutY = Math.max(cutY, this._cardBot);
 		const tags = P.filter((p) => p.w);
 		for (const p of tags) p.big ??= p.el.classList.contains('big');
 		if (tags.length > 1) tags.sort((x, y) => y.big - x.big);
