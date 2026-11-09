@@ -567,12 +567,15 @@ export const hang = {
 				if (allOpen()) win();
 			});
 		// seyirci önerisi: .fl-key.sug → o harfin sikkesi ve ilk açılmamış kutusu parlar
+		// classList.add, sınıf zaten olsa da bir 'class' değişimi kaydı üretir: koşulsuz eklemek gözlemciyi kendi kendine
+		// tetikler, sonsuz döngüde sayfa donardı (Seyirci jokeri). Yalnız eksikse eklenir.
+		const sug = (e) => e && !e.classList.contains('sug') && e.classList.add('sug');
 		const mo = new MutationObserver(() => {
 			for (const k of el.querySelectorAll('.fl-key.sug')) {
 				const L = k.dataset.k;
-				T.find((t) => t.on && t.c === L)?.el.classList.add('sug');
+				sug(T.find((t) => t.on && t.c === L)?.el);
 				const pos = word.findIndex((c, i) => c === L && !lock[i]);
-				if (pos >= 0) slots.get(pos)?.classList.add('sug');
+				if (pos >= 0) sug(slots.get(pos));
 			}
 		});
 		mo.observe(root, { subtree: true, attributes: true, attributeFilter: ['class'] });
