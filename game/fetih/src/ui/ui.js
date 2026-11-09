@@ -1820,6 +1820,7 @@ export class UI {
 			};
 			let ox = 0;
 			let oy = 0;
+			p.dar = false; // boş yer bulunamadı: başkasının üstüne binmek yerine söner
 			// yapışkanlık (zıplamasın): önceki yeri boşsa orada kalır; kendi yerine ancak orası 0,6 sn boş kalınca döner
 			const homeFree = free(0, 0);
 			p.homeT = homeFree ? (p.homeT ?? nowT) : null;
@@ -1831,6 +1832,7 @@ export class UI {
 				{
 					let found = false;
 					let bestC = cost(0, 0);
+					const c0 = bestC;
 					for (let k = 1; k <= 9 && !found; k++)
 						for (const [cx, cy] of [[0, -k * h], [0, k * h], [-k * w * 0.55, 0], [k * w * 0.55, 0], [-k * w * 0.5, -k * h], [k * w * 0.5, -k * h], [-k * w * 0.5, k * h], [k * w * 0.5, k * h]]) {
 							if (free(cx, cy)) {
@@ -1846,6 +1848,7 @@ export class UI {
 								oy = cy;
 							}
 						}
+					if (!found && c0 > 0) p.dar = true;
 				}
 			}
 			// cevabın büyük rozeti hiç gizlenmez: kartın altına giriyorsa kartın hemen altına iner
@@ -1865,7 +1868,7 @@ export class UI {
 				p.dy = (p.dy ?? p.loy) + (p.loy - (p.dy ?? p.loy)) * k;
 				// haritalı soruda kartın altına giren yazı rozeti gizlenir (kartın üstüne binmesin)
 				const off = p.sx < -4 || p.sx > SW + 4 || p.sy < -4 || p.sy > SH + 4; // ait olduğu yer ekranın dışında
-				let hide = off || (!p.big && p.sy + p.dy - 6 - (p.h || 0) < cutY);
+				let hide = off || (!p.big && (p.dar || p.sy + p.dy - 6 - (p.h || 0) < cutY));
 				if (!hide && tb && !p.big) {
 					const x0 = p.bx + p.dx - (p.w + 6) / 2;
 					const y1 = p.sy + p.dy - 4;
