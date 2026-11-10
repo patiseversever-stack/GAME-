@@ -584,6 +584,7 @@ export const mancinik = {
 					t.setAttribute('x', x);
 					t.setAttribute('y', GY - 34 - up);
 					t.textContent = lab;
+					labs.appendChild(t); // yazı en üst katmanda: düşen taşların bayrakları altında kalmaz
 					c.classList.add('on');
 					app?.ui?.toast?.(`Seyirci ${fmt(e.value)} diyor`, { tone: 'info', ms: 1800 });
 				}
