@@ -39,9 +39,7 @@ for (const [type, list] of Object.entries(DENEME_SAMPLES)) {
 		const pv = T.publicView(v);
 		const s = JSON.stringify(pv);
 		if (type === 'kusbakisi') ok(pv.right == null && !pv.q.a && pv.q.il == null && Array.isArray(pv.opts), q.id + ': publicView cevabı sızdırıyor');
-		if (type === 'kosu') ok(!pv.targets && !pv.q.ids && pv.n === q.ids.length, q.id + ': publicView hedefleri sızdırıyor');
 		if (type === 'ilavi') ok(pv.hedef == null && pv.q.il == null && !pv.q.hints && pv.hints.slice(1).every((h) => !h) && pv.sil, q.id + ': publicView gizli ili sızdırıyor');
-		if (type === 'baglanti') ok(!pv.key && !pv.names && !pv.q.groups && pv.tiles.length === 12 && !q.groups.some((g) => s.includes(g.n)), q.id + ': publicView grupları sızdırıyor');
 		// doğru ve yanlış cevap
 		let good;
 		let bad;
@@ -49,17 +47,9 @@ for (const [type, list] of Object.entries(DENEME_SAMPLES)) {
 			good = v.right;
 			bad = (v.right + 1) % 4;
 			ok(new Set(q.a).size === 4, q.id + ': şıklar farklı değil');
-		} else if (type === 'kosu') {
-			good = { taps: q.ids.slice() };
-			bad = { taps: [q.ids[0], 6, 6, 42].filter((id) => id === q.ids[0] || !q.ids.includes(id)) };
 		} else if (type === 'ilavi') {
 			good = { taps: [q.il] };
 			bad = { taps: [6, 34, 35, 1].filter((id) => id !== q.il) };
-		} else if (type === 'baglanti') {
-			const tries = [];
-			for (let g = 0; g < v.n - 1; g++) tries.push(v.key.map((x, i) => (x === g ? i : -1)).filter((i) => i >= 0));
-			good = { tries };
-			bad = { tries: [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]].filter((t) => !t.every((k) => v.key[k] === v.key[t[0]])) };
 		} else if (typeof T.ornek === 'function') ({ good, bad } = T.ornek(v)); // ek gruplar: tipin kendi doğru/yanlış örneği
 		else if (typeof T.sinama === 'function') ({ good, bad } = T.sinama(v, q)); // aynı kanca, öbür ad
 		else if (typeof T.probe === 'function') ({ good, bad } = T.probe(v)); // aynı kanca, üçüncü ad
@@ -84,34 +74,6 @@ for (const [type, list] of Object.entries(DENEME_SAMPLES)) {
 		row.push(q.id.slice(3) + ' ' + v.sec + ' sn');
 	}
 	console.log('  ' + type.padEnd(10) + row.join(' · '));
-}
-
-// bağlantı duvarı: 12 farklı taş, 3 × 4 grup ve TEK çözüm (bütün 12 taşlık bölüşümler içinde yalnız biri, her taşın
-// girebileceği gruplar ALT listesine göre: tuzak taş iki gruba da uyar, sayım tek çözüme indirir)
-const ALT = {
-	'dn-bg1': { Yıldız: [0, 1] },
-	'dn-bg2': { Fatih: [0, 1], Yıldırım: [0, 2] },
-	'dn-bg3': { Ağrı: [0, 2], Van: [1, 2] },
-	'dn-bg4': { Tulum: [0, 1] },
-	'dn-bg5': { Smaç: [1, 2], Blok: [1, 2] },
-};
-for (const q of DENEME_SAMPLES.baglanti) {
-	const words = q.groups.flatMap((g) => g.w);
-	ok(new Set(words).size === 12 && q.groups.length === 3 && q.groups.every((g) => g.w.length === 4), q.id + ': 12 farklı taş, 3 × 4 grup değil');
-	const opts = words.map((w) => ALT[q.id]?.[w] || [q.groups.findIndex((g) => g.w.includes(w))]);
-	let sols = 0;
-	const cnt = [0, 0, 0];
-	const walk = (i) => {
-		if (i === words.length) return void (sols += cnt.every((c) => c === 4) ? 1 : 0);
-		for (const g of opts[i]) {
-			cnt[g]++;
-			walk(i + 1);
-			cnt[g]--;
-		}
-	};
-	walk(0);
-	ok(sols === 1, q.id + ': duvarın tek çözümü yok (' + sols + ')');
-	ok(Object.keys(ALT[q.id] || {}).length > 0, q.id + ': tuzak taş yok');
 }
 
 console.log(checks + ' denetim, ' + fails + ' hata');

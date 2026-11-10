@@ -20,7 +20,6 @@ for (const q of [...BANK, ...Object.values(DENEME_SAMPLES).flat()]) (by[q.type] 
 const out = [];
 const rows = [];
 for (const [t, list] of Object.entries(by)) {
-  if (t === 'kosu' || t === 'baglanti') continue; // galeride elenen prototipler
   const score = (q) => [L(q.q), Math.max(0, ...parts(q).map(L)), parts(q).reduce((a, s) => a + L(s), 0)];
   const pick = new Set();
   for (const k of [0, 1, 2]) for (const q of list.slice().sort((a, b) => score(b)[k] - score(a)[k]).slice(0, N)) pick.add(q);

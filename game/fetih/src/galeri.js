@@ -6,7 +6,7 @@
 // sonra VS girişi ve soru kartı; cevaplayınca bot da cevaplar ve cevap ekranı açılır.
 //
 // YENİ · deneme tipleri (src/quiz/deneme.js): tip listesinin başında ayrı bir bölümde; maçta çıkmazlar, yalnız
-// burada denenir. Galeri ilk açılışta ilk deneme tipiyle başlar; adresin sonuna #kosu gibi tip adı yazılırsa o açılır.
+// burada denenir. Galeri ilk açılışta ilk deneme tipiyle başlar; adresin sonuna #balon gibi tip adı yazılırsa o açılır.
 
 import { createFetih } from './index.js';
 import { TYPES } from './quiz/types.js';
@@ -33,14 +33,12 @@ const ORDER = [
 	['blitz', 'Yıldırım'],
 ];
 // galerideki bütün tipler tek listede: oyundakiler, ardından kullanıcının defterde tuttuğu yeni tipler (3. alan true).
-// Defterde elenen prototipler (Fetih Koşusu, Bağlantı Duvarı) listede yok; kodları src/quiz/ altında duruyor.
-const ELENEN = new Set(['kosu', 'baglanti']);
 // en yeni tipler (kırmızı YENİ rozeti) listenin en üstünde; galeri ilk açılışta ilkiyle başlar
 const TAZE = new Set(TAZE_ORDER.map(([t]) => t));
 const LIST = [
 	...TAZE_ORDER.map(([t, n, s]) => [t, n, true, s]),
 	...ORDER,
-	...DENEME_ORDER.filter(([t]) => !ELENEN.has(t) && !TAZE.has(t)).map(([t, n, s]) => [t, n, true, s]),
+	...DENEME_ORDER.filter(([t]) => !TAZE.has(t)).map(([t, n, s]) => [t, n, true, s]),
 ];
 const ALLT = { ...TYPES, ...DENEME_TYPES };
 const isNew = (t) => !!DENEME_TYPES[t];

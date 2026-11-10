@@ -323,7 +323,7 @@ const CSS = /* css */ `
 .ka-hl,.ka-cells{position:absolute;inset:0}
 .ka-hl{pointer-events:none;z-index:1}
 .ka-cells{z-index:2;display:grid;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);pointer-events:none}
-.ka-c{display:grid;place-items:center;font:400 .58em/1 'Lilita One',sans-serif;color:#f3ecdb;text-shadow:0 .06em 0 rgba(0,0,0,.55);transition:color .2s,transform .2s}
+.ka-c{display:grid;place-items:center;font:400 .66em/1 'Lilita One',sans-serif;color:#f3ecdb;text-shadow:0 .06em 0 rgba(0,0,0,.55);transition:color .2s,transform .2s}
 /* giriş: harfler sol üstten çapraz bir dalgayla döner (kart açılınca) */
 .yn-ka.intro .ka-c{animation:kaIn .42s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--w) * 26ms)}
 .ka-c.sel,.ka-c.anc{color:#1a1200;text-shadow:none;transform:scale(1.12)}
@@ -388,9 +388,19 @@ const CSS = /* css */ `
   .yn-ka{gap:7px}
   .ka-clue{min-height:29px}
   .ka-no{width:26px;font-size:17px}
-  .ka-ct{font-size:13.5px}
   .ka-tip{display:none}
   .ka-vd{height:54px}
+  /* tabloya yükseklik: joker çubuğu alçak ve yakın, süre çubuğu sıkı (ızgara kare: her piksel hücreyi büyütür) */
+  .fl-q.t-kelimeavi .fl-jk{margin-top:6px}
+  .fl-q.t-kelimeavi .fl-jkb{height:48px}
+  .fl-q.t-kelimeavi .fl-tbar{margin:4px 2px 5px}
+  .fl-q.t-kelimeavi .fl-qbody{padding-top:4px}
+  /* başlık satırı: büyük süre yazısı (44 px) satırı yükseltiyordu; kısa ekranda alçak */
+  .fl-q.t-kelimeavi .fl-qhead{min-height:0}
+  .fl-q.t-kelimeavi .fl-clock b{font-size:30px}
+  .fl-q.t-kelimeavi .fl-cat{height:26px}
+  .fl-q.t-kelimeavi .fl-qhead .fl-rule{display:none} /* "En çok kelime": ipuçları ve tablo kuralı zaten anlatıyor */
+  .ka-ct{font-size:13px;line-height:1.1}
   .yn-ka.rv .ka-clue{grid-template-columns:26px minmax(0,1fr) auto}
 }
 @media (max-height:600px){
@@ -403,6 +413,11 @@ const CSS = /* css */ `
   .ka-clue{min-height:24px;gap:6px;padding-top:1px;padding-bottom:1px}
   .ka-ct{font-size:12px;line-height:1.08}
   .ka-len{padding:2px 5px 1px;font-size:11px}
+  /* dar satırda bulmaca yazımı "(8)": ipucu tek satıra sığar, tablo büyür */
+  .ka-len{letter-spacing:.02em}
+  .ka-len small{font-size:0}
+  .ka-len::before{content:'('}
+  .ka-len::after{content:')'}
   .ka-vd{height:50px}
   .ka-av{width:22px;height:22px}
 }
@@ -476,7 +491,7 @@ export const kelimeavi = {
 		el.innerHTML = `<div class="yn-ka" style="--n:${n};--rw:${rw}px">
 			<div class="ka-vd"></div>
 			<div class="ka-clues">${v.clues
-				.map((x, i) => `<div class="ka-clue" data-i="${i}" style="--wc:${RENK[i % 3]}"><i class="ka-no">${i + 1}</i><span class="ka-ct">${esc(x.c).replace(/\s*\u2026\s*/g, ' <u class="ka-blank"></u> ').trim()}</span><b class="ka-ans"></b><em class="ka-len">${x.len} HARF</em><span class="ka-who"></span></div>`)
+				.map((x, i) => `<div class="ka-clue" data-i="${i}" style="--wc:${RENK[i % 3]}"><i class="ka-no">${i + 1}</i><span class="ka-ct">${esc(x.c).replace(/\s*\u2026\s*/g, ' <u class="ka-blank"></u> ').trim()}</span><b class="ka-ans"></b><em class="ka-len">${x.len}<small> HARF</small></em><span class="ka-who"></span></div>`)
 				.join('')}</div>
 			<div class="ka-board"><div class="ka-grid"><i class="ka-gl"></i><div class="ka-hl"></div><div class="ka-cells">${G.map((row, r) => row.map((ch, c) => `<span class="ka-c" data-r="${r}" data-c="${c}" style="--w:${r + c}">${esc(ch)}</span>`).join('')).join('')}</div></div></div>
 			<div class="ka-tip">Harflerin üstünden <b>düz bir çizgide</b> kaydır, bırak</div>

@@ -6,7 +6,7 @@
 //   YENİ TİPLER   kusbakisi ilavi kimim sive halat mancinik yanlis ikidogru harfal azbilinen tufan kayip fitil golge
 //                 gozkarari penalti kazi balon mayin rota tunel kelimeavi
 //                 (BAYRAK ile bir tip maçtan çekilebilir; cfg.yeni = { tip: false } maç başına kapatır)
-//                 Elenenler (kosu, baglanti) maça hiç girmez. Eski tipler olduğu gibi kalır (Resimli 2026-11'de kaldırıldı:
+//                 Elenen prototipler (Fetih Koşusu, Bağlantı Duvarı) 2026-11'de silindi. Eski tipler olduğu gibi kalır (Resimli 2026-11'de kaldırıldı:
 //                 yerini Göz Kararı aldı).
 //   KÖPRÜ         yeni tiplerin soruları galeri örneklerinden (DENEME_SAMPLES) okunur: yeniBank(). Örnek dizilerine
 //                 eklenen her soru maça kendiliğinden girer (bu dosya yalnız okur).
