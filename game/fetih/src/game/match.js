@@ -116,7 +116,7 @@ export const REWARD = { every: 3, pool: ['yari', 'kahin', 'sure', 'ikinci', 'sab
  * İzleyici tahmini (v2, KARARLAR 7): çevrimiçinde başka iki oyuncunun sorusunu izleyen de cevaplar; bilirse +20 puan.
  * Yalnız sunucuda adımı olmayan, bildi/bilemedi ile yargılanan tiplerde (PREDICT.types).
  */
-export const PREDICT = { bonus: 20, types: [...REPAIR_TYPES, 'blitz', 'img', 'order', 'match'] };
+export const PREDICT = { bonus: 20, types: [...REPAIR_TYPES, 'blitz', 'order', 'match'] };
 export const pickPool = (n) => PICK_TIME.first + PICK_TIME.next * Math.max(0, n - 1);
 
 /**

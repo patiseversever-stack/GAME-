@@ -67,7 +67,7 @@ for (const [name, T] of Object.entries(TYPES)) {
 	ok(T.kind === 'exact' || T.kind === 'closest', `${name}: kind`);
 	for (const f of ['prepare', 'mount', 'judge', 'bot']) ok(typeof T[f] === 'function', `${name}: ${f}()`);
 }
-const REQUIRED = ['choice', 'tf', 'num', 'pin', 'hang', 'order', 'match', 'hilo', 'odd', 'anagram', 'cross', 'proverb', 'riddle', 'img', 'blitz'];
+const REQUIRED = ['choice', 'tf', 'num', 'pin', 'hang', 'order', 'match', 'hilo', 'odd', 'anagram', 'cross', 'proverb', 'riddle', 'blitz'];
 for (const t of REQUIRED) ok(TYPES[t], `${t} kayıtlı değil`);
 
 // ---------------------------------------------------------------- 2) bankadaki her soru
@@ -190,7 +190,6 @@ console.log('4) Verisiz tipler (yapay soruyla)');
 const SYN = {
 	anagram: { id: 's1', cat: 'bilim', diff: 1, type: 'anagram', q: 'Sıcaklık ölçer', w: 'TERMOMETRE' },
 	cross: { id: 's2', cat: 'tarih', diff: 2, type: 'cross', q: 'Çengel', words: [{ w: 'FATİH', clue: 'İstanbul fatihi' }, { w: 'SELİM', clue: 'Yavuz' }, { w: 'KANUNİ', clue: 'Süleyman' }] },
-	img: { id: 's3', cat: 'cografya', diff: 1, type: 'img', q: 'Bu nedir?', img: 'kedi', mode: 'blur', a: ['Kedi', 'Köpek', 'Tavşan', 'Kuş'] },
 	blitz: { id: 's4', cat: 'eglence', diff: 1, type: 'blitz', q: 'Yıldırım', items: Array.from({ length: 14 }, (_, i) => ({ t: 'İfade ' + i, ans: i % 2 === 0 })) },
 };
 for (const [t, q] of Object.entries(SYN)) {
@@ -211,7 +210,7 @@ for (const [t, q] of Object.entries(SYN)) {
 console.log('5) pickType');
 const have = new Map();
 for (const q of BANK) (have.get(q.cat) || have.set(q.cat, new Set()).get(q.cat)).add(q.type);
-const EMPTY = ['anagram', 'cross', 'img', 'blitz'].filter((t) => !BANK.some((q) => q.type === t));
+const EMPTY = ['anagram', 'cross', 'blitz'].filter((t) => !BANK.some((q) => q.type === t));
 const R = rng(99);
 for (const cat of [...Object.keys(TYPE_WEIGHTS), null]) {
 	for (const phase of ['attack', 'expand']) {

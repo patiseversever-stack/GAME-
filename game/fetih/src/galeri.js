@@ -30,7 +30,6 @@ const ORDER = [
 	['hilo', 'Karşılaştırma'],
 	['odd', 'Farklı olan'],
 	['riddle', 'Bilmece'],
-	// 'img' (Resimli): eski prosedürel çizimli tip; görselli soruların yerini Göz Kararı aldı (bankada sorusu yok)
 	['blitz', 'Yıldırım'],
 ];
 // galerideki bütün tipler tek listede: oyundakiler, ardından kullanıcının defterde tuttuğu yeni tipler (3. alan true).

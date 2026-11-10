@@ -45,7 +45,6 @@ const V07 = {
 	proverb: [12, 13, 14, 13.1],
 	anagram: [14, 24, 33, 24],
 	cross: [34, 72, 72, 53],
-	img: [16, 22, 24, 20],
 	blitz: [10, 15, 20, 15],
 };
 const clone = (q) => JSON.parse(JSON.stringify(q));
@@ -84,9 +83,6 @@ const SYN = [
 			{ w: 'ALANYA', clue: 'Kızıl Kule’nin ilçesi' },
 		],
 	},
-	{ id: 'y-im1', cat: 'cografya', diff: 1, type: 'img', q: 'Bu nedir?', img: 'kedi', mode: 'blur', a: ['Kedi', 'Köpek', 'Tavşan', 'Kuş'] },
-	{ id: 'y-im2', cat: 'cografya', diff: 2, type: 'img', q: 'Siluetteki yapı hangisi?', img: 'galata', mode: 'silhouette', a: ['Galata Kulesi', 'Kız Kulesi', 'Saat Kulesi', 'Beyazıt Kulesi'] },
-	{ id: 'y-im3', cat: 'eglence', diff: 2, type: 'img', q: 'Resimleri birleştir', img: ['kar', 'adam'], mode: 'rebus', w: 'KARADAM' },
 	{ id: 'y-bz1', cat: 'eglence', diff: 1, type: 'blitz', q: 'Yıldırım', items: Array.from({ length: 14 }, (_, i) => ({ t: 'İfade ' + i, ans: i % 2 === 0 })) },
 	{
 		id: 'y-bz2',
@@ -193,7 +189,6 @@ const W = ['KAR', 'KEDİ', 'MERKÜR', 'MARATON', 'TERMOMETRE', 'KÜTÜPHANECİL�
 // adam asmacada asıl girdi farklı harf sayısıdır (TERMOMETRE 5 farklı harf): artan farklı harfle sınanır
 grows('adam asmaca', (w) => ({ type: 'hang', diff: 2, q: 'İpucu', w }), ['KAR', 'KEDİ', 'MERKÜR', 'MARATON', 'KOLEZYUM', 'KÜTÜPHANECİLİK']);
 grows('anagram', (w) => ({ type: 'anagram', diff: 2, q: 'İpucu', w }), W);
-grows('resimli yazı', (w) => ({ type: 'img', diff: 2, q: 'Bu ne?', img: 'x', mode: 'silhouette', w }), W);
 {
 	const base = SYN.find((q) => q.id === 'y-cr2');
 	const sets = [2, 3, 4, 5].map((n) => ({ ...base, words: base.words.slice(0, n) }));

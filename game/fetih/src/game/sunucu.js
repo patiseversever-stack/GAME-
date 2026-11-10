@@ -20,6 +20,11 @@
 //   azbilinen  (yok; cevap sıra)            reveal: gerçek seçilme oranları (istatistik) { sıra }
 //   golge      (yok; cevap şık)             'ipucu' { k: 2, text } (ilk harf) saatinde   şık
 //   tufan, kusbakisi, kayip, golge, ikidogru: şık (0..n−1) · mancinik: sayı (min..max): yalnız doğrulama
+//   balon      'balon' { k }                'balon' { k, ok } (o an gökte mi, sunucu saatiyle)  { p: [[balon, sn], …] }
+//   mayin      'il' { il }                  'il' { il, mayin } (ikinci mayından sonra ret)    { taps: [plaka, …] }
+//   rota       (yok; cevap { route })       —                                                 { route } durak plakaları
+//   tunel      'yer' { k, g } (sırayla)     'yer' { k, g: doğru boşluk, ok, y: kartın yılı }   { g: [boşluk × 3], t }
+//   kelimeavi  'kelime' { s: [r0,c0,r1,c1] } 'kelime' { i, w? } (bulunan kelime, yoksa i −1)  { s: [[r0,c0,r1,c1,sn], …] }
 //
 // İstatistik (Az Bilinen, Şive): Match cfg.istatistik ile bir Istatistik nesnesi alır (sunucu saklar, JSON); yoksa
 // çevrimdışı tahmini oranlar ve kalabalık kullanılır.
@@ -32,6 +37,9 @@ import { between } from '../quiz/d_ilavi.js';
 import { GAP as KIMIM_GAP, LOCK as KIMIM_LOCK } from '../quiz/d_kimim.js';
 import { karma } from '../quiz/mac.js';
 import { filmOf as golgeFilm, IPUCU_AN as GOLGE_AN } from '../quiz/d_golge.js';
+import { CAN as MAYIN_CAN } from '../quiz/d_mayin.js';
+import { dogruBosluk } from '../quiz/d_tunel.js';
+import { kelimeOf } from '../quiz/d_kelimeavi.js';
 import DATA from '../data/turkiye.json';
 import { setPinAreas } from '../quiz/types.js';
 setPinAreas(DATA); // harita sorusu: il ve göl sınırları (types.js pinJudge)
@@ -352,6 +360,110 @@ export const ADIM = {
 	// Kazı Kazan: { i: şık, s: kazınan pay } (pay istemcinin ölçümü; 0..1'e kırpılır, binde bire yuvarlanır)
 	kazi: { final: (S, x) => (x && typeof x === 'object' && choice(S, x.i) !== null ? { i: x.i, s: Math.round(Math.min(1, Math.max(0, Number(x.s) || 0)) * 1000) / 1000 } : null) },
 	ikidogru: { final: (S, x) => choice(S, x) },
+
+	// Balon Patlat: doğru bayrakları görünümde yok; her dokunuşu sunucu kendi saatiyle damgalar ve yargılar (balon o an
+	// gökte değilse ya da zaten patladıysa ret). Son değer sunucunun kaydı.
+	balon: {
+		open(S) {
+			S.st.p = [];
+		},
+		acts: {
+			balon(S, d) {
+				const k = Number(d?.k);
+				const b = Number.isInteger(k) ? S.v.b?.[k] : null;
+				const t = Math.round(S.t() * 100) / 100;
+				if (!b || S.st.p.some((x) => x[0] === k) || t < b.t - 0.3 || t > b.t + b.d + 0.4) return S.send('balon', { k: d?.k ?? null, rejected: true });
+				S.st.p.push([k, t]);
+				S.send('balon', { k, ok: !!b.ok });
+			},
+		},
+		final: (S) => ({ p: (S.st.p || []).slice() }),
+	},
+	// Mayın Tarlası: güvenli iller görünümde yok; her dokunuşu sunucu yanıtlar (tarlada değilse, aynı ilse ya da canlar
+	// bittiyse ret). Son değer sunucunun kaydı.
+	mayin: {
+		open(S) {
+			S.st.taps = [];
+			S.st.boom = 0;
+		},
+		acts: {
+			il(S, d) {
+				const id = plate(d?.il);
+				const i = id == null ? null : BY_ID.get(id);
+				const st = S.st;
+				if (i == null || !S.v.alan.includes(i) || st.taps.includes(id) || st.boom >= MAYIN_CAN) return S.send('il', { il: d?.il ?? null, rejected: true });
+				st.taps.push(id);
+				const mayin = !S.v.guvenli.includes(i);
+				if (mayin) st.boom++;
+				S.send('il', { il: id, mayin });
+			},
+		},
+		final: (S) => ({ taps: (S.st.taps || []).slice() }),
+	},
+	// Uçuş Rotası: doğru sıra görünümde yok; rota yalnız doğrulanır (duraklardan, tekrarsız, en çok durak sayısı kadar)
+	rota: {
+		final(S, x) {
+			const sira = S.v.sira || [];
+			const route = [];
+			for (const id of Array.isArray(x?.route) ? x.route : []) {
+				const p = plate(id);
+				if (p == null || route.includes(p) || !sira.includes(BY_ID.get(p))) continue;
+				route.push(p);
+				if (route.length >= sira.length) break;
+			}
+			return { route };
+		},
+	},
+	// Zaman Tüneli: kartların yılı görünümde yok; kartlar sırayla konur, her yerleştirmeyi sunucu yanıtlar (doğru boşluk
+	// ve kartın yılı: yanlış kart da gerçek yerine kayar, sonraki kart ona göre konur)
+	tunel: {
+		open(S) {
+			S.st.g = [];
+			S.st.t = [];
+		},
+		acts: {
+			yer(S, d) {
+				const k = Number(d?.k);
+				const g = Number(d?.g);
+				const st = S.st;
+				const n = S.v.years?.length || 0;
+				if (k !== st.g.length || k >= n || !Number.isInteger(g) || g < 0 || g > k + 2) return S.send('yer', { k: d?.k ?? null, rejected: true });
+				st.g.push(g);
+				st.t.push(Math.round(S.t() * 10) / 10);
+				const want = dogruBosluk(S.v, k);
+				S.send('yer', { k, g: want, ok: g === want, y: S.v.years[k] });
+			},
+		},
+		final(S) {
+			const n = S.v.years?.length || 0;
+			const g = (S.st.g || []).slice();
+			while (g.length < n) g.push(null);
+			return { g, t: (S.st.t || []).slice() };
+		},
+	},
+	// Kelime Avı: yerleşim görünümde yok; her seçimi sunucu kendi saatiyle damgalar ve tabloyla karşılaştırır
+	kelimeavi: {
+		open(S) {
+			S.st.s = [];
+			S.st.got = new Set();
+		},
+		acts: {
+			kelime(S, d) {
+				const s = d?.s;
+				const st = S.st;
+				const n = S.v.n || 0;
+				const cell = (x) => Number.isInteger(x) && x >= 0 && x < n;
+				if (!Array.isArray(s) || !s.slice(0, 4).every(cell) || s.length < 4 || st.s.length >= 60) return S.send('kelime', { rejected: true });
+				st.s.push([s[0], s[1], s[2], s[3], Math.round(S.t() * 10) / 10]);
+				const i = kelimeOf(S.v, s[0], s[1], s[2], s[3]);
+				if (i >= 0 && !st.got.has(i)) {
+					st.got.add(i);
+					S.send('kelime', { i, w: S.v.words[i].w });
+				} else S.send('kelime', { i: -1 });
+			},
+		},
+		final: (S) => ({ s: (S.st.s || []).slice() }),
+	},
 };
 
 /**

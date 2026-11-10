@@ -18,7 +18,6 @@ import { order } from './t_order.js';
 import { match } from './t_match.js';
 import { hilo, odd, proverb, riddle, optFit } from './t_pick.js';
 import { anagram, cross } from './t_word.js';
-import { img } from './t_img.js';
 import { blitz } from './t_blitz.js';
 import { hang } from './t_hang.js';
 
@@ -349,7 +348,7 @@ export const TYPES = {
 };
 
 // ---------------------------------------------------------------- yeni tipler (src/quiz/t_*.js)
-Object.assign(TYPES, { hang, order, match, hilo, odd, anagram, cross, proverb, riddle, img, blitz });
+Object.assign(TYPES, { hang, order, match, hilo, odd, anagram, cross, proverb, riddle, blitz });
 // sakin tipler: soru boyunca 3B sahneyi canlandırmazlar (haritasız olanlarda harita arkada durgun: mobilde 30 kare)
 for (const T of Object.values(TYPES)) if (!T.needsMap) T.calm = true;
 
@@ -378,32 +377,32 @@ for (const T of Object.values(TYPES)) {
 // Anahtarlar tip adları, değerler göreli ağırlık (0 = hiç).
 export const TYPE_WEIGHTS = {
 	tarih: {
-		attack: { choice: 4, tf: 2, order: 3, match: 2, odd: 1, hang: 1, anagram: 1, cross: 1, pin: 2, hilo: 1, img: 1, blitz: 1, riddle: 0.5 },
+		attack: { choice: 4, tf: 2, order: 3, match: 2, odd: 1, hang: 1, anagram: 1, cross: 1, pin: 2, hilo: 1, blitz: 1, riddle: 0.5 },
 		expand: { num: 3, order: 3, pin: 2, match: 1, cross: 1, hilo: 1, blitz: 1 },
 	},
 	cografya: {
-		attack: { choice: 4, tf: 2, pin: 3, hang: 1, hilo: 2, match: 2, odd: 1, img: 3, anagram: 1, cross: 1, blitz: 1 },
-		expand: { pin: 4, num: 3, hilo: 2, order: 1, match: 1, cross: 1, img: 1, blitz: 1 },
+		attack: { choice: 4, tf: 2, pin: 3, hang: 1, hilo: 2, match: 2, odd: 1, anagram: 1, cross: 1, blitz: 1 },
+		expand: { pin: 4, num: 3, hilo: 2, order: 1, match: 1, cross: 1, blitz: 1 },
 	},
 	spor: {
 		attack: { choice: 4, tf: 2, hang: 1, hilo: 2, odd: 1, match: 1, anagram: 1, blitz: 1, order: 1, cross: 1 },
 		expand: { num: 3, hilo: 2, order: 2, blitz: 2, match: 1, cross: 1 },
 	},
 	bilim: {
-		attack: { choice: 4, tf: 2, hang: 1, odd: 2, anagram: 2, hilo: 2, match: 2, order: 1, riddle: 1, cross: 1, img: 1, blitz: 1 },
+		attack: { choice: 4, tf: 2, hang: 1, odd: 2, anagram: 2, hilo: 2, match: 2, order: 1, riddle: 1, cross: 1, blitz: 1 },
 		expand: { num: 4, order: 2, hilo: 2, blitz: 1, match: 1, cross: 1 },
 	},
 	sanat: {
-		attack: { choice: 4, tf: 1, odd: 2, match: 2, proverb: 2, riddle: 2, anagram: 1, hang: 1, cross: 2, img: 1, order: 1 },
+		attack: { choice: 4, tf: 1, odd: 2, match: 2, proverb: 2, riddle: 2, anagram: 1, hang: 1, cross: 2, order: 1 },
 		expand: { num: 2, order: 2, match: 2, cross: 2, blitz: 1 },
 	},
 	eglence: {
-		attack: { choice: 3, tf: 2, proverb: 3, riddle: 3, odd: 2, anagram: 2, hang: 1, img: 2, match: 1, cross: 1, blitz: 2, hilo: 1, order: 1 },
+		attack: { choice: 3, tf: 2, proverb: 3, riddle: 3, odd: 2, anagram: 2, hang: 1, match: 1, cross: 1, blitz: 2, hilo: 1, order: 1 },
 		expand: { num: 2, hilo: 2, blitz: 2, order: 1, match: 1, cross: 1 },
 	},
 	// kategori belirsizse
 	default: {
-		attack: { choice: 4, tf: 2, hang: 1, odd: 1, proverb: 1, anagram: 1, match: 1, order: 1, hilo: 1, img: 1, blitz: 1 },
+		attack: { choice: 4, tf: 2, hang: 1, odd: 1, proverb: 1, anagram: 1, match: 1, order: 1, hilo: 1, blitz: 1 },
 		expand: { num: 3, order: 2, hilo: 1, match: 1, blitz: 1 },
 	},
 };

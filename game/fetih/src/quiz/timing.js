@@ -76,7 +76,7 @@ export const PLAYERS = {
 
 // sabit arayüz bekleme ve bakış süreleri (sn)
 const OPEN = 0.5; // kart açılış canlandırması (bekleme)
-const LOOK = { orient: 0.5, gaze: 0.3, map: 1, image: 2, rebus: 1.5, reveal: 4, tile: 0.12, ends: 1 };
+const LOOK = { orient: 0.5, gaze: 0.3, map: 1, image: 2, reveal: 4, tile: 0.12, ends: 1 };
 // giriş hareketleri (sn, yavaş-rahat oyuncu)
 const ACT = { tap: 0.75, confirm: 0.9, move: 1.8, link: 1.5, key: 0.85, miss: 1.6, slide: 2.2, step: 0.45, mapTap: 1.2, mapFix: 1.6, tile: 0.45, tileScan: 0.03, retry: 1.5, nav: 0.6, fix: 2 };
 /** Bilmece kökü iki kez okunur: ilk okuma + anahtar yerlerin ikinci (kısmi) okuması. */
@@ -93,7 +93,6 @@ export const PROFILE = {
 	choice: { min: 10, max: 25, think: [2.5, 1.25] }, // hatırla, şıklarda bul
 	odd: { min: 11, max: 24, think: [3.5, 1.25] }, // ortak kuralı bul
 	riddle: { min: 12, max: 28, think: [4, 1.5] }, // bilmeceyi çöz
-	img: { min: 12, max: 34, think: [3, 1.25] },
 	num: { min: 12, max: 28, think: [3.5, 1.5] }, // tahmin et
 	pin: { min: 12, max: 26, think: [3.5, 1.5] }, // yeri hatırla, haritada ölçeği kur
 	hang: { min: 15, max: 42, think: [3.5, 1.5] }, // kelimeyi hatırla (açılan harflerle desen çözülür)
@@ -249,17 +248,6 @@ function parts(q) {
 			look += 1.5;
 			think = n * (P.think[0] + P.think[1] * k); // kelime başına ipucunu çöz (Kelime Oyunu: 14 kelime 4 dk)
 			act = cells * ACT.key * 0.8 + n * ACT.nav + ACT.fix;
-			break;
-		}
-		case 'img': {
-			const ids = Array.isArray(q.img) ? q.img : [q.img];
-			look += LOOK.image + (q.mode === 'rebus' ? LOOK.rebus * ids.length : 0);
-			if (q.mode === 'blur' || q.mode === 'zoom') wait += LOOK.reveal; // resim netleşene / uzaklaşana dek
-			if (Array.isArray(q.a)) opts(q.a);
-			else {
-				think += 1; // yazımı hatırla
-				act = letters(q.w).length * ACT.key + ACT.retry;
-			}
 			break;
 		}
 		case 'blitz': {

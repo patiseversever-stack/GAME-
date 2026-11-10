@@ -31,7 +31,6 @@ const deepKeys = (o, out = new Set()) => {
 const SAMPLES = [
 	{ id: 's1', cat: 'bilim', diff: 1, type: 'anagram', q: 'Sıcaklık ölçer', w: 'TERMOMETRE' },
 	{ id: 's2', cat: 'tarih', diff: 2, type: 'cross', q: 'Çengel', words: [{ w: 'FATİH', clue: 'İstanbul fatihi' }, { w: 'SELİM', clue: 'Yavuz' }, { w: 'KANUNİ', clue: 'Süleyman' }] },
-	{ id: 's3', cat: 'cografya', diff: 1, type: 'img', q: 'Bu nedir?', img: 'kedi', mode: 'blur', a: ['Kedi', 'Köpek', 'Tavşan', 'Kuş'] },
 	{ id: 's4', cat: 'eglence', diff: 1, type: 'blitz', q: 'Yıldırım', items: Array.from({ length: 8 }, (_, i) => ({ t: 'İfade ' + i, ans: i % 2 === 0 })) },
 ];
 
@@ -247,6 +246,16 @@ for (const q of [...BANK, ...SAMPLES]) {
 				return has2(pv, 'right', 'hedef', 'nb', 'hints') || has2(q, 'a', 'il', 'hint') || !Array.isArray(pv.kuyu);
 			case 'fitil':
 				return has2(pv, 'fuse') || pv.items.some((it) => has2(it, 'right'));
+			case 'balon':
+				return pv.b.some((b) => has2(b, 'ok')) || has2(q, 'dogru', 'yanlis', 'not');
+			case 'mayin':
+				return has2(pv, 'guvenli') || has2(q, 'guvenli', 'not');
+			case 'rota':
+				return has2(pv, 'sira', 'not') || has2(q, 'duraklar');
+			case 'tunel':
+				return has2(pv, 'years') || has2(q, 'cards') || (pv.cards || []).some((x) => has2(x, 'y'));
+			case 'kelimeavi':
+				return has2(pv, 'words') || has2(q, 'words');
 		}
 		return false;
 	};
@@ -353,6 +362,12 @@ for (const q of [...BANK, ...SAMPLES]) {
 						ok(e.d.results.filter((r) => r.correct).length === 1, `${tag}: Fitil: tam bir taraf kurtulmalı`);
 					}
 					if (type === 'sive') ok(Array.isArray(full.heat) && full.heat.length > 0, `${tag}: Şive ısı haritası sunucudan gelmedi`);
+					// galeriden maça gelenler (2026-11): sunucunun kaydı olaylarla aynı
+					const kabul = (kk) => evs(kk).filter((x) => !x.d.rejected).length;
+					if (type === 'balon' && mine.value) ok(kabul('balon') === mine.value.p.length, `${tag}: Balon patlatmaları sunucu kaydıyla uyuşmuyor`);
+					if (type === 'mayin' && mine.value) ok(kabul('il') === mine.value.taps.length && mine.value.taps.filter((id) => !full.guvenli.includes(id - 1)).length <= 2, `${tag}: Mayın dokunuşları sunucu kaydıyla uyuşmuyor`);
+					if (type === 'tunel' && mine.value) ok(kabul('yer') === mine.value.g.filter((g) => g != null).length, `${tag}: Tünel yerleştirmeleri sunucu kaydıyla uyuşmuyor`);
+					if (type === 'kelimeavi' && mine.value) ok(kabul('kelime') === mine.value.s.length, `${tag}: Kelime Avı seçimleri sunucu kaydıyla uyuşmuyor`);
 				}
 				ask = null;
 			});

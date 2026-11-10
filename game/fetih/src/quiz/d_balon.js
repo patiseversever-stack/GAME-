@@ -902,6 +902,7 @@ export const balon = {
 		for (const b of o.b) delete b.ok;
 		delete o.q.dogru;
 		delete o.q.yanlis;
+		delete o.q.not; // açıklama tuzakları adıyla söyler (cevapta tam görünümle gelir)
 		return o;
 	},
 	judge(v, value) {

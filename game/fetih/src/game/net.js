@@ -215,8 +215,6 @@ const SECRET = {
 		if (Array.isArray(o.items)) o.items = o.items.map(({ t }) => ({ t }));
 		delete o.q.items;
 	},
-	// img: görsel kimliği (ids) çizim için gider; kimlik adları cevabı ele vermesin diye görsel paketi
-	// çevrimiçi sürümde anlamsız adlarla (karma) yayımlanmalı
 };
 
 /** Yerel insan koltuğu: kararları arayüzden alır. */
@@ -589,5 +587,70 @@ const OYNA = {
 	async ikidogru(c, d) {
 		await c.sleep(1500 + c.int(5000));
 		return pickOpt(c, d.v);
+	},
+	// Balon Patlat: doğrular görünümde yok; gökteki balonlardan birkaçını uçuşun ortasında patlatır, yargı sunucudan
+	async balon(c, d) {
+		const b = d.v.b || [];
+		const t0 = performance.now();
+		const pick = b.map((x, k) => [k, x.t + x.d * (0.3 + c.R() * 0.4)]).filter(() => c.R() < 0.5).sort((x, y) => x[1] - y[1]);
+		for (const [k, at] of pick.slice(0, 6)) {
+			const w = at * 1000 - (performance.now() - t0);
+			if (w > 0) await c.sleep(w);
+			c.act('balon', { k });
+			await c.wait('balon', 2000);
+		}
+		return { p: [] };
+	},
+	// Mayın Tarlası: tarladaki illere sırayla basar, ikinci mayında durur
+	async mayin(c, d) {
+		const alan = (d.v.alan || []).slice();
+		const taps = [];
+		let boom = 0;
+		for (let k = 0; alan.length && k < 8 && boom < 2; k++) {
+			await c.sleep(900 + c.int(1600));
+			const il = alan.splice(c.int(alan.length), 1)[0] + 1; // il dizini → plaka
+			c.act('il', { il });
+			const r = await c.wait('il');
+			if (!r || r.rejected) continue;
+			taps.push(il);
+			if (r.mayin) boom++;
+		}
+		return { taps };
+	},
+	// Uçuş Rotası: kartlardaki durakları karışık bir sırayla uçar
+	async rota(c, d) {
+		await c.sleep(2000 + c.int(6000));
+		const kart = (d.v.kart || []).slice();
+		for (let k = kart.length - 1; k > 0; k--) {
+			const j = c.int(k + 1);
+			[kart[k], kart[j]] = [kart[j], kart[k]];
+		}
+		return { route: kart.map((i) => i + 1) };
+	},
+	// Zaman Tüneli: üç kartı sırayla bir boşluğa koyar (yanıtı sunucu verir)
+	async tunel(c, d) {
+		const n = d.v.cards?.length || 3;
+		for (let k = 0; k < n; k++) {
+			await c.sleep(1500 + c.int(3000));
+			c.act('yer', { k, g: c.int(k + 3) });
+			await c.wait('yer');
+		}
+		return { g: [], t: [] };
+	},
+	// Kelime Avı: tabloda rastgele düz çizgiler seçer (yerleşimi bilmez)
+	async kelimeavi(c, d) {
+		const n = d.v.n || 7;
+		for (let k = 0; k < 4; k++) {
+			await c.sleep(2000 + c.int(4000));
+			const r0 = c.int(n);
+			const c0 = c.int(n);
+			const len = 2 + c.int(4);
+			const [dr, dc] = [[0, 1], [1, 0], [1, 1]][c.int(3)];
+			const r1 = Math.min(n - 1, r0 + dr * len);
+			const c1 = Math.min(n - 1, c0 + dc * len);
+			c.act('kelime', { s: [r0, c0, r1, c1] });
+			await c.wait('kelime');
+		}
+		return { s: [] };
 	},
 };

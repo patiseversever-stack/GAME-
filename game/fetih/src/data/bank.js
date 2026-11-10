@@ -23,8 +23,6 @@ export function dupKey(q) {
 			return 'proverb|' + q.text;
 		case 'cross':
 			return 'cross|' + (q.words || []).map((x) => x.w).join('|');
-		case 'img':
-			return 'img|' + (q.img || q.w) + '|' + (q.mode || '');
 		case 'blitz':
 			return 'blitz|' + q.q;
 		default:

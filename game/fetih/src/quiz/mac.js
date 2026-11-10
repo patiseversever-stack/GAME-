@@ -4,8 +4,10 @@
 // düzeni"; sayısal doğrulama: node test/sim.mjs (binlerce maç), rapor: ref/mac-entegrasyon-v12/rapor.md.
 //
 //   YENİ TİPLER   kusbakisi ilavi kimim sive halat mancinik yanlis ikidogru harfal azbilinen tufan kayip fitil golge
+//                 gozkarari penalti kazi balon mayin rota tunel kelimeavi
 //                 (BAYRAK ile bir tip maçtan çekilebilir; cfg.yeni = { tip: false } maç başına kapatır)
-//                 Elenenler (kosu, baglanti) maça hiç girmez. Eski 16 tip olduğu gibi kalır.
+//                 Elenenler (kosu, baglanti) maça hiç girmez. Eski tipler olduğu gibi kalır (Resimli 2026-11'de kaldırıldı:
+//                 yerini Göz Kararı aldı).
 //   KÖPRÜ         yeni tiplerin soruları galeri örneklerinden (DENEME_SAMPLES) okunur: yeniBank(). Örnek dizilerine
 //                 eklenen her soru maça kendiliğinden girer (bu dosya yalnız okur).
 //   SEÇİM         tipSec(): an × mod × kategori ağırlıkları, yeni tip payı (eski/yeni dengesi, maç içinde dengelenir),
@@ -25,7 +27,7 @@ import { CATS } from './categories.js';
 import DATA from '../data/turkiye.json';
 
 /** Maça giren yeni tipler. */
-export const YENI = ['kusbakisi', 'ilavi', 'kimim', 'sive', 'halat', 'mancinik', 'yanlis', 'ikidogru', 'harfal', 'azbilinen', 'tufan', 'kayip', 'fitil', 'golge', 'gozkarari', 'penalti', 'kazi'];
+export const YENI = ['kusbakisi', 'ilavi', 'kimim', 'sive', 'halat', 'mancinik', 'yanlis', 'ikidogru', 'harfal', 'azbilinen', 'tufan', 'kayip', 'fitil', 'golge', 'gozkarari', 'penalti', 'kazi', 'balon', 'mayin', 'rota', 'tunel', 'kelimeavi'];
 const YENI_SET = new Set(YENI);
 export const isYeni = (t) => YENI_SET.has(t);
 
@@ -82,11 +84,11 @@ export function yeniBank() {
  */
 export const YENI_W = {
 	// sıralama üreten tipler önde (en yakın, ipucu sırası, deneme sayısı); canlı tur yok
-	expand: { mancinik: 2.2, azbilinen: 2.5, ilavi: 2.5, sive: 2.5, kimim: 2.5, harfal: 2, yanlis: 1.5, kusbakisi: 1.8, kayip: 1.5, tufan: 1.5, ikidogru: 1, golge: 1, gozkarari: 9, penalti: 1.5, kazi: 1.5 },
+	expand: { mancinik: 2.2, azbilinen: 2.5, ilavi: 2.5, sive: 2.5, kimim: 2.5, harfal: 2, yanlis: 1.5, kusbakisi: 1.8, kayip: 1.5, tufan: 1.5, ikidogru: 1, golge: 1, gozkarari: 9, penalti: 1.5, kazi: 1.5, balon: 1.6, tunel: 0.9, rota: 0.9, mayin: 0.8, kelimeavi: 0.6 },
 	// yüz yüze: canlı tur, erken bilen, sinematik
-	attack: { halat: 2.5, fitil: 2.5, kusbakisi: 2.5, kayip: 2, tufan: 2.5, kimim: 2, ikidogru: 2, yanlis: 1.5, harfal: 1.5, mancinik: 1.5, ilavi: 1.2, sive: 1.2, azbilinen: 1, golge: 2, gozkarari: 13, penalti: 2.2, kazi: 2 },
+	attack: { halat: 2.5, fitil: 2.5, kusbakisi: 2.5, kayip: 2, tufan: 2.5, kimim: 2, ikidogru: 2, yanlis: 1.5, harfal: 1.5, mancinik: 1.5, ilavi: 1.2, sive: 1.2, azbilinen: 1, golge: 2, gozkarari: 13, penalti: 2.2, kazi: 2, balon: 2, mayin: 1.8, tunel: 1.6, rota: 1.5, kelimeavi: 1.2 },
 	// kale: maçın en büyük anı, yıldız tipler
-	siege: { halat: 3, fitil: 3, tufan: 2.5, kusbakisi: 2, kayip: 2, mancinik: 1.5, kimim: 1.5, ikidogru: 1, yanlis: 1, harfal: 1, ilavi: 1, sive: 1, azbilinen: 0.5, golge: 2, gozkarari: 8, penalti: 1.5, kazi: 1.5 },
+	siege: { halat: 3, fitil: 3, tufan: 2.5, kusbakisi: 2, kayip: 2, mancinik: 1.5, kimim: 1.5, ikidogru: 1, yanlis: 1, harfal: 1, ilavi: 1, sive: 1, azbilinen: 0.5, golge: 2, gozkarari: 8, penalti: 1.5, kazi: 1.5, balon: 1.5, mayin: 2, rota: 1.6, tunel: 1.4, kelimeavi: 1.2 },
 	// eşitlik bozma ve altın soru: en yakın kazanır (tahmin ya da Mancınık)
 	tie: { mancinik: 1 },
 	golden: { mancinik: 1 },
@@ -126,6 +128,9 @@ export function modK(mode, moment, t) {
 export const KAT = {
 	penalti: { spor: 1.3 },
 	kazi: { cografya: 1.2, tarih: 1.2, sanat: 1.2 }, // 99 yapı: çoğu coğrafya ve tarih
+	mayin: { cografya: 1.3 },
+	rota: { cografya: 1.2, tarih: 1.1 },
+	tunel: { tarih: 1.2 },
 	kusbakisi: { cografya: 1.3, tarih: 1.2 },
 	ilavi: { cografya: 1.3 },
 	kimim: { cografya: 1.3 },
@@ -168,6 +173,12 @@ export const SINIR = {
 	gozkarari: [4, 6], // KARARLAR v1.6: sık (maçta 4–6)
 	penalti: [2, 3],
 	kazi: [2, 3],
+	// galeriden maça (2026-11): uzun turlar (Kelime Avı 37–57 sn, Mayın 29–51 sn) maçta en çok 1–2
+	balon: [2, 3],
+	mayin: [1, 2],
+	rota: [1, 2],
+	tunel: [1, 2],
+	kelimeavi: [1, 2],
 	// eski tiplerden yalnız uzun olanlar sınırlı (banka v1.2: anagram 26, çengel 25, yıldırım 25 soru)
 	cross: [1, 2],
 	blitz: [2, 3],
