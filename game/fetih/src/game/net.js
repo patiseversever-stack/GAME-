@@ -588,6 +588,24 @@ const OYNA = {
 		await c.sleep(1500 + c.int(5000));
 		return pickOpt(c, d.v);
 	},
+	// Kazı Kazan: görsel görünümde yok; rastgele karoları kazır (sunucu gönderir ve sayar), sonra bir şık seçer. Bildirdiği
+	// pay 0 (hile denemesi): sunucu kendi saydığını kullanmalı
+	async kazi(c, d) {
+		const [, , tx = 12, ty = 8] = d.v.karo || [];
+		const n = tx * ty;
+		const want = Math.round(n * (0.08 + c.R() * 0.3));
+		const cs = [];
+		while (cs.length < want) {
+			const k = c.int(n);
+			if (!cs.includes(k)) cs.push(k);
+		}
+		for (let k = 0; k < cs.length; k += 8) {
+			await c.sleep(250 + c.int(400));
+			c.act('karo', { c: cs.slice(k, k + 8) });
+			await c.wait('karo', 2000);
+		}
+		return { i: pickOpt(c, d.v), s: 0 };
+	},
 	// Balon Patlat: doğrular görünümde yok; gökteki balonlardan birkaçını uçuşun ortasında patlatır, yargı sunucudan
 	async balon(c, d) {
 		const b = d.v.b || [];

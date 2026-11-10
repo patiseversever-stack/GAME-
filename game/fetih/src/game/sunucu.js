@@ -25,6 +25,7 @@
 //   rota       (yok; cevap { route })       —                                                 { route } durak plakaları
 //   tunel      'yer' { k, g } (sırayla)     'yer' { k, g: doğru boşluk, ok, y: kartın yılı }   { g: [boşluk × 3], t }
 //   kelimeavi  'kelime' { s: [r0,c0,r1,c1] } 'kelime' { i, w? } (bulunan kelime, yoksa i −1)  { s: [[r0,c0,r1,c1,sn], …] }
+//   kazi       'karo' { c: [karo, …] }     'karo' { t: [[karo, resim | null]] } (kazınan yerin karoları) { i, s: gönderilen / bütün }
 //
 // İstatistik (Az Bilinen, Şive): Match cfg.istatistik ile bir Istatistik nesnesi alır (sunucu saklar, JSON); yoksa
 // çevrimdışı tahmini oranlar ve kalabalık kullanılır.
@@ -40,6 +41,23 @@ import { filmOf as golgeFilm, IPUCU_AN as GOLGE_AN } from '../quiz/d_golge.js';
 import { CAN as MAYIN_CAN } from '../quiz/d_mayin.js';
 import { dogruBosluk } from '../quiz/d_tunel.js';
 import { kelimeOf } from '../quiz/d_kelimeavi.js';
+
+/**
+ * Kazı Kazan karo kaynağı: no → { w, h, tx, ty, t: [karo resmi | null] } ya da null (tools/yapi/karo.py →
+ * sunucu-veri/yapi-karo/<no>.json). Sunucu girişi kurar (dosyadan okur); kurulmamışsa çevrimiçi Kazı Kazan'da pay
+ * istemcinin bildirdiğidir (yalnız geliştirme). Karo verisi yayımlanan sayfayla gitmez.
+ */
+let karoKaynak = null;
+const karoOnbellek = new Map();
+export function setKaroKaynak(fn) {
+	karoKaynak = fn;
+	karoOnbellek.clear();
+}
+const karoPaketi = (no) => {
+	if (!karoKaynak || !no) return null;
+	if (!karoOnbellek.has(no)) karoOnbellek.set(no, karoKaynak(no) || null);
+	return karoOnbellek.get(no);
+};
 import DATA from '../data/turkiye.json';
 import { setPinAreas } from '../quiz/types.js';
 setPinAreas(DATA); // harita sorusu: il ve göl sınırları (types.js pinJudge)
@@ -357,8 +375,34 @@ export const ADIM = {
 		final: (S, x) => choice(S, x),
 	},
 	penalti: { final: (S, x) => choice(S, x) },
-	// Kazı Kazan: { i: şık, s: kazınan pay } (pay istemcinin ölçümü; 0..1'e kırpılır, binde bire yuvarlanır)
-	kazi: { final: (S, x) => (x && typeof x === 'object' && choice(S, x.i) !== null ? { i: x.i, s: Math.round(Math.min(1, Math.max(0, Number(x.s) || 0)) * 1000) / 1000 } : null) },
+	// Kazı Kazan: görsel istemciye gitmez; kazınan her karoyu sunucu gönderir ve sayar. Son değer { i: şık, s: pay }:
+	// pay sunucunun gönderdiği karo / bütün karo (istemcinin bildirdiği pay sayılmaz). Karo kaynağı kurulmamışsa
+	// (geliştirme) pay istemcininki (0..1'e kırpılır).
+	kazi: {
+		open(S) {
+			S.st.k = new Set();
+		},
+		acts: {
+			karo(S, d) {
+				const P = karoPaketi(S.v.q.img);
+				const n = P ? P.tx * P.ty : 0;
+				const t = [];
+				for (const x of Array.isArray(d?.c) ? d.c.slice(0, 256) : []) {
+					const k = Number(x);
+					if (!P || !Number.isInteger(k) || k < 0 || k >= n || S.st.k.has(k)) continue;
+					S.st.k.add(k);
+					t.push([k, P.t[k] || null]);
+				}
+				S.send('karo', { t });
+			},
+		},
+		final(S, x) {
+			if (!(x && typeof x === 'object' && choice(S, x.i) !== null)) return null;
+			const P = karoPaketi(S.v.q.img);
+			const s = P ? (S.st.k?.size || 0) / (P.tx * P.ty) : Math.min(1, Math.max(0, Number(x.s) || 0));
+			return { i: x.i, s: Math.round(s * 1000) / 1000 };
+		},
+	},
 	ikidogru: { final: (S, x) => choice(S, x) },
 
 	// Balon Patlat: doğru bayrakları görünümde yok; her dokunuşu sunucu kendi saatiyle damgalar ve yargılar (balon o an

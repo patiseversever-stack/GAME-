@@ -205,7 +205,14 @@ for (const q of [...BANK, ...SAMPLES]) {
 	const { makeApp, makeUI } = await import('./dunya.mjs');
 	const { LocalTransport, BotClient } = await import('../src/game/net.js');
 	const MAC = await import('../src/quiz/mac.js');
-	const { Istatistik } = await import('../src/game/sunucu.js');
+	const { Istatistik, setKaroKaynak } = await import('../src/game/sunucu.js');
+	// Kazı Kazan karoları (sunucu verisi, yayımlanan sayfada yok): sunucu girişinin yaptığı gibi dosyadan
+	const { readFileSync, existsSync } = await import('node:fs');
+	const karoDir = new URL('../sunucu-veri/yapi-karo/', import.meta.url);
+	setKaroKaynak((no) => {
+		const f = new URL(no + '.json', karoDir);
+		return existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : null;
+	});
 	const { GAP: KGAP } = await import('../src/quiz/d_kimim.js');
 	const S = kur();
 	const stats = new Istatistik();
@@ -219,7 +226,7 @@ for (const q of [...BANK, ...SAMPLES]) {
 			case 'penalti':
 				return has2(pv, 'right') || has2(q, 'a');
 			case 'kazi':
-				return has2(pv, 'right') || has2(q, 'a', 'ad', 'il', 'yer', 'alt');
+				return has2(pv, 'right') || has2(q, 'a', 'ad', 'il', 'yer', 'alt', 'img') || JSON.stringify(pv).includes('.webp');
 			case 'golge':
 				return has2(pv, 'right') || has2(q, 'a', 'ad', 'il', 'yer') || !!pv.ipucu?.[2];
 			case 'ilavi':
@@ -367,6 +374,12 @@ for (const q of [...BANK, ...SAMPLES]) {
 					if (type === 'balon' && mine.value) ok(kabul('balon') === mine.value.p.length, `${tag}: Balon patlatmaları sunucu kaydıyla uyuşmuyor`);
 					if (type === 'mayin' && mine.value) ok(kabul('il') === mine.value.taps.length && mine.value.taps.filter((id) => !full.guvenli.includes(id - 1)).length <= 2, `${tag}: Mayın dokunuşları sunucu kaydıyla uyuşmuyor`);
 					if (type === 'tunel' && mine.value) ok(kabul('yer') === mine.value.g.filter((g) => g != null).length, `${tag}: Tünel yerleştirmeleri sunucu kaydıyla uyuşmuyor`);
+					if (type === 'kazi' && mine.value) {
+						// pay sunucunun gönderdiği karodan (bot pay 0 bildirir: sayılmamalı)
+						const n = full.karo[2] * full.karo[3];
+						const sent = evs('karo').reduce((a, x) => a + (x.d.t?.length || 0), 0);
+						ok(sent > 0 && Math.abs(mine.value.s - Math.round((sent / n) * 1000) / 1000) < 1e-9, `${tag}: Kazı payı sunucunun gönderdiği karoyla uyuşmuyor (${mine.value.s}, ${sent}/${n})`);
+					}
 					if (type === 'kelimeavi' && mine.value) ok(kabul('kelime') === mine.value.s.length, `${tag}: Kelime Avı seçimleri sunucu kaydıyla uyuşmuyor`);
 				}
 				ask = null;

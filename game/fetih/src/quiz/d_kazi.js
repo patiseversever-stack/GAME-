@@ -14,6 +14,10 @@
 //       alt (plakanın ikinci satırı), tema ('gunduz' | 'batim' | 'gece'), folyo ('gumus' | 'altin' | 'holo': zorluk 1–3).
 // Değer: { i: şık, s: kazınan pay 0..1 }. Tür 'closest': doğruysa err = (100 − puan) / 100 (az kazıyan önde, eşitlikte
 //        hız), yanlışsa err 2. Puan kuralı (puanOf): 100 − 90 · min(1, pay / 0,7); doğru cevap en az 10.
+// Çevrimiçi: görsel ve numarası istemciye gitmez. Görsel uzun kenarı KARO karo olan kare karolara bölünmüş olarak sunucuda
+//   durur (tools/yapi/karo.py → sunucu-veri/yapi-karo); kart kazındıkça dokunulan karoları ister (act 'karo' { c } → ev
+//   'karo' { t: [[karo, resim | null]] }) ve onları çizer. Pay sunucunun gönderdiği karo / bütün karo (src/game/sunucu.js):
+//   istemcinin bildirdiği pay sayılmaz, hiç kazımayan da hiçbir şey görmez. Görünümde yalnız boy ve ızgara (v.karo).
 // Bot: botTime'dan bir cevap anı; o ana dek kazıdığı pay beceriyle azalır, doğruluk pCorrect + kazıdıkça artan tanıma payı.
 // Görseller sayfanın yanında yoksa (yapiHazir() false) tip maçta seçilmez.
 // Jokerler: yarı yarıya ve seyirci (şıklı tipin ortak etkileri).
@@ -25,6 +29,7 @@ import { appOf, stamp, onClose, onOpen, rule, stampLater, sfx, LOOK, ACT, DENEME
 import { clock, setTimeout, clearTimeout } from '../core/clock.js';
 import { degHz } from '../audio/scales.js';
 import DATA from '../data/turkiye.json';
+import { KAZI_BOY } from '../data/ek/kazi-boyut.js';
 
 const ILLER = new Map(DATA.provinces.map((p) => [p.id, p.name]));
 
@@ -34,6 +39,16 @@ export const puanOf = (s) => Math.round(PUAN.tam - (PUAN.tam - PUAN.taban) * cla
 /** Kazıma ızgarası (pay ölçümü): pencere bu kadar hücreye bölünür. */
 const GX = 64;
 const GY = 40;
+/** Çevrimiçi karo ızgarası: görselin uzun kenarındaki karo sayısı (tools/yapi/karo.py N ile aynı). */
+export const KARO = 12;
+/** k. karonun kenarları (görsel pikseli): yarım yukarı yuvarlanır (karo.py ile aynı). */
+export const karoKutu = (w, h, tx, k) => {
+	const T = Math.max(w, h) / KARO;
+	const i = k % tx;
+	const j = Math.floor(k / tx);
+	const R = (x) => Math.floor(x + 0.5);
+	return [R(i * T), R(j * T), Math.min(w, R((i + 1) * T)), Math.min(h, R((j + 1) * T))];
+};
 
 // ---------------------------------------------------------------- görseller (sayfanın yanındaki yapi/ klasörü)
 export const YAPI_BASE = 'yapi/';
@@ -540,7 +555,7 @@ export const kazi = {
 	sub: (v, value) => `%${Math.round(clamp(Number(value?.s) || 0, 0, 1) * 100)} kazıdı`,
 	prepare(q, R) {
 		const order = shuffle([0, 1, 2, 3], R);
-		const v = { q, opts: order.map((i) => q.a[i]), right: order.indexOf(0) };
+		const v = { q, opts: order.map((i) => q.a[i]), right: order.indexOf(0), karo: KAZI_BOY[q.img] || null };
 		return stamp(v, q, (q2, k, P, text) => {
 			for (const a of q2.a) text(a);
 			return {
@@ -582,7 +597,64 @@ export const kazi = {
 		const root = el.querySelector('.yn-kz');
 		const pen = root.querySelector('.yn-kz-pen');
 		const sah = pen.querySelector('.yn-kz-sah');
-		const yap = pen.querySelector('.yn-kz-yap');
+		let yap = pen.querySelector('.yn-kz-yap');
+		// çevrimiçi: görsel numarası görünümde yok; görselin boyunda boş bir tuval, karolar sunucudan kazındıkça gelir
+		const online = !q.img && Array.isArray(v.karo) && typeof api.act === 'function' && typeof api.wait === 'function';
+		const KN = online ? v.karo[2] * v.karo[3] : 0;
+		const kIst = new Set(); // istenen karolar (sunucunun saydığı payın aynısı)
+		let kBek = [];
+		let kT = 0;
+		let kr = null; // görselin ekrandaki kutusu (kazıma noktası → karo)
+		let kctx = null;
+		if (online) {
+			const cv = document.createElement('canvas');
+			cv.width = v.karo[0];
+			cv.height = v.karo[1];
+			cv.className = 'yn-kz-yap yok';
+			yap.replaceWith(cv);
+			yap = cv;
+			kctx = cv.getContext('2d');
+		}
+		const karoCiz = (list) => {
+			for (const [k, src] of list || []) {
+				if (!src || !kctx) continue;
+				const [x0, y0] = karoKutu(v.karo[0], v.karo[1], v.karo[2], k);
+				const im = new Image();
+				im.onload = () => LIVE === me && kctx.drawImage(im, x0, y0);
+				im.src = src;
+			}
+		};
+		const karoGonder = () => {
+			kT = 0;
+			if (!kBek.length || locked) return;
+			const c = kBek;
+			kBek = [];
+			api.act('karo', { c });
+			api.wait('karo', 3000).then((r) => r && karoCiz(r.t));
+		};
+		// kazınan nokta (pencere oranı) ve fırça yarıçapı (css px) → dokunduğu karolar istenir
+		const karoIste = (nx, ny, r) => {
+			if (!online || !rect) return;
+			kr ||= yap.getBoundingClientRect();
+			if (kr.width < 2) return;
+			const x = rect.left + nx * rect.width - kr.left;
+			const y = rect.top + ny * rect.height - kr.top;
+			const tx = v.karo[2];
+			const ty = v.karo[3];
+			const s = Math.max(kr.width / tx, 1e-3);
+			const i0 = Math.max(0, Math.floor((x - r) / s));
+			const i1 = Math.min(tx - 1, Math.floor((x + r) / s));
+			const j0 = Math.max(0, Math.floor((y - r) / (kr.height / ty)));
+			const j1 = Math.min(ty - 1, Math.floor((y + r) / (kr.height / ty)));
+			for (let j = j0; j <= j1; j++)
+				for (let i = i0; i <= i1; i++) {
+					const k = j * tx + i;
+					if (kIst.has(k)) continue;
+					kIst.add(k);
+					kBek.push(k);
+				}
+			if (kBek.length && !kT) kT = globalThis.setTimeout(karoGonder, 90);
+		};
 		const cvF = pen.querySelector('.yn-kz-fol');
 		const cvS = pen.querySelector('.yn-kz-sim');
 		const ip = pen.querySelector('.yn-kz-ip');
@@ -604,7 +676,7 @@ export const kazi = {
 		let t0 = 0; // kartın açıldığı an (oyun saati)
 		let raf = 0;
 		let auto = false; // otomatik kazıma sürüyor ya da bitti (folyo artık oyuncunun değil)
-		const frac = () => hits / (GX * GY);
+		const frac = () => (online ? kIst.size / KN : hits / (GX * GY));
 		const lock = () => {
 			locked = true;
 			root.classList.add('lock');
@@ -630,7 +702,8 @@ export const kazi = {
 			picWait = [];
 			for (const fn of w) fn();
 		};
-		{
+		if (online) picDone(true);
+		else {
 			const im = yapiOnyukle(q);
 			yap.src = im ? im.src : `${YAPI_BASE}${q.img}.webp`;
 			if (yap.complete && yap.naturalWidth) picDone(true);
@@ -684,6 +757,7 @@ export const kazi = {
 			fctx.globalAlpha = 1;
 			fctx.globalCompositeOperation = 'source-over';
 			if (!mark) return;
+			karoIste(nx, ny, r);
 			const rx = (r * 0.95) / (rect.width || 1);
 			const ry = (r * 0.95) / (rect.height || 1);
 			const gx0 = Math.max(0, Math.floor((nx - rx) * GX));
@@ -720,6 +794,7 @@ export const kazi = {
 			const W = Math.round(r.width * d);
 			const H = Math.round(r.height * d);
 			rect = r;
+			kr = null;
 			if (W === fw && H === fh) return true;
 			fw = W;
 			fh = H;
@@ -1115,6 +1190,14 @@ export const kazi = {
 			},
 			reveal(results) {
 				lock();
+				// çevrimiçi: cevapta sunucunun tam görünümü karta katılınca (v.q.img) görselin tamamı tuvale çizilir
+				if (online && v.q?.img && kctx) {
+					const im = yapiOnyukle(v.q) || new Image();
+					const ciz = () => LIVE === me && im.naturalWidth && (kctx.clearRect(0, 0, yap.width, yap.height), kctx.drawImage(im, 0, 0, yap.width, yap.height));
+					if (im.complete && im.naturalWidth) ciz();
+					else im.addEventListener('load', ciz, { once: true });
+					if (!im.src) im.src = `${YAPI_BASE}${v.q.img}.webp`;
+				}
 				c.reveal(results, (val) => (val && Number.isInteger(val.i) ? val.i : null));
 				fit.refit();
 				ip.classList.add('gone');
@@ -1180,7 +1263,7 @@ export const kazi = {
 			destroy: close,
 		};
 	},
-	/** Çevrimiçi görünüm: doğru şık, ad, yer ve bilgi yok (görsel numarası resmi göstermek için gerekir; Gölge'deki gibi). */
+	/** Çevrimiçi görünüm: doğru şık, ad, yer, bilgi ve görsel numarası yok (görsel karo karo sunucudan gelir). */
 	publicView(v) {
 		const o = JSON.parse(JSON.stringify(v));
 		delete o.right;
@@ -1189,6 +1272,7 @@ export const kazi = {
 		delete o.q.alt;
 		delete o.q.il;
 		delete o.q.yer;
+		delete o.q.img; // görsel istemciye gitmez: karolar kazındıkça sunucudan (v.karo: boy ve ızgara)
 		return o;
 	},
 	judge(v, value) {
