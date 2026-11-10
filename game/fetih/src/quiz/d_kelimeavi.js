@@ -669,12 +669,29 @@ export const kelimeavi = {
 			}, 520);
 			later(fin, 1250);
 		};
-		const submit = (r0, c0, r1, c1) => {
+		// çevrimiçi: yerleşim görünümde yok (publicView); her seçimi sunucu yanıtlar (act 'kelime' { s } → ev 'kelime'
+		// { i, w }, sunucu.js). Bulunan kelime seçimin uçlarından görünüme yazılır (kapsül ve kutlama onu çizer)
+		const online = !Array.isArray(v.words) && typeof api.act === 'function' && typeof api.wait === 'function';
+		let asking = false;
+		const submit = async (r0, c0, r1, c1) => {
 			const cells = hat(n, r0, c0, r1, c1);
-			if (!cells || cells.length < 2) return;
+			if (!cells || cells.length < 2 || asking) return;
 			const t = now();
 			if (log.length < 80) log.push([r0, c0, r1, c1, t]);
-			const i = kelimeOf(v, r0, c0, r1, c1);
+			let i = kelimeOf(v, r0, c0, r1, c1);
+			if (!Array.isArray(v.words)) {
+				if (!online) return; // yargılayacak kimse yok
+				asking = true;
+				api.act('kelime', { s: [r0, c0, r1, c1] });
+				const r = await api.wait('kelime', 3000);
+				asking = false;
+				if (!r || r.rejected || done) return;
+				i = Number.isInteger(r.i) ? r.i : -1;
+				if (i >= 0 && !W[i]) {
+					const d = DIRS.findIndex(([dr, dc]) => dr === Math.sign(r1 - r0) && dc === Math.sign(c1 - c0));
+					W[i] = { w: r.w, r: r0, c: c0, d, len: cells.length };
+				}
+			}
 			if (i >= 0 && !found.has(i)) {
 				found.set(i, t);
 				for (const c of root.querySelectorAll(`.ka-c.hint`)) if (cells.some(([r, cc]) => cellOf(r, cc) === c)) c.classList.remove('hint');

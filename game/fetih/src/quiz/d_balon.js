@@ -639,8 +639,23 @@ export const balon = {
 			ynB.textContent = String(bad);
 		};
 		// ---------------------------------------------------------------- dokunuş
+		// çevrimiçi: doğru bayrakları görünümde yok (publicView); dokunuşu sunucu yanıtlar (act 'balon' { k } → ev 'balon'
+		// { k, ok }, sunucu.js). Yanıt gelene dek o balona yeni dokunuş alınmaz; arayüz api.act / api.wait sağlar (Mayın gibi)
+		const online = v.b.some((b) => b.ok === undefined) && typeof api.act === 'function' && typeof api.wait === 'function';
 		const popBall = (B) => {
-			if (done || locked || B.state !== 1) return;
+			if (done || locked || B.state !== 1 || B.ask) return;
+			if (B.b.ok === undefined) {
+				if (!online) return; // yargılayacak kimse yok
+				B.ask = true;
+				api.act('balon', { k: B.k });
+				api.wait('balon', 1500).then((r) => {
+					B.ask = false;
+					if (!r || r.rejected || r.k !== B.k) return;
+					B.b.ok = !!r.ok;
+					popBall(B);
+				});
+				return;
+			}
 			const t = now();
 			B.state = 2;
 			pops.push([B.k, Math.round(t * 100) / 100]);

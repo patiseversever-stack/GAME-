@@ -604,9 +604,24 @@ export const tunel = {
 		};
 
 		// ---------------------------------------------------------------- yerleştirme
-		const commit = (g) => {
+		// çevrimiçi: kartların yılı görünümde yok (publicView); her yerleştirmeyi sunucu yanıtlar (act 'yer' { k, g } → ev
+		// 'yer' { k, g: doğru boşluk, ok, y }, sunucu.js). Gelen yıl görünüme yazılır: sonraki kart o tünele göre konur
+		const online = !Array.isArray(v.years) && typeof api.act === 'function' && typeof api.wait === 'function';
+		if (!Array.isArray(v.years)) v.years = [];
+		const commit = async (g) => {
 			if (done || busy || step >= N || !t0) return;
 			if (cut?.[step]?.includes(g)) return;
+			if (v.years[step] == null) {
+				if (!online) return; // yargılayacak kimse yok
+				busy = true;
+				root.classList.add('busy');
+				api.act('yer', { k: step, g });
+				const r = await api.wait('yer', 3000);
+				busy = false;
+				root.classList.remove('busy');
+				if (!r || r.rejected || r.k !== step || done) return;
+				v.years[step] = r.y;
+			}
 			busy = true;
 			root.classList.add('busy');
 			const k = step;
