@@ -152,7 +152,7 @@ export const SAHNE_CSS = /* css */ `
 .ht-tag.L{left:5%}.ht-tag.R{right:5%;flex-direction:row-reverse;padding:3px 3px 3px 10px}
 .ht-tag .fl-av{width:26px;height:26px;border-radius:50%}
 .ht-tag b{font:italic 900 15px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.4);white-space:nowrap}
-.ht-ev{position:absolute;top:clamp(2px,36%,calc(100% - 60px));z-index:3;display:flex;flex-direction:column;align-items:center;gap:1px;opacity:0;transform:translateY(8px) scale(.6);pointer-events:none;
+.ht-ev{position:absolute;top:clamp(2px,36%,calc(100% - 68px));z-index:3;display:flex;flex-direction:column;align-items:center;gap:1px;opacity:0;transform:translateY(8px) scale(.6);pointer-events:none;
   font:italic 900 22px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.55)}
 .ht-ev.L{left:8%}.ht-ev.R{right:8%}
 .ht-ev b{font-size:14px;letter-spacing:.1em;padding:1px 8px;border-radius:5px;background:rgba(0,0,0,.55)}

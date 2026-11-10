@@ -553,11 +553,21 @@ export const mancinik = {
 				} else if (e?.kind === 'crowd') {
 					const c = svg.querySelector('.crowd');
 					const x = xOf(v, e.value);
+					// yazı en az bir kat yukarıda ("SUR SİSTE · AŞMA!" levhası yerin 21–41 birim üstünde) ve kat yerleşimine
+					// katılır: cevapta düşen taşların yazıları ona binmez (320 px'te "seyirci 1895" ile "1891" üst üste kalıyordu)
+					const lab = `seyirci ${fmt(e.value)}`;
+					const w = [...lab].length * 7.4 + 6;
+					let k = 1;
+					while (k < 6 && placed.some((p) => p.k === k && Math.abs(p.x - x) < (p.w + w) / 2)) k++;
+					placed.push({ x, w, k });
+					const up = k * 15;
 					c.querySelector('.cl').setAttribute('x1', x);
 					c.querySelector('.cl').setAttribute('x2', x);
+					c.querySelector('.cl').setAttribute('y1', GY - 30 - up);
 					const t = c.querySelector('.ct');
 					t.setAttribute('x', x);
-					t.textContent = `seyirci ${fmt(e.value)}`;
+					t.setAttribute('y', GY - 34 - up);
+					t.textContent = lab;
 					c.classList.add('on');
 					app?.ui?.toast?.(`Seyirci ${fmt(e.value)} diyor`, { tone: 'info', ms: 1800 });
 				}
