@@ -22,7 +22,20 @@ const sizes = sizesA === 'hepsi' ? BOYLAR : sizesA.split(',');
 const evreler = evreA.split(',');
 fs.mkdirSync(out, { recursive: true });
 
+// cevap: tipin kendi dokunuşlarıyla; tutmazsa (ör. 50/50 o şıkkı kapattı) kartın kendi botunun cevabı api.answer ile
 async function answer(p, t) {
+	await answer0(p, t);
+	if (t === 'halat' || t === 'fitil') return;
+	await p.waitForTimeout(2500);
+	await p.evaluate(() => {
+		const c = window.__fl?.app?.ui?.current;
+		if (!c || c.answered || document.querySelector('.fl-q.rv')) return;
+		try {
+			c.api.answer(c.ctx.T.bot(c.ctx.v, 0.95, Math.random).value);
+		} catch {}
+	});
+}
+async function answer0(p, t) {
 	const c = (sel, i = 0) => p.evaluate(([s, k]) => document.querySelectorAll(s)[k]?.click(), [sel, i]);
 	if (t === 'yanlis') {
 		const bad = await p.evaluate(() => window.__fl?.app?.match?.cur?.v?.bad ?? 1);
