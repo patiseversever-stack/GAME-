@@ -440,6 +440,9 @@ export const mancinik = {
 					if (t < 1) return requestAnimationFrame(step);
 					anims.delete(step);
 					ball.remove();
+					// uçuş izi düşünce söner: kesik çizgi surun ve taşların yazılarının üstünden geçmesin
+					trail.style.transition = 'opacity .6s';
+					trail.setAttribute('opacity', '0');
 					const over = v.hedef != null && Number(value) > v.hedef;
 					impact(g, ex, color, label, swing);
 					app?.cam?.impulse?.(swing ? 0.16 : 0.08);
