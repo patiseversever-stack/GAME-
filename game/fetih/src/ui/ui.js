@@ -1688,6 +1688,8 @@ export class UI {
 		// haritalı soruda kartın altı engel: yazı kartın arkasına girmesin
 		const top = this.el.classList.contains('qmap') && this._mapTop ? this._mapTop * SH - 4 : 2;
 		obs.push({ l: -1e5, r: 1e5, t: -1e5, b: top, p: null, k: 10 });
+		// duraklat düğmesi de engel (haritalı soruda sağ altta): uzaklık yazısı altına girmesin (320 px'te "310 km")
+		if (this._pbBox) obs.push({ ...this._pbBox, p: null, k: 10 });
 		K.sort((a, b) => a.sy - b.sy);
 		for (const p of K) {
 			p.kw ??= p.el.querySelector('.km')?.offsetWidth || 44;
