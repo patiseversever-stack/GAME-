@@ -207,7 +207,7 @@ export function katman(app, cls) {
  * sorusunda sinema adları susturur ("cevabı ele vermesin"); bu tiplerde adlar sorunun parçası. Dönen işlev ad katmanının
  * kipini eski haline koyar (susturma durumuna dokunmaz: soru bitince sinema kendisi açar).
  */
-export function adlar(app, list, K = null) {
+export function adlar(app, list, K = null, { gizle = null } = {}) {
 	const L = app.board?.labelLayer;
 	if (!L?.show) return () => {};
 	const saved = { mode: L.mode, base: L.base, forced: L.forced?.slice?.(), hiTo: L.hiTo?.slice?.() };
@@ -221,10 +221,14 @@ export function adlar(app, list, K = null) {
 		const byArea = list.slice().sort((x, y) => (b.provinces[y].area || 0) - (b.provinces[x].area || 0));
 		const o = {};
 		let last = list.join();
+		let base = '';
+		const drop = new Set(); // katman kaydırdıktan sonra hâlâ üst üste kalan adlardan küçük ilinki
+		const rank = new Map(byArea.map((i, k) => [i, k]));
 		K.on((P) => {
 			const keep = [];
 			const box = [];
 			for (const i of byArea) {
+				if (gizle?.has(i)) continue; // tipin söndürdüğü ad (ör. Mayın: cevap işareti yer bulamayıp üstüne oturdu)
 				P.lab(i, o);
 				if (o.behind) continue;
 				const w = 21 * (L.size[i * 3] || 3) * 0.94 + 4;
@@ -236,11 +240,32 @@ export function adlar(app, list, K = null) {
 				box.push(r);
 				keep.push(i);
 			}
+			// kaymadan sonraki gerçek yer (katmanın son elemesi): dar ekranda (320 px) kaydırma yetmeyip üst üste kalan çiftte
+			// küçük ilin adı söner (KÜTAHYA ile AFYONKARAHİSAR, KARAMAN ile ADANA). Ön seçim değişince (kamera yaklaştı) sıfırlanır.
 			keep.sort((x, y) => x - y);
-			const key = keep.join();
+			const b0 = keep.join();
+			if (b0 !== base) {
+				base = b0;
+				drop.clear();
+			}
+			if (L.mode === 'list' && L._sx && b0 && last === [...keep.filter((i) => !drop.has(i))].join()) {
+				const dpr = L.uniforms?.uDpr?.value || 1;
+				const sh = keep.filter((i) => !drop.has(i) && L.alpha[i] > 0.5);
+				for (let a = 0; a < sh.length; a++)
+					for (let c = a + 1; c < sh.length; c++) {
+						const i = sh[a];
+						const j = sh[c];
+						if (drop.has(i) || drop.has(j)) continue;
+						const ox = Math.abs(L._sx[i] + L._ox[i] * dpr - (L._sx[j] + L._ox[j] * dpr));
+						const oy = Math.abs(L._sy[i] + L._oy[i] * dpr - (L._sy[j] + L._oy[j] * dpr));
+						if (ox * 2 < L._sw[i] + L._sw[j] - 2 * dpr && oy * 2 < L._sh[i] + L._sh[j] - 2 * dpr) drop.add(rank.get(i) > rank.get(j) ? i : j);
+					}
+			}
+			const show = keep.filter((i) => !drop.has(i));
+			const key = show.join();
 			if (key !== last) {
 				last = key;
-				L.show(keep);
+				L.show(show);
 			}
 		});
 	}

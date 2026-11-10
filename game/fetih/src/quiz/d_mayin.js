@@ -313,6 +313,10 @@ export const mayin = {
 		let done = false;
 		let over = false; // tarla kapandı (ikinci mayın ya da temiz): cevap gönderilene dek dokunuş sayılmaz
 		let started = false;
+		let rvd = false; // cevap çiziliyor: yer bulamayan işaret altındaki adı söndürür
+		const sus = new Set(); // cevapta sönen adlar (il dizini)
+		const hit = new Set(); // bu çizimde yer bulamayan işaretin altında kalan adlar
+		const hitAt = new Map(); // ad → çakışmanın başladığı an (ms)
 		const timers = [];
 		const later = (fn, ms) => timers.push(setTimeout(() => el.isConnected && fn(), ms));
 		const say = (t, bad = false) => {
@@ -420,7 +424,11 @@ export const mayin = {
 				m.at = k;
 				x = cand[k][0];
 				y = cand[k][1];
-				occ.push(box(x, y, m.bx));
+				const mb = box(x, y, m.bx);
+				// cevapta en az binen yer de doluysa altındaki komşu ad söner; yalnız yarım saniyeden uzun süren çakışmada
+				// (işaretler belirirken ve kamera oturuncaki anlık çakışmalar sayılmaz), sonra cevap boyunca sönük (gidip gelmesin)
+				if (rvd && cost(k) > 3) for (const q of occ) if (q.i >= 0 && q.i !== m.i && cut(mb, q) > 3) hit.add(q.i);
+				occ.push(mb);
 			}
 			m.g.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
 		};
@@ -442,7 +450,16 @@ export const mayin = {
 				// görünen hap (hücrenin kenar payı düşülür)
 				occ.push({ l: o.x - o.hw * 0.96, r: o.x + o.hw * 0.96, t: o.y - o.hh * 0.82, b: o.y + o.hh * 0.82, i });
 			}
+			hit.clear();
 			for (const m of marks) place(P, m);
+			if (rvd) {
+				const now = performance.now();
+				for (const i of hit) {
+					if (!hitAt.has(i)) hitAt.set(i, now);
+					else if (now - hitAt.get(i) > 500) sus.add(i);
+				}
+				for (const i of [...hitAt.keys()]) if (!hit.has(i)) hitAt.delete(i);
+			}
 		});
 		const unmark = (m) => {
 			const k = marks.indexOf(m);
@@ -505,7 +522,9 @@ export const mayin = {
 				g.paint(v.merkez, '#d9a521', mp.x, mp.z);
 				g.fx(v.merkez, 0.35, 1);
 			}
-			unAd = adlar(app, frame, K); // adlar çakışmasız (dar ekranda küçük illerin adı yaklaşınca gelir)
+			// adlar çakışmasız (dar ekranda küçük illerin adı yaklaşınca gelir); cevapta yer bulamayan işaretin altındaki ad
+			// söner (sus): kalabalık tarlada (4 kişi, 320 px) işaret ada binmez
+			unAd = adlar(app, frame, K, { gizle: sus });
 			cerceve(app, frame, { top: cardTop(el), alt: 54, yan: 6, pitch: 1.22, dur: 0.9, arc: 4 });
 		});
 		const stopOpen = onOpen(el, () => {
@@ -748,6 +767,7 @@ export const mayin = {
 				unHov();
 				// çevrimiçinde güvenli iller cevapla gelir (sunucunun tam görünümü görünüme katılır); gelmediyse cevap çizilemez
 				if (!Array.isArray(v.guvenli)) return;
+				rvd = true;
 				if (!known) for (const i of v.guvenli) S.add(i);
 				root.classList.add('done', 'rv');
 				sweep.classList.add('off');
@@ -805,7 +825,8 @@ export const mayin = {
 						mark(i, `<g class="pp" style="--d:${d}s"><circle r="9" class="okc"/><path d="${CHECK}" class="ok" transform="scale(1.05)"/></g>`, { dy: -23, bx: [-10, -10, 10, 10] });
 						return;
 					}
-					const s = who.length > 2 ? 0.72 : 0.86;
+					// 3–4 bayrak: dar ekranda (320–375 px) daha küçük küme (komşu adlar yerinde kalsın)
+					const s = who.length > 2 ? ((app._rc?.width || innerWidth) < 380 ? 0.6 : 0.72) : 0.86;
 					const html = who.map((r, j) => `<g transform="translate(${((j - (who.length - 1) / 2) * 13 * s).toFixed(1)} 0)">${FLAG(r.color, s)}</g>`).join('');
 					const ex = ((who.length - 1) / 2) * 13 * s;
 					mark(i, `<g class="fd" style="--d:${d}s">${html}</g>`, { dx: 2, dy: -13, bx: [-ex - 5.6 * s, -31.4 * s, ex + 15.8 * s, 2.4 * s] });
