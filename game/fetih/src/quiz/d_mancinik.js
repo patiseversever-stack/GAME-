@@ -294,6 +294,10 @@ export const mancinik = {
 		const stones = svg.querySelector('.stones');
 		// ölçü çizgileri ve fark yazıları kendi katmanında, taşların üstünde: sonradan atılan taşın krateri yazıyı örtmesin
 		const mss = svg.querySelector('.mss');
+		// değer yazıları en üst katmanda: uçan taşların dumanı, tozu ve izleri yazıların üstünden geçmez
+		const labs = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+		labs.setAttribute('class', 'labs');
+		svg.appendChild(labs);
 		const msg = root.querySelector('.dn-mc-msg');
 		let lo = q.min;
 		let hi = q.max;
@@ -370,6 +374,14 @@ export const mancinik = {
 			if (v.hedef == null || wall.dataset.on) return;
 			wall.dataset.on = '1';
 			wall.innerHTML = wallSVG(v, xOf(v, v.hedef));
+			// surun değer yazısı da en üst katmanda (sur yükselirken kendi geçişiyle belirir)
+			const wt = wall.querySelector('text.lt');
+			if (wt) {
+				wt.style.transition = 'opacity .5s .5s';
+				wt.style.opacity = '0';
+				labs.appendChild(wt);
+				requestAnimationFrame(() => (wt.style.opacity = '1'));
+			}
 			svg.querySelector('.fogs').classList.add('off');
 			requestAnimationFrame(() => wall.classList.remove('hide'));
 		};
@@ -401,7 +413,8 @@ export const mancinik = {
 			}
 			mk('circle', { class: 'dust', cx: ex, cy: GY - 4, r: 10, fill: '#e8dcc0' }, g);
 			const up = label ? levelOf(ex, label) * 15 : 0;
-			g.insertAdjacentHTML('beforeend', `<line x1="${ex}" y1="${GY - 26 - up}" x2="${ex}" y2="${GY}" stroke="${color}" stroke-width="2.2"/><path d="M${ex},${GY - 26 - up} l12,4 -12,4z" fill="${color}"/>${label ? `<text class="lt" x="${ex}" y="${GY - 30 - up}" text-anchor="middle" fill="${color}">${esc(label)}</text>` : ''}`);
+			g.insertAdjacentHTML('beforeend', `<line x1="${ex}" y1="${GY - 26 - up}" x2="${ex}" y2="${GY}" stroke="${color}" stroke-width="2.2"/><path d="M${ex},${GY - 26 - up} l12,4 -12,4z" fill="${color}"/>`);
+			if (label) labs.insertAdjacentHTML('beforeend', `<text class="lt sl" x="${ex}" y="${GY - 30 - up}" text-anchor="middle" fill="${color}">${esc(label)}</text>`);
 		};
 		/** Bir taşı at: renk, değer; bitince onLand(x). Kolu (yalnız kendi atışında) savurur. Taş alev alır, duman bırakır. */
 		const throwStone = (value, color, { swing = false, delay = 0, label = '', onLand } = {}) => {
@@ -589,6 +602,7 @@ export const mancinik = {
 					msg.classList.remove('on');
 					stones.innerHTML = '';
 					mss.innerHTML = '';
+					for (const t of labs.querySelectorAll('.sl')) t.remove(); // taş yazıları üst katmanda
 				} else setTimeout(() => msg.classList.remove('on'), 1400);
 				const list = results.filter((r) => r.value != null && !(keep && r.p?.human));
 				const rest = () => {
