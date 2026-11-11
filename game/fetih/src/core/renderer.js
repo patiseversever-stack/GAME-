@@ -32,6 +32,9 @@ export function createRenderer(canvas, forcedTier, adjust = null) {
 		powerPreference: 'high-performance',
 		preserveDrawingBuffer: false,
 	});
+	// yayında gölgelendirici hata denetimi kapalı: her programın ilk kullanımında derlemenin bitmesi eşzamanlı beklenmez
+	// (açılışta ~0,3 sn masaüstünde, zayıf telefonda daha çok; KHR_parallel_shader_compile ile derleme arkada sürer)
+	renderer.debug.checkShaderErrors = !!import.meta.env.DEV;
 	renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // renk dönüşümü shader'larda yapılır
 	renderer.toneMapping = THREE.NoToneMapping;
 	renderer.setClearColor(0x1b2a4a, 1);

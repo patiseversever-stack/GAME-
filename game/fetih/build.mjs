@@ -63,8 +63,20 @@ const ekYok = {
 		b.onLoad({ filter: /.*/, namespace: 'ek-yok' }, () => ({ contents: 'export default [];', loader: 'js' }));
 	},
 };
+// büyük JSON verisi (harita, kabartma) JavaScript nesnesi yerine JSON.parse metni olarak gömülür: V8 JSON metnini nesne
+// sözdiziminden çok daha hızlı ayrıştırır (düşük telefonda açılışın en uzun parçası betiğin ilk çalışmasıydı)
+const jsonHizli = {
+	name: 'json-hizli',
+	setup(b) {
+		b.onLoad({ filter: /[\\/]src[\\/]data[\\/].*\.json$/ }, async (a) => {
+			const { readFile } = await import('node:fs/promises');
+			const txt = JSON.stringify(JSON.parse(await readFile(a.path, 'utf8')));
+			return { contents: `export default JSON.parse(${JSON.stringify(txt)});`, loader: 'js' };
+		});
+	},
+};
 const base = {
-	plugins: EK_YOK ? [ekYok] : [],
+	plugins: EK_YOK ? [ekYok, jsonHizli] : [jsonHizli],
 	bundle: true,
 	target: ['es2020', 'chrome80', 'safari14'],
 	legalComments: 'none',
