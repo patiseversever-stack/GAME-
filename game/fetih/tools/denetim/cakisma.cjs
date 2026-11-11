@@ -124,6 +124,20 @@ const measure = () => {
 		r.selectNodeContents(n);
 		for (const b of r.getClientRects()) if (b.width > 2 && b.height > 4) lines.push({ n, el, b, s: n.textContent.trim().slice(0, 26) });
 	}
+	// 1b) kelime ortasından bölünme: birden çok satıra yayılan yazıda her kelimenin (gerçek tire ve eğik çizgi kelime sınırı
+	// sayılır) satır kutuları tek satırda mı. Yumuşak tireyle (hece) ya da overflow-wrap ile bölünen kelime yakalanır.
+	const multi = new Set(lines.filter((L, i) => lines.findIndex((o) => o.n === L.n) !== i).map((L) => L.n));
+	for (const n of multi) {
+		const t = n.textContent;
+		for (const m of t.matchAll(/[^\s\-/–—]+/g)) {
+			if ([...m[0].replace(/­/g, '')].length < 2) continue;
+			const r = document.createRange();
+			r.setStart(n, m.index);
+			r.setEnd(n, m.index + m[0].length);
+			const tops = [...r.getClientRects()].filter((b) => b.width > 0.5 && b.height > 4).map((b) => Math.round(b.top));
+			if (tops.length > 1 && Math.max(...tops) - Math.min(...tops) > 3) say(`kelime bölünüyor: "${m[0].replace(/­/g, '')}" (${ad(n.parentElement)})`);
+		}
+	}
 	// 2) kesik yazı (kırpma ya da ekran dışı)
 	for (const L of lines) {
 		const c = clipOf(L.el);

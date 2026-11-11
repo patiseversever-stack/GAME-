@@ -42,6 +42,7 @@ export async function duelIntro(ui, ctx) {
 	const land = W > H && H < 560;
 	el.style.setProperty('--sa', (land ? Math.atan((0.14 * W) / H) : -Math.atan((0.2 * H) / W)).toFixed(4) + 'rad');
 	el.className = 'fl-duel on' + (siege ? ' siege' : '');
+	ui.el.classList.add('duelon'); // kural rozeti (TUR 1/6) saldıranın portresine binmesin
 	const gen = ui._gen;
 	ui.sfx('whoosh');
 	let skip = null;
@@ -68,5 +69,6 @@ export async function duelIntro(ui, ctx) {
 	await sleep(280);
 	if (gen !== ui._gen) return;
 	el.className = 'fl-duel';
+	ui.el.classList.remove('duelon');
 	el.innerHTML = '';
 }

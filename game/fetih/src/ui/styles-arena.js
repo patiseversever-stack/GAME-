@@ -634,7 +634,7 @@ export const CSS_ARENA = /* css */ `
 .fl-kural .bar::after{content:'';position:absolute;right:-1px;top:-3px;bottom:-3px;width:2px;background:#fff}
 .fl-kural.hot{color:#ff8a78;box-shadow:inset 0 0 0 1px rgba(255,90,72,.7),0 4px 12px rgba(0,0,0,.45);animation:flKuralHot 1s ease-in-out infinite}
 @keyframes flKuralHot{50%{opacity:.7}}
-.fl-kural.off,.fl-ui.qon .fl-kural,.fl-ui.qmap .fl-kural,.fl-ui.paused .fl-kural,.fl-ui.toaston .fl-kural{opacity:0}
+.fl-kural.off,.fl-ui.qon .fl-kural,.fl-ui.qmap .fl-kural,.fl-ui.paused .fl-kural,.fl-ui.toaston .fl-kural,.fl-ui.duelon .fl-kural{opacity:0}
 
 /* ---------------------------------------------------------------- izleme özeti (v2): iki botun düellosu, soru kartı yok.
    Altta eğik koyu kart: başlık (DÜELLO · il), iki portre, BİLDİ/BİLEMEDİ ve süre; eşlide takım arkadaşında soru + cevap */

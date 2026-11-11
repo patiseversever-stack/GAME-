@@ -1836,10 +1836,13 @@ export class Match {
 	async duelAt(p, target, turn, cin) {
 		if (this.owner(target) < 0) return this.neutralAt(p, target, turn);
 		const d = this.players[this.owner(target)];
-		if (d.human && this._skipping && !this.skipAll) {
-			// bot insana saldırıyor: atlama biter, savunma tam gösterilir
-			this.skipBots = false;
-			this.setSkip(false);
+		if (d.human && !this.skipAll) {
+			// bot insana saldırıyor: atlama biter, savunma tam gösterilir; Atla düğmesi insanın kendi sorusunda açık kalmaz
+			// (soru kartının duraklat düğmesine biniyordu, dokunulunca savunmayı atlatırdı)
+			if (this._skipping) {
+				this.skipBots = false;
+				this.setSkip(false);
+			}
 			this.ui.skipBtn?.(false);
 		}
 		const isCap = d.capital === target;

@@ -2120,6 +2120,7 @@ export class UI {
 		$.wheel.querySelector('.fl-catpick')?.remove();
 		$.wheel.querySelector('.fl-wh')?.classList.remove('hide');
 		$.duel.className = 'fl-duel';
+		this.el.classList.remove('duelon');
 		$.duel.innerHTML = '';
 		$.banner.className = 'fl-banner';
 		$.rank.classList.remove('on');

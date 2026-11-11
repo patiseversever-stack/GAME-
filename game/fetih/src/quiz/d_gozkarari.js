@@ -10,7 +10,7 @@
 // Görseller ayrı dosyadan, tembel yüklenir: gk/<img>.webp (siluette gk/<img>.m.png). Görseller sayfanın yanında yoksa
 // (gkHazir() false) tip maçta hiç seçilmez (match.askable); yedek çizim gösterilmez.
 
-import { css, esc, shuffle, pCorrect, mountChoice, clamp, chips, heceli } from './util.js';
+import { css, esc, shuffle, pCorrect, mountChoice, clamp, chips } from './util.js';
 import { botTime, secOf } from './timing.js';
 import { stamp, LOOK, onClose, DENEME_CSS } from './d_ortak.js';
 import { playSfx } from './appref.js';
@@ -126,7 +126,6 @@ const CSS = /* css */ `
 const ease = (x) => 1 - Math.pow(1 - x, 2.4);
 let UID = 0;
 
-export { heceli }; // util.js'e taşındı (optFit de kullanır)
 
 export const gozkarari = {
 	time: 20,
@@ -243,11 +242,7 @@ export const gozkarari = {
 				done = true; // görsel cevap anında donar: puan o anda kilitlenir
 			},
 		});
-		// uzun kelimeli şıklar hecesinden bölünebilsin (yazı küçülmez, kesilmez). Mikro görevde: arayüzün şık uzunluğu
-		// ölçüsü (ui.question, mount'tan hemen sonra) yumuşak tireleri saymasın; sığdırıcı (fit.js) sonraki karede ölçer
-		queueMicrotask(() => {
-			for (const sp of el.querySelectorAll('[data-r=o] .fl-opt>span')) sp.innerHTML = heceli(sp.textContent);
-		});
+		// şık yazısı kelime ortasından bölünmez (yumuşak tire yok): sığmayan uzun kelime ortak sığdırıcıda (fit.js) küçülür
 		return {
 			lock() {
 				done = true;
