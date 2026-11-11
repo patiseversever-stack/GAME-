@@ -159,6 +159,58 @@ const MK = {
 	'yn-mayin-29': (id) => id >= 72,
 	'yn-mayin-30': (id) => UNVAN.includes(id),
 	'yn-mayin-31': (id) => BUYUKSEHIR.includes(id),
+	// 2026-11 büyütmesi: veriden (komşuluk, bölge, kıyı, deniz, plaka) ya da elle yazılmış, kaynaklardan doğrulanmış listeler
+	'yn-mayin-32': (id) => nbs(24).includes(id),
+	'yn-mayin-33': (id) => reg(id) === 'karadeniz',
+	// Asya'nın Yedi Kilisesi: Efes, Smyrna, Bergama (İzmir); Tiyatira, Sardes, Filadelfiya (Manisa); Laodikeia (Denizli)
+	'yn-mayin-34': ((L) => (id) => L.includes(id))(ids('İzmir,Manisa,Denizli')),
+	'yn-mayin-35': (id) => nbs(43).includes(id),
+	'yn-mayin-36': (id) => reg(id) === 'ege' && !coast(id),
+	'yn-mayin-37': (id) => name(id).includes('şehir'),
+	'yn-mayin-38': (id) => nbs(38).includes(id),
+	'yn-mayin-39': (id) => nbs(42).includes(id) && nbs(7).includes(id),
+	// Batı Cephesi muharebeleri: İnönü (Eskişehir), Kütahya-Eskişehir, Sakarya (Polatlı, Ankara), Büyük Taarruz (Afyon, Kütahya)
+	'yn-mayin-40': ((L) => (id) => L.includes(id))(ids('Eskişehir,Kütahya,Ankara,Afyonkarahisar')),
+	'yn-mayin-41': (id) => nbs(66).includes(id),
+	'yn-mayin-42': ((L) => (id) => L.includes(id))(ids('Edirne,Kırklareli,Tekirdağ')),
+	'yn-mayin-43': (id) => nbs(44).includes(id),
+	'yn-mayin-44': (id) => reg(id) === 'akdeniz' && !coast(id),
+	'yn-mayin-45': (id) => id % 11 === 0,
+	'yn-mayin-46': (id) => nbs(27).includes(id),
+	'yn-mayin-47': coast,
+	// İstiklal Yolu: İnebolu, Kastamonu, Ilgaz ve Çankırı, Kalecik ve Ankara
+	'yn-mayin-48': ((L) => (id) => L.includes(id))(ids('Kastamonu,Çankırı,Ankara')),
+	'yn-mayin-49': (id) => nbs(26).includes(id),
+	'yn-mayin-50': (id) => nbs(id).length <= 3,
+	'yn-mayin-51': (id) => nbs(31).includes(id) && nbs(46).includes(id),
+	'yn-mayin-52': (id) => nbs(12).includes(id),
+	'yn-mayin-53': (id) => reg(id) === 'marmara' && kiyi(id).includes('E'),
+	// UNESCO 2023 ahşap direkli camiler: Afyon Ulu, Ankara Arslanhane, Sivrihisar Ulu, Kasaba Mahmut Bey, Beyşehir Eşrefoğlu
+	'yn-mayin-54': ((L) => (id) => L.includes(id))(ids('Afyonkarahisar,Ankara,Eskişehir,Kastamonu,Konya')),
+	'yn-mayin-55': (id) => nbs(51).includes(id),
+	// il merkezi 1500 m'den yüksek (tarladakiler): Erzurum, Ardahan, Kars; Iğdır ~870 m
+	'yn-mayin-56': ((L) => (id) => L.includes(id))(ids('Erzurum,Ardahan,Kars')),
+	'yn-mayin-57': (id) => nbs(19).includes(id) && nbs(60).includes(id),
+	'yn-mayin-58': (id) => nbs(49).includes(id),
+	// en az iki ülkeye sınır: Iğdır (Ermenistan, Azerbaycan, İran), Hakkari (Irak, İran), Şırnak (Suriye, Irak)
+	'yn-mayin-59': ((L) => (ok(L.every(sinir), 'iki ülke: veride sınır ili'), (id) => L.includes(id)))(ids('Iğdır,Hakkari,Şırnak')),
+	'yn-mayin-60': (id) => id > 1 && [...Array(id).keys()].slice(2).every((k) => id % k),
+	'yn-mayin-61': (id) => nbs(33).includes(id),
+	'yn-mayin-62': (id) => reg(id) === 'marmara' && kiyi(id).includes('K'),
+	'yn-mayin-63': (id) => nbs(3).includes(id) && nbs(45).includes(id),
+	'yn-mayin-64': (id) => nbs(10).includes(id),
+	'yn-mayin-65': (id) => reg(id) === 'icanadolu' && nbs(id).every((x) => reg(x) === 'icanadolu'),
+	'yn-mayin-66': (id) => nbs(65).includes(id),
+	// kıyı ili ama il merkezi kıyıda değil (28 kıyı ilinin 13'ü)
+	'yn-mayin-67': ((L) => (id) => coast(id) && L.includes(id))(ids('Kırklareli,Edirne,Sakarya,Düzce,Bartın,Kastamonu,Artvin,Bursa,Balıkesir,Aydın,Muğla,Adana,Hatay')),
+	'yn-mayin-68': (id) => nbs(23).includes(id),
+	'yn-mayin-69': (id) => reg(id) === 'karadeniz' && nbs(id).some((x) => reg(x) === 'dogu'),
+	'yn-mayin-70': (id) => nbs(28).includes(id) && nbs(69).includes(id),
+	'yn-mayin-71': (id) => nbs(2).includes(id),
+	'yn-mayin-72': (id) => reg(id) === 'icanadolu',
+	'yn-mayin-73': (id) => reg(id) === 'dogu' && nbs(id).some((x) => reg(x) === 'guneydogu'),
+	'yn-mayin-74': (id) => reg(id) === 'icanadolu' && nbs(id).some(coast),
+	'yn-mayin-75': (id) => reg(id) === 'karadeniz' && nbs(id).every((x) => reg(x) === 'karadeniz'),
 };
 ok(same(golKiyi('Tuz Gölü'), ids('Ankara,Konya,Aksaray')), 'veri: Tuz Gölü üç ilin sınırında');
 for (const q of SAMPLES.mayin) {
