@@ -57,6 +57,10 @@ const BY_NAME = new Map(DATA.provinces.map((p) => [p.name, p]));
 	const ege = SAMPLES.balon[0];
 	for (const w of ege.dogru) ok(BY_NAME.get(w)?.region === 'ege', ege.id + ': ' + w + ' Ege Bölgesi’nde değil');
 	for (const w of ege.yanlis) ok(BY_NAME.has(w) && BY_NAME.get(w).region !== 'ege', ege.id + ': tuzak ' + w + ' il değil ya da Ege’de');
+	// yn-balon-52: Güneydoğu Anadolu illeri (bölge turkiye.json'dan)
+	const gd = SAMPLES.balon.find((q) => q.id === 'yn-balon-52');
+	for (const w of gd.dogru) ok(BY_NAME.get(w)?.region === 'guneydogu', gd.id + ': ' + w + ' Güneydoğu’da değil');
+	for (const w of gd.yanlis) ok(BY_NAME.has(w) && BY_NAME.get(w).region !== 'guneydogu', gd.id + ': tuzak ' + w + ' il değil ya da Güneydoğu’da');
 	const temalar = new Set();
 	for (const q of SAMPLES.balon) {
 		temalar.add(q.tema);

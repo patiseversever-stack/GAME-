@@ -131,6 +131,16 @@ const ans = (id) => Q.get(id)?.a || [];
 	const sum = il('Ankara').id + il('Adana').id;
 	const f = ans('yn-penalti-26').map((n) => il(n).id);
 	ok(f[0] === sum && !f.slice(1).includes(sum), 'yn-penalti-26: plaka toplamı ' + sum + ' ' + f);
+	// ek sorular: plaka yarısı (34 / 2), plaka çarpımı (06 × 07), tek komşulu il, Erzurum'a komşu olmayan il
+	const h = ans('yn-penalti-72').map((n) => il(n).id);
+	ok(h[0] === il('İstanbul').id / 2 && !h.slice(1).includes(h[0]), 'yn-penalti-72: plaka yarısı ' + h);
+	const m = ans('yn-penalti-73').map((n) => il(n).id);
+	ok(m[0] === il('Ankara').id * il('Antalya').id && !m.slice(1).includes(m[0]), 'yn-penalti-73: plaka çarpımı ' + m);
+	const tek = PV.filter((p) => p.nb.length === 1).map((p) => p.name);
+	ok(tek.length === 1 && tek[0] === ans('yn-penalti-74')[0] && ans('yn-penalti-74').slice(1).every((n) => il(n).nb.length > 1), 'yn-penalti-74: tek komşulu il ' + tek);
+	const ez = il('Erzurum').nb;
+	const z = ans('yn-penalti-79').map((n) => il(n).id);
+	ok(!ez.includes(z[0]) && z.slice(1).every((x) => ez.includes(x)), 'yn-penalti-79: Erzurum komşuları');
 }
 
 // ---------------------------------------------------------------- hesapla doğrulanan olgular
@@ -151,6 +161,17 @@ const ans = (id) => Q.get(id)?.a || [];
 	ok(V - (5 * p5 + 6 * h6) / 2 + (p5 + h6) === 2 && p5 === 12, 'futbol topu yamaları');
 	// Rubik 3×3: 6 yüz, her yüzde bir merkez
 	ok(ans('yn-penalti-40')[0] === '6', 'yn-penalti-40');
+	// ek sorular: Gauss toplamı, hem kare hem küp, beyazın ilk hamleleri, Romen rakamı, Braille hücresi
+	ok(ans('yn-penalti-88')[0] === String((100 * 101) / 2), 'yn-penalti-88: 1–100 toplamı');
+	const kk = ans('yn-penalti-89').map(Number);
+	const kare = (n) => Number.isInteger(Math.sqrt(n));
+	const kup = (n) => Math.round(Math.cbrt(n)) ** 3 === n;
+	ok(kare(kk[0]) && kup(kk[0]) && kk.slice(1).every((n) => !(kare(n) && kup(n))), 'yn-penalti-89: hem kare hem küp');
+	ok(ans('yn-penalti-109')[0] === String(8 * 2 + 2 * 2), 'yn-penalti-109: beyazın ilk hamleleri');
+	const rom = { M: 1000, D: 500, C: 100, L: 50, X: 10, V: 5, I: 1 };
+	const roma = (s) => [...s].reduce((t, c, i, a) => t + (rom[c] < (rom[a[i + 1]] || 0) ? -rom[c] : rom[c]), 0);
+	ok(ans('yn-penalti-113')[0] === String(roma('MCM')), 'yn-penalti-113: MCM');
+	ok(ans('yn-penalti-120')[0] === String(2 * 3), 'yn-penalti-120: Braille hücresi');
 }
 
 // ---------------------------------------------------------------- tip davranışı

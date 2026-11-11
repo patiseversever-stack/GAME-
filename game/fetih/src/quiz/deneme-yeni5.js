@@ -1030,9 +1030,9 @@ export const SAMPLES = {
 			['ÇANDARLI', 'Kuşatmaya karşı çıkan sadrazam … Halil'],
 		]),
 		KA('yn-kelimeavi-34', 'tarih', 2, 'Millî Mücadele’de cephe gerisi', [
-			['ŞERİFE', 'Kağnısıyla cephane taşırken donan … Bacı'],
 			['HALİDE', 'Sultanahmet mitinginin hatibi … Edib'],
-			['KARAKOL', 'Anadolu’ya silah kaçıran gizli cemiyet'],
+			['KARAKOL', 'İstanbul’dan silah kaçıran gizli cemiyet'],
+			['ANADOLU', '1920’de kurulan haber ajansı: … Ajansı'],
 		]),
 		KA('yn-kelimeavi-35', 'tarih', 3, 'Osmanlı’nın kurumları', [
 			['YENİÇERİ', 'Kazan kaldırarak isyan eden ocak askeri'],
@@ -1152,9 +1152,9 @@ export const SAMPLES = {
 			['WİMBLEDON', 'Çim kortlarıyla ünlü turnuva'],
 		]),
 		KA('yn-kelimeavi-58', 'spor', 3, 'Atletizmin efsaneleri', [
-			['BOLT', 'Jamaikalı “Yıldırım” sprinter Usain …'],
-			['BUBKA', 'Sırıkta 35 kez rekor kıran Sergey …'],
-			['ZATOPEK', '“Çek Lokomotifi” lakaplı koşucu Emil …'],
+			['BOLT', 'Jamaikalı sprinter Usain …'],
+			['BUBKA', 'Ukraynalı sırık efsanesi Sergey …'],
+			['ZATOPEK', 'Çek uzun mesafe koşucusu Emil …'],
 		]),
 		KA('yn-kelimeavi-59', 'spor', 1, 'Havuzdan dalgaya', [
 			['YÜZME', 'Kelebek ve kurbağalama stilli spor'],
@@ -1174,7 +1174,7 @@ export const SAMPLES = {
 		KA('yn-kelimeavi-62', 'spor', 1, 'Türk futbolunun efsaneleri', [
 			['METİN', '“Taçsız Kral” … Oktay'],
 			['LEFTER', 'Büyükada doğumlu Fenerbahçe efsanesi'],
-			['HAKAN', '2002’de 11. saniyede gol atan … Şükür'],
+			['HAKAN', '“Boğaziçi’nin Boğası” … Şükür'],
 		]),
 		KA('yn-kelimeavi-63', 'spor', 2, 'Altmış dört karenin dünyası', [
 			['PİYON', 'Her oyuncuda sekiz tane olan taş'],

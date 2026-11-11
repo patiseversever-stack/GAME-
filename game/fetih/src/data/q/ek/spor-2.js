@@ -159,7 +159,7 @@ export default [
 	// ---------------------------------------------------------------- doğru mu: kurallar
 	{ id: "spo-ek-tf-2029", cat: "spor", diff: 1, type: "tf", q: "Futbolda taç atışı yapan oyuncunun iki ayağı da yere değmelidir.", ans: true },
 	{ id: "spo-ek-tf-2030", cat: "spor", diff: 1, type: "tf", q: "Basketbolda panyaya çarpıp potadan geçen atış geçersiz sayılır.", ans: false },
-	{ id: "spo-ek-tf-2031", cat: "spor", diff: 2, type: "tf", q: "Voleybolda bir oyuncu, blok dışında topa üst üste iki kez dokunamaz.", ans: true },
+	{ id: "spo-ek-tf-2031", cat: "spor", diff: 2, type: "tf", q: "Voleybolda bir oyuncu, blok dışında topa üst üste iki kez vuramaz.", ans: true },
 	{ id: "spo-ek-tf-2032", cat: "spor", diff: 1, type: "tf", q: "Teniste servis fileye değip doğru alana düşerse servis tekrarlanır.", ans: true },
 	{ id: "spo-ek-tf-2033", cat: "spor", diff: 2, type: "tf", q: "Hentbolda kaleci, kendi alanında topu ayağıyla da durdurabilir.", ans: true },
 	{ id: "spo-ek-tf-2034", cat: "spor", diff: 3, type: "tf", q: "Sutopunda kaleci dışındaki oyuncular topu iki elle tutabilir.", ans: false },
