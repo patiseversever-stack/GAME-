@@ -31,7 +31,9 @@
 //     k='harf'     d={ ch }                  adam asmaca harf denemesi; sunucu yalnız o koltuğa 'harf' olayı döner
 //     k='acildi'   d={}                      kart açıldı (soru saati sunucuda bu an başlar; ipuçları buna göre akar)
 //     k='hafiza'   d=Hafiza.ozet()           soru hafızası (2026-11, src/quiz/hafiza.js): istemci 'hello' alır almaz (ve yeniden
-//                                           bağlanınca) son gördüğü sorular; sunucu soruyu odadaki herkesin görmediklerinden seçer
+//                                           bağlanınca) son gördüğü sorular; sunucu soruyu odadaki herkesin görmediklerinden seçer.
+//                                           Hesaplı koltukta özet sunucudaki hesap kaydına katılır (sunucu.js setHafizaDeposu):
+//                                           cihaz değişse de geçmiş sunucuda kalır. Hesap kimliği istemciden alınmaz.
 //   Yeni tiplerin eylemleri (v1.2, yalnız soruyu cevaplayan koltuktan ve soru açıkken; ayrıntı src/game/sunucu.js):
 //     k='harf'     d={}                      Harf Al: rastgele kapalı kutu → ev 'harf' { i, c } (puanı sunucu sayar)
 //     k='il'       d={ il: plaka }           İl Avı → ev 'il' { il, km, dir, found, left, hint } · Kimim → ev 'il'

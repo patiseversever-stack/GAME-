@@ -26,7 +26,7 @@ import { TYPES } from '../quiz/types.js';
 import { secOf } from '../quiz/timing.js';
 import { BAYRAK, CANLI, HIZLI, isYeni, yeniBank, kapsam, tipSec, payOf, egri, okumaK, filmMs, varsayilan, RESULT_MS, kusbakisiUygun, eslestir, karma, yayilmaKat } from '../quiz/mac.js';
 import { bindApp } from '../quiz/d_ortak.js';
-import { ADIM, Oturum } from './sunucu.js';
+import { ADIM, Oturum, hesapHafizasi, hesapKaydet } from './sunucu.js';
 import { CATS } from '../quiz/categories.js';
 import { BANK as QUESTIONS } from '../data/bank.js';
 import { rng } from '../core/math.js';
@@ -356,7 +356,16 @@ export class Match {
 			this.progress.hafiza.yeniMac();
 			this.mem.push(this.progress.hafiza);
 		}
-		for (const p of this.players) if (p.ctl?.remote && cfg.hafiza?.[p.i]) this.mem.push((p.mem = Hafiza.from(cfg.hafiza[p.i])));
+		for (const p of this.players) {
+			if (!p.ctl?.remote) continue;
+			// hesaplı koltuk: sunucudaki kayıt + cihazın özeti (sunucu.js setHafizaDeposu); hesapsız: yalnız cihazın özeti
+			const hesap = p.ctl.hesap ?? cfg.hesap?.[p.i];
+			const h = hesap != null ? hesapHafizasi(hesap, cfg.hafiza?.[p.i]) : null;
+			if (h) {
+				p.hesap = String(hesap);
+				this.mem.push((p.mem = h));
+			} else if (cfg.hafiza?.[p.i]) this.mem.push((p.mem = Hafiza.from(cfg.hafiza[p.i])));
+		}
 		this.usedK = new Set();
 		this.recent = []; // son çıkan soru tipleri (art arda aynı tip gelmesin)
 		// v1.2 soru düzeni (src/quiz/mac.js): yeni tiplerin açık olanları, maçın soru havuzu (eski banka + köprü),
@@ -464,6 +473,7 @@ export class Match {
 
 	/** Maçtan çık: ilerleme kaydedilmez, yarım kalan akış bir sonraki adımında durur. */
 	abort() {
+		if (!this.aborted) this.hesaplariKaydet();
 		this.aborted = true;
 		this.over = true;
 		if (this.cur) this.cur.closed = true;
@@ -906,6 +916,11 @@ export class Match {
 		if (k === 'joker') return this.useJoker(d?.id, p);
 		if (k === 'hafiza') {
 			// koltuğun soru hafızası özeti (katılımda; yeniden bağlanınca tazelenir)
+			// hesaplı koltukta özet sunucudaki kayda katılır (kayıt değişmez); hesapsızda özet koltuğun hafızası olur
+			if (p.hesap && p.mem) {
+				p.mem.birlestir(d);
+				return true;
+			}
 			const h = Hafiza.from(d);
 			if (p.mem) this.mem.splice(this.mem.indexOf(p.mem), 1, h);
 			else this.mem.push(h);
@@ -2135,7 +2150,13 @@ export class Match {
 		};
 	}
 
+	/** Hesaplı uzak koltukların soru hafızasını sunucu deposuna yaz (maç sonu, maçtan çıkış). */
+	hesaplariKaydet() {
+		for (const p of this.players) if (p.hesap && p.mem) hesapKaydet(p.hesap, p.mem);
+	}
+
 	finish(ranking) {
+		this.hesaplariKaydet();
 		if (!this.humanPlayer || !this.persist) return null;
 		const res = this.result(ranking);
 		const out = { ...res, endReason: this.endReason };

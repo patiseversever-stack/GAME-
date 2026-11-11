@@ -216,5 +216,60 @@ console.log("5) İstemci 'hello' alınca özetini gönderir, gördüğünü kayd
 	console.log(`   ${log.length} soru, istemcinin gördüklerinden ${log.filter((e) => e.seen).length}`);
 }
 
+// ---------------------------------------------------------------- 6) hesaba bağlı hafıza (sunucu deposu)
+console.log('6) Hesap: sunucu kaydı maçtan maça taşınır, cihaz değişse de soru tekrar etmez');
+{
+	const { setHafizaDeposu, hesapHafizasi } = await import('../src/game/sunucu.js');
+	// birleştirme: iki kaydın sayaçları farklı; "kaç maç önce" korunur, ikisinde olan kimlikte yakın olan kalır
+	const a = new Hafiza();
+	for (let i = 0; i < 5; i++) a.yeniMac();
+	a.gor({ id: 'x' }); // a'da bu maç (yaş 0)
+	const b = new Hafiza();
+	for (let i = 0; i < 10; i++) b.yeniMac();
+	b.m.set('x', 8); // b'de 2 maç önce
+	b.m.set('y', 10); // b'de bu maç
+	b.m.set('z', 7); // b'de 3 maç önce
+	a.birlestir(b);
+	ok(a.yas('x') === 0 && a.yas('y') === 0 && a.yas('z') === 3, `birlestir yaşları korumalı (x ${a.yas('x')}, y ${a.yas('y')}, z ${a.yas('z')})`);
+	ok([...a.m.keys()].indexOf('z') < [...a.m.keys()].indexOf('y'), 'birlestir sonrası kayıt görülme sırasında olmalı (kırpma eskiyi atar)');
+	// depo
+	const depo = new Map();
+	setHafizaDeposu({ oku: (h) => depo.get(h) || null, yaz: (h, k) => depo.set(h, JSON.parse(JSON.stringify(k))) });
+	ok(hesapHafizasi('yok', null).size === 0, 'yeni hesabın kaydı boş olmalı');
+	const oyna = async (seed, ozet) => {
+		const [a1, c1] = LocalTransport.pair();
+		let s = seed;
+		new BotClient(c1, { skill: 0.7, R: () => ((s = (s * 16807) % 2147483647) / 2147483647), hafiza: ozet });
+		const m = new Match(makeApp(), makeUI(), { mode: '1v1', length: 'quick', bot: 'er', region: 'ege', seed, seats: ['bot', 'remote'], transports: { 1: a1 }, allBots: true, persist: false, hesap: { 1: 'oyuncu-42' } });
+		const log = [];
+		watch(m, [], log, 'hesap' + seed);
+		const VS = kur();
+		await VS.surdur(m.run());
+		VS.kaldir();
+		return { m, log };
+	};
+	const m1 = await oyna(101, null);
+	const k1 = depo.get('oyuncu-42');
+	ok(!!k1, 'maç sonunda hesabın kaydı depoya yazılmadı');
+	const gordu = new Set(m1.log.map((e) => e.id));
+	ok(gordu.size > 5 && [...gordu].every((id) => new Hafiza(k1).yas(id) < Infinity), 'depodaki kayıt maçta sorulanları içermeli');
+	// ikinci maç: cihaz yeni (özet yok); sunucu kaydı yine de ilk maçın sorularını bilir
+	const m2 = await oyna(202, null);
+	const tekrar = m2.log.filter((e) => gordu.has(e.id));
+	ok(m2.m.players[1].hesap === 'oyuncu-42' && !!m2.m.players[1].mem, 'hesaplı koltuk sunucu kaydıyla kurulmalı');
+	ok(tekrar.length === 0, `cihaz değişince ilk maçın soruları tekrar etti: ${tekrar.map((e) => e.id).slice(0, 5).join(', ')}`);
+	ok(new Hafiza(depo.get('oyuncu-42')).n >= 2, 'ikinci maç kayda yeni maç olarak işlenmeli');
+	// maç yarıda kalırsa da yazılır
+	depo.clear();
+	const [a2, c2] = LocalTransport.pair();
+	new BotClient(c2, { skill: 0.7, R: Math.random });
+	const m3 = new Match(makeApp(), makeUI(), { mode: '1v1', length: 'quick', bot: 'er', region: 'ege', seed: 5, seats: ['bot', 'remote'], transports: { 1: a2 }, allBots: true, persist: false, hesap: { 1: 'yarim' } });
+	m3.players[1].mem.gor({ id: 'yarim-soru' });
+	m3.abort();
+	ok(new Hafiza(depo.get('yarim')).yas('yarim-soru') < Infinity, 'yarıda kalan maçta hesap kaydı yazılmadı');
+	setHafizaDeposu(null);
+	console.log(`   1. maç ${gordu.size} soru; ikinci maç (yeni cihaz) ${m2.log.length} soru, tekrar ${tekrar.length}`);
+}
+
 console.log(`\nhafiza.test.mjs: ${checks} denetim, ${fails} hata`);
 process.exit(fails ? 1 : 0);

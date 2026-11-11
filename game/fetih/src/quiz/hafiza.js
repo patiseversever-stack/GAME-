@@ -12,6 +12,9 @@
  *  Çevrimiçi istemci ozet() gönderir (son görülen en çok 6000 kimlik ve 3000 kardeş, maç yaşlarıyla; ~70 KB JSON, gzip'le
  *            ~20 KB); sunucu her insan koltuğunun hafızasını Hafiza.from(ozet) ile kurar ve soruyu odadaki herkes için en
  *            taze olandan seçer. Maç içinde sorulanlar sunucuda da yazılır (koltuğun kendi kaydı istemcide yazılır).
+ *  Hesap     sunucu, kimliği doğrulanmış oyuncunun kaydını kendisi saklar (src/game/sunucu.js setHafizaDeposu): maç başında
+ *            depodan okunur, cihazın özetiyle birleşir (birlestir), maç sonunda ya da yarıda kalınca depoya yazılır. Telefon
+ *            değiştiren ya da veriyi silen oyuncu gördüğü soruları yeniden görmez.
  *  Saklama   { v: 2, n, g: { maç: 'id id …' }, k: { maç: 'anahtar anahtar …' } }: kimlik bir kez, maç sırası grup başına
  *            bir kez yazılır. En çok 15000 kimlik ve 8000 kardeş (eskiler düşer): 100+ maçlık geçmiş.
  */
@@ -119,6 +122,30 @@ export class Hafiza {
 			if (over-- <= 0) break;
 			map.delete(key);
 		}
+	}
+
+	/**
+	 * Başka bir kaydı bu kayda kat (sunucudaki hesap kaydı + cihazın özeti). İki kaydın maç sayaçları ayrı: öbür kayıttaki
+	 * "kaç maç önce" bu kaydın sayacına çevrilir; iki kayıtta da olan kimlikte daha yakın görülme kalır.
+	 */
+	birlestir(o) {
+		o = Hafiza.from(o);
+		const kat = (from, into) => {
+			for (const [id, t] of from) {
+				const at = this.n - (o.n - t);
+				const cur = into.get(id);
+				if (cur == null || at > cur) into.set(id, at);
+			}
+		};
+		kat(o.m, this.m);
+		kat(o.k, this.k);
+		// Map sırası görülme sırası olmalı (kırpma en eskiyi atar): birleşince sıraya yeniden diz
+		const sirala = (map) => new Map([...map.entries()].sort((a, b) => a[1] - b[1]));
+		this.m = sirala(this.m);
+		this.k = sirala(this.k);
+		if (this.m.size > MAX_ID) this._trim(this.m, MAX_ID);
+		if (this.k.size > MAX_K) this._trim(this.k, MAX_K);
+		return this;
 	}
 
 	/** Kaç maç önce görüldü (bu maçta: 0); hiç görülmediyse Infinity. */

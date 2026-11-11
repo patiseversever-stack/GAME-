@@ -41,6 +41,7 @@ import { filmOf as golgeFilm, IPUCU_AN as GOLGE_AN } from '../quiz/d_golge.js';
 import { CAN as MAYIN_CAN } from '../quiz/d_mayin.js';
 import { dogruBosluk } from '../quiz/d_tunel.js';
 import { kelimeOf } from '../quiz/d_kelimeavi.js';
+import { Hafiza } from '../quiz/hafiza.js';
 
 /**
  * Kazı Kazan karo kaynağı: no → { w, h, tx, ty, t: [karo resmi | null] } ya da null (tools/yapi/karo.py →
@@ -53,6 +54,41 @@ export function setKaroKaynak(fn) {
 	karoKaynak = fn;
 	karoOnbellek.clear();
 }
+/**
+ * Soru hafızası deposu (hesap başına; src/quiz/hafiza.js): { oku(hesap) → kayıt (Hafiza.toJSON) | null, yaz(hesap, kayıt) }.
+ * Sunucu girişi kurar (veritabanı, dosya …). Hesap kimliği istemcinin beyanından alınmaz: kimliği doğrulayan bağlantı
+ * katmanı koltuğa yazar (Match cfg.hesap[koltuk] ya da uzak denetleyicinin .hesap alanı). Depo yoksa ya da koltuğun hesabı
+ * yoksa eski davranış: yalnız cihazın gönderdiği özet.
+ */
+let hafizaDeposu = null;
+export function setHafizaDeposu(depo) {
+	hafizaDeposu = depo && typeof depo.oku === 'function' && typeof depo.yaz === 'function' ? depo : null;
+}
+/** Hesabın kaydını depodan kur (yoksa boş), yeni maçı başlat, cihazın özetini (varsa) kat. Depo yoksa null. */
+export function hesapHafizasi(hesap, ozet = null) {
+	if (!hafizaDeposu || hesap == null || hesap === '') return null;
+	let kayit = null;
+	try {
+		kayit = hafizaDeposu.oku(String(hesap));
+	} catch (e) {
+		kayit = null; // depo okunamadı: boş kayıtla sürer (maç durmaz)
+	}
+	const h = new Hafiza(kayit && typeof kayit === 'object' ? kayit : null);
+	h.yeniMac();
+	if (ozet) h.birlestir(ozet);
+	return h;
+}
+/** Hesabın kaydını depoya yaz (maç sonunda ya da maç yarıda kalınca). */
+export function hesapKaydet(hesap, h) {
+	if (!hafizaDeposu || hesap == null || hesap === '' || !h) return false;
+	try {
+		hafizaDeposu.yaz(String(hesap), Hafiza.from(h).toJSON());
+		return true;
+	} catch (e) {
+		return false;
+	}
+}
+
 const karoPaketi = (no) => {
 	if (!karoKaynak || !no) return null;
 	if (!karoOnbellek.has(no)) karoOnbellek.set(no, karoKaynak(no) || null);
