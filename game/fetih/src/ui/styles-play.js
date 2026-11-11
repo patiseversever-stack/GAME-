@@ -164,6 +164,24 @@ export const CSS_PLAY = /* css */ `
 .fl-end.camp .fl-podium .fl-av{width:46px;height:46px}
 .fl-end.camp .fl-podium .p1 .fl-av{width:60px;height:60px}
 .fl-end.camp .fl-podium .ped span{font-size:26px}
+/* kısa telefon (≤700 yükseklik): kürsü ve başlık küçülür, ödül dökümü ve reklam düğmesi kaydırmadan görünür */
+@media (max-height:700px){
+  .fl-end:not(.camp) .fl-ein{gap:8px}
+  .fl-end:not(.camp) .hdr b{font-size:min(calc(14 * var(--vw)),calc(9 * var(--vh)),64px)}
+  .fl-end:not(.camp) .hdr span{font-size:14.5px;margin-top:4px}
+  .fl-end:not(.camp) .fl-podium .p1 .ped{height:62px}
+  .fl-end:not(.camp) .fl-podium .p2 .ped{height:44px}
+  .fl-end:not(.camp) .fl-podium .p3 .ped{height:32px}
+  .fl-end:not(.camp) .fl-podium .fl-av{width:48px;height:48px;border-radius:15px}
+  .fl-end:not(.camp) .fl-podium .p1 .fl-av{width:62px;height:62px;border-radius:19px}
+  .fl-end:not(.camp) .fl-podium .ped span{font-size:27px}
+  .fl-end:not(.camp) .fl-podium .who{margin-bottom:4px}
+  .fl-end:not(.camp) .fl-rew{padding:6px 8px}
+  .fl-end:not(.camp) .fl-rew .lv{width:46px;height:46px}
+  .fl-end:not(.camp) .fl-lines .ln{padding:2px 8px}
+  .fl-end:not(.camp) .fl-adbtn{padding:5px 12px 8px;font-size:16px}
+  .fl-end .fl-rewbox{gap:6px}
+}
 .fl-rewbox{display:flex;flex-direction:column;gap:8px;width:100%}
 .fl-cres{padding:8px 12px 10px;border-radius:18px;text-align:center;background:var(--panel);border:2.5px solid rgba(255,210,90,.55);box-shadow:0 5px 0 var(--navy-d);animation:flUp .4s .7s ease-out both;opacity:0;transform:translateY(12px)}
 .fl-cres .cs-h small{display:block;font-size:11px;letter-spacing:.14em;color:#cfe0ff}
