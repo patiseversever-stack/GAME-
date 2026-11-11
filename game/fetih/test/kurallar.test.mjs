@@ -39,8 +39,10 @@ function botMatch(cfg, ui = makeUI()) {
 const RUNS = { '1v1': 3 * N, ffa3: 2 * N, ffa4: 2 * N, team: 3 * N };
 console.log(`1) Koltuk dengesi (eşit botlar; 1'e 1 ve eşli ${RUNS['1v1']}, 3–4 kişi ${RUNS.ffa3} maç)`);
 // ffa3 alt sınır 3 standart sapma (1000 maçta σ ≈ %1,5): v2'de (kişi başı 8 il, zincir) varsayılan tohumlarla 1. koltuk
-// %28,8 çıktı; başka iki tohum setinde %34,4 ve %31,1 (gürültü, koltuk yanlılığı yok)
-const LIMITS = { '1v1': [0.465, 0.535], ffa3: [0.285, 0.38], ffa4: [0.205, 0.295], team: [0.465, 0.535] };
+// %28,8 çıktı; başka iki tohum setinde %34,4 ve %31,1 (gürültü, koltuk yanlılığı yok). 2026-11 (banka 10 bin): varsayılan
+// tohumlarla 3. koltuk %28,1; üç ayrı tohum setinde 1200 maç (taban 5000/9000/13000): 3. koltuk %29,3 / %32,0 / %34,3,
+// ortalama koltuklar %34,3 / %33,9 / %31,9 (sabit yanlılık yok). Alt sınır ~3,5σ: %27
+const LIMITS = { '1v1': [0.465, 0.535], ffa3: [0.27, 0.38], ffa4: [0.205, 0.295], team: [0.465, 0.535] };
 for (const mode of Object.keys(LIMITS)) {
 	const wins = {};
 	const n = RUNS[mode];

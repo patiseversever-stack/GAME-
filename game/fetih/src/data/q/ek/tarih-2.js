@@ -234,7 +234,7 @@ export default [
 	{ id: "tar-ek-ma-2010", cat: "tarih", diff: 2, type: "match", q: "Bağımsızlık liderlerini ülkeleriyle eşleştir.", pairs: [["Ho Şi Minh", "Vietnam"], ["Jomo Kenyatta", "Kenya"], ["Sukarno", "Endonezya"]] },
 	{ id: "tar-ek-ma-2011", cat: "tarih", diff: 1, type: "match", q: "Ülkeleri eski sömürgecileriyle eşleştir.", pairs: [["Hindistan", "İngiltere"], ["Cezayir", "Fransa"], ["Brezilya", "Portekiz"]] },
 	{ id: "tar-ek-ma-2012", cat: "tarih", diff: 2, type: "match", q: "I. Dünya Savaşı'na giriş yıllarını eşleştir.", pairs: [["Osmanlı Devleti", "1914"], ["İtalya", "1915"], ["ABD", "1917"]] },
-	{ id: "tar-ek-ma-2013", cat: "tarih", diff: 3, type: "match", q: "Medreseleri bulundukları illerle eşleştir.", pairs: [["Karatay Medresesi", "Konya"], ["Yakutiye Medresesi", "Erzurum"], ["Cacabey Medresesi", "Kırşehir"]] },
+	{ id: "tar-ek-ma-2013", cat: "tarih", diff: 3, type: "match", q: "Medreseleri bulundukları illerle eşleştir.", pairs: [["Sırçalı Medrese", "Konya"], ["Buruciye Medresesi", "Sivas"], ["Cacabey Medresesi", "Kırşehir"]] },
 	{ id: "tar-ek-ma-2014", cat: "tarih", diff: 1, type: "match", q: "Mustafa Kemal'in okullarını şehirlerle eşleştir.", pairs: [["Askerî Rüştiye", "Selanik"], ["Askerî İdadi", "Manastır"], ["Harp Akademisi", "İstanbul"]] },
 	{ id: "tar-ek-ma-2015", cat: "tarih", diff: 3, type: "match", q: "Roma'ya direnen liderleri yurtlarıyla eşleştir.", pairs: [["Vercingetorix", "Galya"], ["Boudica", "Britanya"], ["Arminius", "Germanya"]] },
 	{ id: "tar-ek-ma-2016", cat: "tarih", diff: 1, type: "match", q: "Muharebeleri ait oldukları savaşla eşleştir.", pairs: [["Gelibolu", "I. Dünya Savaşı"], ["Sakarya", "Kurtuluş Savaşı"], ["Normandiya", "II. Dünya Savaşı"]] },
