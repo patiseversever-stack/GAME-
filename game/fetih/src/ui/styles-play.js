@@ -182,6 +182,32 @@ export const CSS_PLAY = /* css */ `
   .fl-end:not(.camp) .fl-adbtn{padding:5px 12px 8px;font-size:16px}
   .fl-end .fl-rewbox{gap:6px}
 }
+/* çok kısa telefon (≤600: 320×568): seviye atlama satırı da gelince reklam düğmesi düğmelerin arkasına giriyordu */
+@media (max-height:600px){
+  .fl-end:not(.camp) .fl-ein{gap:6px}
+  .fl-end:not(.camp) .hdr b{font-size:min(calc(13 * var(--vw)),calc(8 * var(--vh)),56px)}
+  .fl-end:not(.camp) .fl-podium .p1 .ped{height:48px}
+  .fl-end:not(.camp) .fl-podium .p2 .ped{height:34px}
+  .fl-end:not(.camp) .fl-podium .p3 .ped{height:26px}
+  .fl-end:not(.camp) .fl-podium .ped{padding-top:3px}
+  .fl-end:not(.camp) .fl-podium .ped span{font-size:23px}
+  .fl-end:not(.camp) .fl-podium .fl-av{width:42px;height:42px;border-radius:13px}
+  .fl-end:not(.camp) .fl-podium .p1 .fl-av{width:54px;height:54px;border-radius:16px}
+  .fl-end:not(.camp) .fl-podium .crown{height:24px;font-size:28px}
+  .fl-end:not(.camp) .fl-rew .lv{width:42px;height:42px}
+  .fl-lvups .up{padding:3px 10px 4px 8px;font-size:12px;line-height:1.25}
+  .fl-lvups .up b{font-size:15px}
+  .fl-end:not(.camp) .hdr b{font-size:min(calc(12 * var(--vw)),calc(7 * var(--vh)),52px)}
+  .fl-end:not(.camp) .hdr span{font-size:13.5px;padding:3px 12px 4px}
+  .fl-end:not(.camp) .fl-podium .p1 .ped{height:40px}
+  .fl-end:not(.camp) .fl-podium .who{margin-bottom:3px}
+  .fl-end:not(.camp) .fl-podium .who em{font-size:16px}
+  .fl-end:not(.camp) .fl-rest{gap:4px}
+  .fl-end:not(.camp) .fl-rest .rr{padding:2px 10px 2px 6px}
+  .fl-end:not(.camp) .fl-rest .fl-av{width:24px;height:24px;border-radius:7px}
+  .fl-end:not(.camp) .fl-rew{padding:4px 8px}
+  .fl-end:not(.camp) .fl-lines{gap:3px}
+}
 .fl-rewbox{display:flex;flex-direction:column;gap:8px;width:100%}
 .fl-cres{padding:8px 12px 10px;border-radius:18px;text-align:center;background:var(--panel);border:2.5px solid rgba(255,210,90,.55);box-shadow:0 5px 0 var(--navy-d);animation:flUp .4s .7s ease-out both;opacity:0;transform:translateY(12px)}
 .fl-cres .cs-h small{display:block;font-size:11px;letter-spacing:.14em;color:#cfe0ff}
