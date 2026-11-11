@@ -15,6 +15,10 @@ import EK_YANLIS from '../data/ek/yanlis.js';
 import EK_IKIDOGRU from '../data/ek/ikidogru.js';
 import EK_HARFAL from '../data/ek/harfal.js';
 import EK_AZBILINEN from '../data/ek/azbilinen.js';
+import EK2_YANLIS from '../data/ek/yanlis-2.js';
+import EK2_IKIDOGRU from '../data/ek/ikidogru-2.js';
+import EK2_HARFAL from '../data/ek/harfal-2.js';
+import EK2_AZBILINEN from '../data/ek/azbilinen-2.js';
 
 // süre profilleri (timing.js'e dokunmadan): en az 20 sn
 Object.assign(PROFILE, {
@@ -600,3 +604,7 @@ SAMPLES.yanlis.push(...EK_YANLIS);
 SAMPLES.ikidogru.push(...EK_IKIDOGRU);
 SAMPLES.harfal.push(...EK_HARFAL);
 SAMPLES.azbilinen.push(...EK_AZBILINEN);
+SAMPLES.yanlis.push(...EK2_YANLIS);
+SAMPLES.ikidogru.push(...EK2_IKIDOGRU);
+SAMPLES.harfal.push(...EK2_HARFAL);
+SAMPLES.azbilinen.push(...EK2_AZBILINEN);
