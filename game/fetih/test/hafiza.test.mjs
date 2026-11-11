@@ -200,7 +200,9 @@ console.log("5) İstemci 'hello' alınca özetini gönderir, gördüğünü kayd
 	const h = new Hafiza();
 	h.yeniMac();
 	const S = new Set();
-	base.pool.forEach((q, i) => i % 3 && (h.gor(q), S.add(q.id)));
+	// istemci havuzun üçte ikisini görmüş; özet sınırını (OZET_ID) aşmasın: banka büyüdükçe test anlamını korur
+	const { OZET_ID } = await import('../src/quiz/hafiza.js');
+	base.pool.forEach((q, i) => i % 3 && S.size < OZET_ID && (h.gor(q), S.add(q.id)));
 	const [a1, c1] = LocalTransport.pair();
 	let s = 5;
 	const cl = new BotClient(c1, { skill: 0.7, R: () => ((s = (s * 16807) % 2147483647) / 2147483647), hafiza: h.ozet() });

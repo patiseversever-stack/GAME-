@@ -9,8 +9,8 @@
  *  Bayatlık  bayat(q, H, usedK): 0 taze; soruyu gören her insan için +2 (son 30 maçta) ya da +1 (daha eski), kardeşini son
  *            5 maçta gören için +0,5, kardeşi bu maçta sorulduysa +3. Seçici (Match.pick) en düşük bayatlık katmanından
  *            seçer (katman içinde zorluk ağırlığıyla), görülmüşler katmanında en eskisi önce.
- *  Çevrimiçi istemci ozet() gönderir (son görülen en çok 6000 kimlik ve 3000 kardeş, maç yaşlarıyla; ~70 KB JSON, gzip'le
- *            ~20 KB); sunucu her insan koltuğunun hafızasını Hafiza.from(ozet) ile kurar ve soruyu odadaki herkes için en
+ *  Çevrimiçi istemci ozet() gönderir (son görülen en çok OZET_ID = 10 000 kimlik ve 5 000 kardeş, maç yaşlarıyla; ~150 KB
+ *            JSON, gzip'le ~40 KB); sunucu her insan koltuğunun hafızasını Hafiza.from(ozet) ile kurar ve soruyu odadaki herkes için en
  *            taze olandan seçer. Maç içinde sorulanlar sunucuda da yazılır (koltuğun kendi kaydı istemcide yazılır).
  *  Hesap     sunucu, kimliği doğrulanmış oyuncunun kaydını kendisi saklar (src/game/sunucu.js setHafizaDeposu): maç başında
  *            depodan okunur, cihazın özetiyle birleşir (birlestir), maç sonunda ya da yarıda kalınca depoya yazılır. Telefon
@@ -21,6 +21,10 @@
 
 const MAX_ID = 15000;
 const MAX_K = 8000;
+// çevrimiçi özet: son görülen en çok 10 000 kimlik ve 5 000 kardeş (~150 KB JSON, gzip'le ~40 KB; maç başına bir kez).
+// Banka 10 bini geçince 6 000 dar kaldı (~190 maç). Hesaplı oyuncuda sınır yok: kayıt sunucuda tam (sunucu.js).
+export const OZET_ID = 10000;
+export const OZET_K = 5000;
 
 const norm = (s) =>
 	String(s ?? '')
@@ -175,7 +179,7 @@ export class Hafiza {
 	}
 
 	/** Çevrimiçi özet: en yeni görülenler (sunucuya katılımda gider). */
-	ozet(maxId = 6000, maxK = 3000) {
+	ozet(maxId = OZET_ID, maxK = OZET_K) {
 		return { v: 2, n: this.n, g: this._pack(this.m, maxId), k: this._pack(this.k, maxK) };
 	}
 }
