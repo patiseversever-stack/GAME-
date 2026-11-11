@@ -17,7 +17,8 @@ import ek2Spor from './ek/spor-2.js';
 import ek2Bilim from './ek/bilim-2.js';
 import ek2Sanat from './ek/sanat-2.js';
 import ek2Eglence from './ek/eglence-2.js';
+import veri from './veri.js'; // il verisinden üretilen sorular (tools/soru/veri_uret.mjs), bankanın küçük payı
 
-export const ALL = [...tarih, ...cografya, ...spor, ...bilim, ...sanat, ...eglence, ...ekTarih, ...ekCografya, ...ekSpor, ...ekBilim, ...ekSanat, ...ekEglence, ...ek2Tarih, ...ek2Cografya, ...ek2Spor, ...ek2Bilim, ...ek2Sanat, ...ek2Eglence];
+export const ALL = [...tarih, ...cografya, ...spor, ...bilim, ...sanat, ...eglence, ...ekTarih, ...ekCografya, ...ekSpor, ...ekBilim, ...ekSanat, ...ekEglence, ...ek2Tarih, ...ek2Cografya, ...ek2Spor, ...ek2Bilim, ...ek2Sanat, ...ek2Eglence, ...veri];
 export { tarih, cografya, spor, bilim, sanat, eglence };
 export default ALL;

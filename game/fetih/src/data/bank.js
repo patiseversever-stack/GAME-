@@ -34,7 +34,9 @@ const seen = new Set();
 // harita soruları yalnız q/harita.js'ten (v1.6: alan tabanlı, elden geçmiş metin); eski dağınık iğne soruları alınmaz
 export const BANK = [...[...SEED, ...ALL].filter((q) => q.type !== 'pin'), ...HARITA].filter((q) => {
 	if (!TYPES[q.type]) return false;
-	const k = q.type === 'choice' || q.type === 'tf' || q.type === 'num' || q.type === 'pin' || q.type === 'hang' ? q.q : dupKey(q);
+	// veriden üretilen il soruları aynı kalıp metnini paylaşır ("Hangisinin yüzölçümü en büyüktür?"): üretici benzersiz
+	// kurar, kimlikleriyle girer
+	const k = /^cog-vr-/.test(q.id) ? q.id : q.type === 'choice' || q.type === 'tf' || q.type === 'num' || q.type === 'pin' || q.type === 'hang' ? q.q : dupKey(q);
 	if (seen.has(k)) return false;
 	seen.add(k);
 	return true;
