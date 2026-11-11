@@ -467,5 +467,330 @@ export const SAMPLES = {
 			[41, 'İzmit'],
 			[34, 'Varış'],
 		]),
+		// ---- 2026-11 büyütmesi (32–71). Sıralar yalnız kesin bilinenlerden; her biri sınamada yazılı sırayla doğrulanır.
+		// tarih: kurtuluş günleri, seferler, savaşlar, padişahlar, demiryolu, kongreler
+		// 32) Fransız ve Yunan işgalinden kurtuluş (Maraş 12 Şubat 1920, Urfa 11 Nisan 1920, Antep 25 Aralık 1921, Adana 5 Ocak 1922)
+		RT('yn-rota-32', 'tarih', 2, 'Kurtuluş günlerini tarih sırasıyla uç!', [
+			[46, 'Şubat 1920', 'Maraş'],
+			[63, 'Nisan 1920', 'Urfa'],
+			[27, 'Aralık 1921', 'Antep'],
+			[1, 'Ocak 1922'],
+			[35, 'Eylül 1922'],
+		]),
+		// 33) I. Haçlı Seferi 1097: İznik kuşatması, Dorylaion (Eskişehir), Ereğli (Konya), Kayseri, Maraş, Antakya
+		RT('yn-rota-33', 'tarih', 2, 'I. Haçlı Seferi’nin Anadolu yolunu uç!', [
+			[16, 'Haziran 1097', 'İznik'],
+			[26, '1 Temmuz', 'Dorylaion'],
+			[42, 'Ereğli'],
+			[38, 'Kapadokya'],
+			[46, 'Ekim', 'Maraş'],
+			[31, 'Ekim 1097', 'Antakya'],
+		]),
+		// 34) Barbarossa 1190: Edirne'de kışlar, Gelibolu'dan geçer, Filadelfiya (Alaşehir), Laodikeia, Konya, Göksu'da (Silifke) boğulur
+		RT('yn-rota-34', 'tarih', 2, 'Friedrich Barbarossa’nın 1190 seferini uç!', [
+			[22, 'Kışlak', 'Edirne'],
+			[17, 'Mart 1190', 'Gelibolu'],
+			[45, 'Alaşehir', 'Filadelfiya'],
+			[20, 'Nisan 1190', 'Laodikeia'],
+			[42, 'Mayıs 1190'],
+			[33, 'Haziran 1190', 'Silifke'],
+		]),
+		// 35) Büyük İskender MÖ 334–333: Granikos (Biga), Sardes, Milet, Halikarnas (Bodrum), Gordion, Tarsus
+		RT('yn-rota-35', 'tarih', 2, 'Büyük İskender’in Anadolu seferini uç!', [
+			[17, 'MÖ 334', 'Granikos'],
+			[45, 'Teslim oldu', 'Sardes'],
+			[9, 'Kuşatma', 'Milet'],
+			[48, 'Kuşatma', 'Halikarnas'],
+			[6, 'Düğüm', 'Gordion'],
+			[33, 'MÖ 333', 'Tarsus'],
+		]),
+		// 36) Ksenofon'un Onbinleri: Trapezus'ta denize iner, Kotyora (Ordu), Sinope, Herakleia (Ereğli), Byzantion
+		RT('yn-rota-36', 'tarih', 3, 'Onbinlerin Dönüşü: Ksenofon’la Karadeniz’i uç!', [
+			[61, 'Denize çıkış', 'Trapezus'],
+			[52, '45 gün', 'Kotyora'],
+			[57, 'Gemiyle', 'Sinope'],
+			[67, 'Ereğli', 'Herakleia'],
+			[34, 'Varış', 'Byzantion'],
+		]),
+		// 37) savaşlar: Ankara 1402, Otlukbeli 1473 (Erzincan), Sarıkamış 1914 (Kars), Çanakkale 1915, I. İnönü 1921 (Eskişehir)
+		RT('yn-rota-37', 'tarih', 2, 'Savaşları tarih sırasıyla uç!', [
+			[6, '1402'],
+			[24, '1473', 'Otlukbeli'],
+			[36, '1914', 'Sarıkamış'],
+			[17, '1915'],
+			[26, '1921', 'İnönü'],
+		]),
+		// 38) Fatih: Edirne'de doğdu, 1443 Manisa sancağı, 1453 İstanbul, 1481 Gebze (Hünkâr Çayırı)
+		RT('yn-rota-38', 'tarih', 1, 'Fatih Sultan Mehmet’in hayatını uç!', [
+			[22, 'Doğum 1432'],
+			[45, 'Sancak 1443'],
+			[34, 'Fetih 1453'],
+			[41, 'Ölüm 1481', 'Gebze'],
+		]),
+		// 39) Yavuz: Amasya'da doğdu, Trabzon sancakbeyi, 1512 tahta, 1520 Çorlu'da öldü
+		RT('yn-rota-39', 'tarih', 2, 'Yavuz Sultan Selim’in hayatını uç!', [
+			[5, 'Doğum'],
+			[61, 'Sancakbeyi'],
+			[34, 'Tahta 1512'],
+			[59, 'Ölüm 1520', 'Çorlu'],
+		]),
+		// 40) demiryolunun ulaştığı yıl: İzmir–Aydın 1866, Ankara 1892, Konya 1896, Sivas 1930, Diyarbakır 1935, Erzurum 1939
+		RT('yn-rota-40', 'tarih', 2, 'Trenin şehre ulaştığı yıla göre uç!', [
+			[9, '1866', 'İzmir–Aydın'],
+			[6, '1892'],
+			[42, '1896'],
+			[58, '1930'],
+			[21, '1935'],
+			[25, '1939'],
+		]),
+		// 41) Timur: Sivas 1400, Ankara Savaşı Temmuz 1402, Bursa yağması, İzmir Aralık 1402
+		RT('yn-rota-41', 'tarih', 2, 'Timur’un Anadolu seferini uç!', [
+			[58, '1400'],
+			[6, 'Temmuz 1402'],
+			[16, 'Yağma'],
+			[35, 'Aralık 1402'],
+		]),
+		// 42) il olma: Tunceli 1935–36, Hatay 1939, Uşak 1953, Adıyaman 1954
+		RT('yn-rota-42', 'tarih', 3, 'Dört ili il oldukları yıla göre uç!', [
+			[62, '1930’lar'],
+			[31, '1939'],
+			[64, '1953'],
+			[2, '1954'],
+		]),
+		// 43) kongreler 1919: I. Balıkesir 28 Haziran, Erzurum 23 Temmuz, Nazilli 6 Ağustos, Alaşehir 16 Ağustos, Sivas 4 Eylül
+		RT('yn-rota-43', 'tarih', 3, 'Millî Mücadele kongrelerini sırayla uç!', [
+			[10, 'Haziran 1919', 'Balıkesir'],
+			[25, '23 Temmuz'],
+			[9, '6 Ağustos', 'Nazilli'],
+			[45, '16 Ağustos', 'Alaşehir'],
+			[58, '4 Eylül'],
+		]),
+		// 44) Büyük Taarruz'dan sonra: Eskişehir 2, Balıkesir 6, Aydın 7, Manisa 8, Bursa 11 Eylül 1922
+		RT('yn-rota-44', 'tarih', 3, 'Büyük Taarruz’dan sonra kurtuluş sırasıyla uç!', [
+			[26, '2 Eylül'],
+			[10, '6 Eylül'],
+			[9, '7 Eylül'],
+			[45, '8 Eylül'],
+			[16, '11 Eylül'],
+		]),
+		// sanat ve edebiyat
+		// 45) Mevlana'nın ailesi Şam'dan Malatya, Erzincan, Larende (Karaman, ~7 yıl) üzerinden 1228'de Konya'ya
+		RT('yn-rota-45', 'sanat', 2, 'Mevlana’nın ailesiyle Konya yolculuğunu uç!', [
+			[44, 'Şam’dan'],
+			[24, 'Konaklama'],
+			[70, '7 yıl', 'Larende'],
+			[42, '1228'],
+		]),
+		// 46) Sabahattin Ali: Yozgat'ta ilk görev, Aydın ve Konya'da öğretmen, Konya'da tutuklandı, Sinop Cezaevi 1933, aftan sonra Ankara
+		RT('yn-rota-46', 'sanat', 3, 'Sabahattin Ali’nin izinden uç!', [
+			[66, 'İlk görev'],
+			[9, 'Öğretmen'],
+			[42, 'Tutuklandı'],
+			[57, 'Cezaevi 1933'],
+			[6, 'Af sonrası'],
+		]),
+		// 47) şairler doğum sırasıyla, doğdukları ile
+		RT('yn-rota-47', 'sanat', 3, 'Şairleri doğum sırasıyla uç: doğdukları ile!', [
+			[21, '1910', 'Cahit Sıtkı'],
+			[61, '1914', 'Oktay Rifat'],
+			[45, '1918', 'İlhan Berk'],
+			[35, '1925', 'Attilâ İlhan'],
+			[6, '1927', 'Turgut Uyar'],
+		]),
+		// 48) romancılar (Cide, Ceyhan, Akşehir, Manisa, Yeşilova)
+		RT('yn-rota-48', 'sanat', 3, 'Romancıları doğum sırasıyla uç: doğdukları ile!', [
+			[37, '1911', 'Rıfat Ilgaz'],
+			[1, '1914', 'Orhan Kemal'],
+			[42, '1918', 'Tarık Buğra'],
+			[45, '1921', 'Yusuf Atılgan'],
+			[15, '1929', 'Fakir Baykurt'],
+		]),
+		// 49) sanatçılar: İbrahim Çallı (Çal, 1881/82), Adnan Saygun, Ruhi Su, Zeki Müren, Barış Manço
+		RT('yn-rota-49', 'sanat', 2, 'Sanatçıları doğum sırasıyla uç!', [
+			[20, '1880’ler', 'İbrahim Çallı'],
+			[35, '1907', 'Adnan Saygun'],
+			[65, '1912', 'Ruhi Su'],
+			[16, '1931', 'Zeki Müren'],
+			[34, '1943', 'Barış Manço'],
+		]),
+		// 50) yönetmenler (Erden Kıral Gölcük'te)
+		RT('yn-rota-50', 'sanat', 3, 'Yönetmenleri doğum sırasıyla uç!', [
+			[34, '1916', 'Lütfi Akad'],
+			[33, '1925', 'Atıf Yılmaz'],
+			[41, '1942', 'Erden Kıral'],
+			[6, '1944', 'Ömer Kavur'],
+		]),
+		// 51) film festivalleri: Altın Portakal 1964, Altın Koza 1969, İstanbul 1982, Ankara 1988
+		RT('yn-rota-51', 'sanat', 2, 'Film festivallerini kuruluş sırasıyla uç!', [
+			[7, '1964'],
+			[1, '1969'],
+			[34, '1982'],
+			[6, '1988'],
+		]),
+		// 52) eski şairler: Âşık Paşa (Kırşehir), Hacı Bayram (Ankara), Nef'î (Hasankale), Nâbî (Urfa), Şeyh Galip (İstanbul)
+		RT('yn-rota-52', 'sanat', 3, 'Eski şairleri doğum sırasıyla uç!', [
+			[40, '1272', 'Âşık Paşa'],
+			[6, '1300’ler', 'Hacı Bayram'],
+			[25, '1570’ler', 'Nef’î'],
+			[63, '1642', 'Nâbî'],
+			[34, '1757', 'Şeyh Galip'],
+		]),
+		// spor
+		// 53) ev sahipliği: Akdeniz Oyunları 1971, Kış Üniversiadı 2011, Akdeniz Oyunları 2013, İşitme Engelliler Olimpiyatları
+		// 2017, İslami Dayanışma Oyunları 2022
+		RT('yn-rota-53', 'spor', 2, 'Uluslararası oyunların ev sahiplerini sırayla uç!', [
+			[35, 'Akdeniz 1971'],
+			[25, 'Ünv. 2011'],
+			[33, 'Akdeniz 2013'],
+			[55, 'İşitme 2017'],
+			[42, 'İslami 2022'],
+		]),
+		// 54) Anadolu kulüpleri kuruluş sırasıyla
+		RT('yn-rota-54', 'spor', 2, 'Anadolu kulüplerini kuruluş sırasıyla uç!', [
+			[35, '1925', 'Göztepe'],
+			[1, '1940', 'Demirspor'],
+			[55, '1965', 'Samsunspor'],
+			[7, '1966', 'Antalyaspor'],
+			[58, '1967', 'Sivasspor'],
+			[27, '1969', 'Gaziantepspor'],
+		]),
+		// 55) kayak merkezleri batıdan doğuya (il ortaları da bu sırada)
+		RT('yn-rota-55', 'spor', 1, 'Kayak merkezlerini batıdan doğuya uç!', [
+			[16, 'Eski Olympos', 'Uludağ'],
+			[14, 'Köroğlu Dağı', 'Kartalkaya'],
+			[38, 'Volkan', 'Erciyes'],
+			[25, 'Ünv. 2011', 'Palandöken'],
+			[36, 'Kristal kar', 'Sarıkamış'],
+		]),
+		// 56) 2010 FIBA Dünya Şampiyonası şehirleri batıdan doğuya
+		RT('yn-rota-56', 'spor', 1, 'FIBA 2010’un şehirlerini batıdan doğuya uç!', [
+			[35, 'Grup'],
+			[34, 'Final'],
+			[6, 'Grup'],
+			[38, 'Grup'],
+		]),
+		// bilim
+		// 57) bilim insanları doğum sırasıyla (Efes, İznik, Anazarbos; Feza Gürsey, Gazi Yaşargil, Aziz Sancar)
+		RT('yn-rota-57', 'bilim', 2, 'Bilim insanlarını doğum sırasıyla uç: doğdukları ile!', [
+			[35, 'MÖ ~535', 'Herakleitos'],
+			[16, 'MÖ ~190', 'Hipparkhos'],
+			[1, 'MS ~40', 'Dioskorides'],
+			[34, '1921', 'Feza Gürsey'],
+			[21, '1925', 'Gazi Yaşargil'],
+			[47, '1946', 'Aziz Sancar'],
+		]),
+		// 58) darüşşifalar: Gevher Nesibe 1206, Keykavus 1217, Amasya 1309, Edirne II. Bayezid 1488, Manisa Hafsa Sultan 1539
+		RT('yn-rota-58', 'bilim', 3, 'Darüşşifaları yapım sırasıyla uç!', [
+			[38, '1206', 'Gevher Nesibe'],
+			[58, '1217', 'Keykavus'],
+			[5, '1309'],
+			[22, '1488', 'II. Bayezid'],
+			[45, '1539', 'Hafsa Sultan'],
+		]),
+		// 59) volkanik yerler batıdan doğuya: Kula, Meke maarı, Erciyes, Nemrut (Bitlis) krater gölü
+		RT('yn-rota-59', 'bilim', 1, 'Volkanik yerleri batıdan doğuya uç!', [
+			[45, 'Jeopark', 'Kula'],
+			[42, 'Maar gölü', 'Meke'],
+			[38, 'Dev volkan', 'Erciyes'],
+			[13, 'Krater gölü', 'Nemrut'],
+		]),
+		// genel kültür
+		// 60) telefon alan kodları: batıdan doğuya büyür
+		RT('yn-rota-60', 'eglence', 2, 'İlleri telefon alan koduna göre küçükten büyüğe uç!', [
+			[35, '232'],
+			[7, '242'],
+			[6, '312'],
+			[38, '352'],
+			[21, '412'],
+			[25, '442'],
+		]),
+		// 61) Ankara–Sivas hızlı treni (Yerköy Yozgat'ta)
+		RT('yn-rota-61', 'eglence', 1, 'Hızlı trenle Ankara’dan Sivas’a uç!', [
+			[6, 'Kalkış'],
+			[71, 'İlk il'],
+			[66, 'Yerköy'],
+			[58, 'Varış'],
+		]),
+		// 62) köfteler batıdan doğuya: Tekirdağ, İnegöl (Bursa), ıslama (Adapazarı), Sivas, Akçaabat (Trabzon)
+		RT('yn-rota-62', 'eglence', 1, 'Köfteleri batıdan doğuya uç!', [
+			[59, 'Trakya', 'Tekirdağ'],
+			[16, 'Bursa', 'İnegöl'],
+			[54, 'Adapazarı', 'Islama'],
+			[58, 'İç Anadolu', 'Sivas köftesi'],
+			[61, 'Trabzon', 'Akçaabat'],
+		]),
+		// 63) Anadolu Otoyolu: İzmit, Sapanca, Kaynaşlı (Düzce), Gerede (Bolu)
+		RT('yn-rota-63', 'eglence', 1, 'Otoyolla İstanbul’dan Ankara’ya uç!', [
+			[34, 'Kalkış'],
+			[41, 'İzmit'],
+			[54, 'Sapanca'],
+			[81, 'Kaynaşlı'],
+			[14, 'Gerede'],
+			[6, 'Varış'],
+		]),
+		// 64) kebaplar batıdan doğuya: İskender (Bursa), Adana, Tokat, Urfa, cağ (Erzurum)
+		RT('yn-rota-64', 'eglence', 1, 'Kebapları batıdan doğuya uç!', [
+			[16, 'Bursa', 'İskender'],
+			[1, 'Acılı', 'Adana'],
+			[60, 'Patlıcanlı', 'Tokat'],
+			[63, 'Acısız', 'Urfa'],
+			[25, 'Yatay şiş', 'Cağ kebabı'],
+		]),
+		// coğrafya
+		// 65) uç noktalar saat yönünde: İnceburun (Sinop), Iğdır, Yayladağı (Hatay), Çanakkale (Gökçeada, Babakale)
+		RT('yn-rota-65', 'cografya', 1, 'Uç noktaları kuzeyden başlayıp saat yönünde uç!', [
+			[57, 'En kuzey', 'İnceburun'],
+			[76, 'En doğu'],
+			[31, 'En güney', 'Yayladağı'],
+			[17, 'En batı'],
+		]),
+		// 66) millî parklar ilan sırasıyla: Yozgat Çamlığı 1958 (ilk), Soğuksu 1959, Uludağ 1961, Yedigöller 1965, Göreme 1986
+		RT('yn-rota-66', 'cografya', 2, 'Millî parkları ilan sırasıyla uç!', [
+			[66, '1958 · ilk'],
+			[6, '1959', 'Soğuksu'],
+			[16, '1961', 'Uludağ'],
+			[14, '1965', 'Yedigöller'],
+			[50, '1986', 'Göreme'],
+		]),
+		// 67) körfezler kıyı boyunca: İzmit, Gemlik, Edremit, İzmir, Gökova, İskenderun
+		RT('yn-rota-67', 'cografya', 2, 'Körfezleri Marmara’dan Akdeniz’e kıyı boyunca uç!', [
+			[41, 'Marmara', 'İzmit'],
+			[16, 'Marmara', 'Gemlik'],
+			[10, 'Ege', 'Edremit'],
+			[35, 'Ege', 'İzmir'],
+			[48, 'Ege', 'Gökova'],
+			[31, 'Akdeniz', 'İskenderun'],
+		]),
+		// 68) şelaleler batıdan doğuya: Suuçtu (Mustafakemalpaşa), Manavgat, Kapuzbaşı (Yahyalı), Tortum (Uzundere), Muradiye
+		RT('yn-rota-68', 'cografya', 2, 'Şelaleleri batıdan doğuya uç!', [
+			[16, 'Orman içinde', 'Suuçtu'],
+			[7, 'Irmakta', 'Manavgat'],
+			[38, 'Yedi şelale', 'Kapuzbaşı'],
+			[25, 'Uzundere', 'Tortum'],
+			[65, 'En doğuda', 'Muradiye'],
+		]),
+		// 69) Karadeniz yaylaları batıdan doğuya (ilçeleriyle)
+		RT('yn-rota-69', 'cografya', 1, 'Karadeniz yaylalarını batıdan doğuya uç!', [
+			[52, 'Aybastı', 'Perşembe'],
+			[28, 'Dereli', 'Kümbet'],
+			[61, 'Çaykara', 'Uzungöl'],
+			[53, 'Çamlıhemşin', 'Ayder'],
+			[8, 'Borçka', 'Macahel'],
+		]),
+		// 70) dağlar alçaktan yükseğe (veriden: doruk yükseltisi ve doruğun ili)
+		RT('yn-rota-70', 'cografya', 2, 'Bu dağları alçaktan yükseğe uç!', [
+			[70, '2288 m', 'Karadağ'],
+			[20, '2571 m', 'Honaz'],
+			[51, '3524 m', 'Medetsiz'],
+			[13, '4058 m', 'Süphan'],
+		]),
+		// 71) göller batıdan doğuya: Uluabat (Gölyazı), Salda, Sapanca, Hazar (Sivrice), Van Gölü
+		RT('yn-rota-71', 'cografya', 2, 'Gölleri batıdan doğuya uç!', [
+			[16, 'Gölyazı', 'Uluabat'],
+			[15, 'Beyaz kum', 'Salda'],
+			[54, 'Tektonik', 'Sapanca'],
+			[23, 'Sivrice', 'Hazar'],
+			[65, 'İnci kefali', 'Van Gölü'],
+		]),
 	],
 };

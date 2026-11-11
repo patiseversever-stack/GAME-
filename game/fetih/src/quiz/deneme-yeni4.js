@@ -140,8 +140,8 @@ export const SAMPLES = {
 		// ---------------------------------------------------------------- spor
 		// 10 fit = 3,05 m (FIBA ve NBA aynı)
 		PK('yn-penalti-47', 'spor', 2, 'Basketbol potasının çemberi yerden kaç metre yüksektedir?', ['3,05 metre', '2,75 metre', '3,35 metre', '2,90 metre']),
-		// üç devre × 20 dakika
-		PK('yn-penalti-48', 'spor', 2, 'Bir buz hokeyi maçı kaç devreden oluşur?', ['3', '2', '4', '5']),
+		// voleybolda takım topa en çok üç kez dokunabilir (blok sayılmaz)
+		PK('yn-penalti-48', 'spor', 1, 'Voleybolda bir takım topa en çok kaç kez dokunabilir?', ['3', '2', '4', '5']),
 		// dokuz inning; beraberlikte uzar
 		PK('yn-penalti-49', 'spor', 2, 'Beyzbolda bir maç normalde kaç devreden (inning) oluşur?', ['9', '7', '6', '10']),
 		// love = 0 (15, 30, 40; beraberlik deuce, avantaj advantage)
@@ -158,14 +158,14 @@ export const SAMPLES = {
 		PK('yn-penalti-55', 'spor', 3, 'İlk Kış Olimpiyatları 1924’te hangi şehirde yapıldı?', ['Chamonix', 'St. Moritz', 'Oslo', 'Innsbruck']),
 		// 15’li ragbide (rugby union) deneme 5 sayı (1992’den beri), dönüşüm vuruşu 2, penaltı 3
 		PK('yn-penalti-56', 'spor', 3, '15 kişilik ragbide bir denemeyle (try) kaç sayı kazanılır?', ['5', '3', '6', '7']),
-		// touchdown 6 sayı; ardından ek vuruşla 1 ya da ek oyunla 2 sayı; field goal 3
-		PK('yn-penalti-57', 'spor', 2, 'Amerikan futbolunda touchdown kaç sayı değerindedir?', ['6', '7', '3', '5']),
+		// 21 etap, yaklaşık üç hafta (23 gün, iki dinlenme günüyle)
+		PK('yn-penalti-57', 'spor', 2, 'Tour de France yaklaşık kaç hafta sürer?', ['3', '1', '2', '5']),
 		// wicket: üç dikey çubuk (stump) ve üstündeki iki tahtacık (bail); pitch oyun şeridi, crease çizgi, over altı atış
 		PK('yn-penalti-58', 'spor', 3, 'Kriketteki üç dikey çubuk ve üstündeki tahtacıklara ne denir?', ['Wicket', 'Pitch', 'Crease', 'Over']),
 
 		// ---------------------------------------------------------------- tarih
-		// 15 Haziran 1215 Runnymede: İngiliz baronları Kral John’a (Yurtsuz John) imzalattı; Aslan Yürekli Richard onun ağabeyiydi
-		PK('yn-penalti-59', 'tarih', 3, 'Magna Carta 1215’te hangi İngiliz kralına imzalatıldı?', ['Yurtsuz John', 'Aslan Yürekli Richard', 'VIII. Henry', 'Fatih William']),
+		// 8. yüzyılda Hazar yöneticileri ve soyluları Yahudiliği benimsedi (Bulan Kağan dönemi)
+		PK('yn-penalti-59', 'tarih', 3, 'Hazar Kağanlığı’nın yöneticileri hangi dini benimsedi?', ['Yahudilik', 'Hristiyanlık', 'Budizm', 'Maniheizm']),
 		// Kastilya Kraliçesi I. Isabella (eşi Aragonlu Ferdinand); Aragonlu Katerina onun kızı, I. Elizabeth ve Mary Stuart sonraki yüzyıl
 		PK('yn-penalti-60', 'tarih', 2, 'Kolomb’un 1492 seferini destekleyen kraliçe kimdir?', ['Kastilyalı Isabella', 'I. Elizabeth', 'Aragonlu Katerina', 'Mary Stuart']),
 		// 11 Ekim 1922 Mudanya Ateşkesi’ni Batı Cephesi Komutanı İsmet Paşa imzaladı; Fevzi Paşa Genelkurmay Başkanıydı
@@ -182,8 +182,8 @@ export const SAMPLES = {
 		PK('yn-penalti-66', 'tarih', 2, '1878 Berlin Kongresi’ne ev sahipliği yapan Alman şansölye kimdir?', ['Bismarck', 'Metternich', 'Kaiser Wilhelm', 'Moltke']),
 		// Endülüs Emevileri (756–1031) başkenti Kurtuba (Córdoba); Gırnata son Müslüman kent, İşbiliye Sevilla, Tuleytula Toledo
 		PK('yn-penalti-67', 'tarih', 3, 'Endülüs Emevi Devleti’nin başkenti hangi şehirdi?', ['Kurtuba', 'Gırnata', 'İşbiliye', 'Tuleytula']),
-		// I. Justinianus’un eşi Theodora (Nika Ayaklanması’nda tahtı kurtaran sözüyle ünlü)
-		PK('yn-penalti-68', 'tarih', 3, 'Bizans İmparatoru Justinianus’un eşi olan imparatoriçe kimdir?', ['Theodora', 'Zoe', 'İrene', 'Helena']),
+		// 30 Ekim 1918, Agamemnon zırhlısı: Osmanlı heyetinin başkanı Bahriye Nazırı Rauf Bey (Orbay)
+		PK('yn-penalti-68', 'tarih', 3, 'Mondros Ateşkesi’ni Osmanlı adına imzalayan heyetin başkanı kimdir?', ['Rauf Orbay', 'Damat Ferit', 'Talat Paşa', 'Ahmet İzzet Paşa']),
 		// söylence: MÖ 7. yüzyılda Megaralı Byzas kurdu, kent adını ondan aldı (Byzantion)
 		PK('yn-penalti-69', 'tarih', 2, 'Efsaneye göre İstanbul’un ilk kurucusu olan Megaralı kimdir?', ['Byzas', 'Konstantin', 'Perikles', 'Teseus']),
 		// Nevşehirli Damat İbrahim Paşa, 1718–1730 sadrazam; Patrona Halil İsyanı’yla öldürüldü
@@ -204,38 +204,38 @@ export const SAMPLES = {
 		PK('yn-penalti-76', 'cografya', 3, 'Ganj Nehri hangi körfeze dökülür?', ['Bengal Körfezi', 'Basra Körfezi', 'Aden Körfezi', 'Siam Körfezi']),
 		// İskoçya’nın başkenti Edinburgh; en kalabalık kenti Glasgow
 		PK('yn-penalti-77', 'cografya', 2, 'İskoçya’nın başkenti hangisidir?', ['Edinburgh', 'Glasgow', 'Aberdeen', 'Dundee']),
-		// San Marino dört bir yanı İtalya ile çevrili (Vatikan gibi)
-		PK('yn-penalti-78', 'cografya', 1, 'San Marino hangi ülkenin toprakları içindedir?', ['İtalya', 'Fransa', 'İspanya', 'Avusturya']),
+		// veri: Ege illeri Afyonkarahisar 03, Aydın 09, Denizli 20, İzmir 35, Kütahya 43, Manisa 45, Muğla 48, Uşak 64
+		PK('yn-penalti-78', 'cografya', 3, 'Ege Bölgesi’nde plaka kodu en büyük olan il hangisidir?', ['Uşak', 'Muğla', 'Manisa', 'Kütahya']),
 		// veri: Erzurum’un dokuz komşusu Artvin, Ardahan, Kars, Ağrı, Muş, Bingöl, Erzincan, Bayburt, Rize; Trabzon değil
 		PK('yn-penalti-79', 'cografya', 3, 'Hangi il Erzurum’a komşu değildir?', ['Trabzon', 'Rize', 'Bayburt', 'Muş']),
 		// Güney Afrika’nın batısı Atlas, doğusu Hint Okyanusu; Namibya ve Angola yalnız Atlas, Mozambik yalnız Hint Okyanusu
 		PK('yn-penalti-80', 'cografya', 2, 'Hangisinin hem Atlas hem Hint Okyanusu’na kıyısı vardır?', ['Güney Afrika', 'Namibya', 'Mozambik', 'Angola']),
-		// Matterhorn (4478 m) Zermatt (İsviçre) ile Breuil-Cervinia (İtalya) arasında sınırda
-		PK('yn-penalti-81', 'cografya', 3, 'Matterhorn Dağı hangi iki ülkenin sınırındadır?', ['İsviçre ve İtalya', 'Fransa ve İtalya', 'İsviçre ve Fransa', 'Avusturya ve İsviçre']),
+		// Quito ~0,2° G; Nairobi ~1,3° G, Bogota ~4,7° K, Lima ~12° G
+		PK('yn-penalti-81', 'cografya', 3, 'Hangisi Ekvator’a en yakın başkenttir?', ['Quito', 'Bogota', 'Nairobi', 'Lima']),
 		// Zambezi Nehri üzerinde, Zambiya ile Zimbabve sınırında
 		PK('yn-penalti-82', 'cografya', 3, 'Victoria Şelalesi hangi iki ülkenin sınırındadır?', ['Zambiya ve Zimbabve', 'Kenya ve Tanzanya', 'Uganda ve Kenya', 'Angola ve Namibya']),
-		// Köprüçay kanyonu, Antalya’nın Manavgat ilçesinde (Beşkonak, Oluk Köprüsü); komşu Isparta bilerek şıklarda yok
-		PK('yn-penalti-83', 'cografya', 2, 'Köprülü Kanyon hangi ilimizdedir?', ['Antalya', 'Mersin', 'Muğla', 'Burdur']),
+		// Faroe Adaları Danimarka Krallığı’na bağlı özerk bölge
+		PK('yn-penalti-83', 'cografya', 3, 'Faroe Adaları hangi ülkeye bağlıdır?', ['Danimarka', 'Norveç', 'İzlanda', 'İngiltere']),
 		// Yunanistan’ın resmî adı Helen Cumhuriyeti (Ellinikí Dimokratía)
 		PK('yn-penalti-84', 'cografya', 2, 'Resmî adı Helen Cumhuriyeti olan ülke hangisidir?', ['Yunanistan', 'Kıbrıs', 'Arnavutluk', 'Bulgaristan']),
 
 		// ---------------------------------------------------------------- bilim
 		// yakut (kırmızı) ve safir aynı mineral: korindon (alüminyum oksit, Mohs 9)
 		PK('yn-penalti-85', 'bilim', 3, 'Yakut ve safir hangi mineralin türleridir?', ['Korindon', 'Kuvars', 'Beril', 'Topaz']),
-		// Mohs: 1 talk, 2 jips, 3 kalsit … 7 kuvars … 10 elmas
-		PK('yn-penalti-86', 'bilim', 3, 'Mohs sertlik ölçeğinde 1 olan en yumuşak mineral hangisidir?', ['Talk', 'Jips', 'Kalsit', 'Kuvars']),
+		// J. J. Thomson, katot ışınlarıyla 1897; Rutherford çekirdeği 1911’de buldu
+		PK('yn-penalti-86', 'bilim', 3, 'Elektronu 1897’de keşfeden bilim insanı kimdir?', ['J. J. Thomson', 'Rutherford', 'Niels Bohr', 'Faraday']),
 		// DNA bazları A, T, G, C; urasil yalnız RNA’da (timinin yerinde)
 		PK('yn-penalti-87', 'bilim', 2, 'Hangisi DNA’nın yapısında bulunmaz?', ['Urasil', 'Timin', 'Adenin', 'Guanin']),
-		// n(n+1)/2 = 100 × 101 / 2 (Gauss’un okul öyküsü)
-		PK('yn-penalti-88', 'bilim', 2, '1’den 100’e kadar bütün sayıların toplamı kaçtır?', ['5050', '5000', '10100', '4950']),
+		// Luna 2 (Sovyetler Birliği) 13 Eylül 1959’da Ay’a çarptı
+		PK('yn-penalti-88', 'bilim', 3, 'Ay’a ulaşan ilk insan yapımı aracı hangi ülke gönderdi?', ['Sovyetler Birliği', 'ABD', 'Çin', 'Japonya']),
 		// 64 = 8² = 4³; 36 yalnız kare, 27 yalnız küp, 81 = 9² = 3⁴ (küp değil)
 		PK('yn-penalti-89', 'bilim', 2, 'Hangisi hem tam kare hem tam küp bir sayıdır?', ['64', '36', '27', '81']),
 		// mare (Latince “deniz”): Galileo döneminde su sanılan bazalt düzlükleri (Huzur Denizi’ne Apollo 11 indi)
 		PK('yn-penalti-90', 'bilim', 3, 'Ay’ın yüzeyindeki geniş karanlık düzlüklere ne ad verilir?', ['Deniz', 'Krater', 'Vadi', 'Çöl']),
 		// Mars’ın uyduları Phobos ve Deimos; Titan Satürn’ün, Europa Jüpiter’in, Triton Neptün’ün
 		PK('yn-penalti-91', 'bilim', 2, 'Mars’ın iki uydusundan biri hangisidir?', ['Phobos', 'Titan', 'Europa', 'Triton']),
-		// 1 ışık yılı ≈ 9,46 trilyon km
-		PK('yn-penalti-92', 'bilim', 2, 'Bir ışık yılı yaklaşık kaç kilometredir?', ['9,5 trilyon', '300 bin', '150 milyon', '1 milyar']),
+		// K vitamini pıhtılaşma etkenlerinin karaciğerde üretimi için gerekir (K, Almanca Koagulation’dan)
+		PK('yn-penalti-92', 'bilim', 2, 'Kanın pıhtılaşması için gerekli olan vitamin hangisidir?', ['K vitamini', 'C vitamini', 'A vitamini', 'B12 vitamini']),
 		// koni hücreleri renk, çubuk hücreleri loş ışık; melanosit pigment hücresi
 		PK('yn-penalti-93', 'bilim', 2, 'Gözde renkleri algılayan hücrelere ne ad verilir?', ['Koni', 'Çubuk', 'Nöron', 'Melanosit']),
 		// güneş rüzgârı kuyruğu hep Güneş’in ters yönüne iter (Güneş’ten uzaklaşırken kuyruk önden gider)
@@ -248,8 +248,8 @@ export const SAMPLES = {
 		// ---------------------------------------------------------------- sanat ve edebiyat
 		// An die Freude (1785) Friedrich Schiller’in; Beethoven 9. Senfoni’nin finalinde (1824) kullandı
 		PK('yn-penalti-97', 'sanat', 3, 'Beethoven’ın 9. Senfonisi’ndeki “Neşeye Övgü” şiiri kimindir?', ['Schiller', 'Goethe', 'Heine', 'Hölderlin']),
-		// Rosinante; Bukefalos İskender’in, Babieca El Cid’in atı, Pegasus kanatlı at
-		PK('yn-penalti-98', 'sanat', 2, 'Don Kişot’un atının adı nedir?', ['Rosinante', 'Bukefalos', 'Babieca', 'Pegasus']),
+		// Cemal Süreya’nın asıl adı Cemalettin Seber (1931–1990)
+		PK('yn-penalti-98', 'sanat', 3, 'Cemal Süreya’nın asıl adı nedir?', ['Cemalettin Seber', 'Cemil Sürer', 'Celalettin Sever', 'Cemal Sezer']),
 		// Bir Bilim Adamının Romanı: Mustafa İnan (1975), Atay’ın İTÜ’deki hocası
 		PK('yn-penalti-99', 'sanat', 3, 'Oğuz Atay’ın Bir Bilim Adamının Romanı kimi anlatır?', ['Mustafa İnan', 'Cahit Arf', 'Feza Gürsey', 'Ali Kuşçu']),
 		// Bram Stoker 1847’de Dublin’de doğdu, İrlandalı; Drakula 1897
@@ -262,8 +262,8 @@ export const SAMPLES = {
 		PK('yn-penalti-103', 'sanat', 3, 'Köçekçe adlı orkestra eserini hangi Türk bestecisi yazdı?', ['Ulvi Cemal Erkin', 'Adnan Saygun', 'Hasan Ferit Alnar', 'Cemal Reşit Rey']),
 		// Schachnovelle (1942) Stefan Zweig’ın son eseri
 		PK('yn-penalti-104', 'sanat', 2, 'Satranç adlı ünlü uzun öykünün yazarı kimdir?', ['Stefan Zweig', 'Franz Kafka', 'Thomas Mann', 'Hermann Hesse']),
-		// Kipling, Orman Çocuğu: Mowgli’yi kurt ailesi büyütür; ayı Baloo ve panter Bagheera ona yol gösterir
-		PK('yn-penalti-105', 'sanat', 1, 'Mowgli’yi ormanda hangi hayvanlar büyütür?', ['Kurtlar', 'Maymunlar', 'Ayılar', 'Panterler']),
+		// Faust’la anlaşma yapan şeytan Mefistofeles (Mephistopheles)
+		PK('yn-penalti-105', 'sanat', 2, 'Goethe’nin Faust’unda ruhunu satın alan şeytanın adı nedir?', ['Mefistofeles', 'Lucifer', 'Belzebub', 'Asmodeus']),
 		// Lewis Carroll (1865): Alice yeleğinden saat çıkaran Beyaz Tavşan’ın peşinden tavşan deliğine düşer
 		PK('yn-penalti-106', 'sanat', 1, 'Alice Harikalar Diyarı’na kimin peşinden düşer?', ['Beyaz Tavşan', 'Cheshire Kedisi', 'Çılgın Şapkacı', 'Tırtıl']),
 		// J. M. Barrie: Neverland, Türkçede Varolmayan Ülke
@@ -272,8 +272,8 @@ export const SAMPLES = {
 		PK('yn-penalti-108', 'sanat', 3, 'Yaşlı Adam ve Deniz’deki yaşlı balıkçının adı nedir?', ['Santiago', 'Manolin', 'Pedro', 'Ramón']),
 
 		// ---------------------------------------------------------------- genel kültür
-		// 8 piyon × 2 kare + 2 at × 2 kare = 20
-		PK('yn-penalti-109', 'eglence', 3, 'Satrançta beyazın ilk hamlesi için kaç farklı seçeneği vardır?', ['20', '16', '24', '18']),
+		// sudoku Japonca “sūji wa dokushin ni kagiru” (rakamlar tek kalmalı) kısaltması
+		PK('yn-penalti-109', 'eglence', 2, 'Sudoku adını hangi dilden alır?', ['Japonca', 'Çince', 'Korece', 'Latince']),
 		// Emmental (İsviçre): mayalanırken çıkan karbondioksit iri delikler açar
 		PK('yn-penalti-110', 'eglence', 1, 'Hangi peynir iri delikleriyle tanınır?', ['Emmental', 'Parmesan', 'Rokfor', 'Brie']),
 		// Roquefort: koyun sütünden, Combalou mağaralarında olgunlaşan küflü peynir

@@ -141,6 +141,8 @@ const ans = (id) => Q.get(id)?.a || [];
 	const ez = il('Erzurum').nb;
 	const z = ans('yn-penalti-79').map((n) => il(n).id);
 	ok(!ez.includes(z[0]) && z.slice(1).every((x) => ez.includes(x)), 'yn-penalti-79: Erzurum komşuları');
+	const eg = ans('yn-penalti-78').map((n) => il(n));
+	ok(eg.every((p) => p.region === 'ege') && eg[0].id === Math.max(...PV.filter((p) => p.region === 'ege').map((p) => p.id)), 'yn-penalti-78: Ege’nin en büyük plakası');
 }
 
 // ---------------------------------------------------------------- hesapla doğrulanan olgular
@@ -161,13 +163,11 @@ const ans = (id) => Q.get(id)?.a || [];
 	ok(V - (5 * p5 + 6 * h6) / 2 + (p5 + h6) === 2 && p5 === 12, 'futbol topu yamaları');
 	// Rubik 3×3: 6 yüz, her yüzde bir merkez
 	ok(ans('yn-penalti-40')[0] === '6', 'yn-penalti-40');
-	// ek sorular: Gauss toplamı, hem kare hem küp, beyazın ilk hamleleri, Romen rakamı, Braille hücresi
-	ok(ans('yn-penalti-88')[0] === String((100 * 101) / 2), 'yn-penalti-88: 1–100 toplamı');
+	// ek sorular: hem kare hem küp, Romen rakamı, Braille hücresi
 	const kk = ans('yn-penalti-89').map(Number);
 	const kare = (n) => Number.isInteger(Math.sqrt(n));
 	const kup = (n) => Math.round(Math.cbrt(n)) ** 3 === n;
 	ok(kare(kk[0]) && kup(kk[0]) && kk.slice(1).every((n) => !(kare(n) && kup(n))), 'yn-penalti-89: hem kare hem küp');
-	ok(ans('yn-penalti-109')[0] === String(8 * 2 + 2 * 2), 'yn-penalti-109: beyazın ilk hamleleri');
 	const rom = { M: 1000, D: 500, C: 100, L: 50, X: 10, V: 5, I: 1 };
 	const roma = (s) => [...s].reduce((t, c, i, a) => t + (rom[c] < (rom[a[i + 1]] || 0) ? -rom[c] : rom[c]), 0);
 	ok(ans('yn-penalti-113')[0] === String(roma('MCM')), 'yn-penalti-113: MCM');

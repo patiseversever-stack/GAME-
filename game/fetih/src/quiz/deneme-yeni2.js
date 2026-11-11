@@ -222,8 +222,9 @@ export const SAMPLES = {
 		// Michelangelo: Pietà ve Musa heykelleri, Sistina’daki Âdem’in Yaratılışı ve Son Yargı freskleri (bankada sorulan Davut
 		// bilerek yok); tuzaklar başka ustaların en ünlü eserleri
 		BL('yn-balon-74', 'sanat', 1, 'Michelangelo’nun eserlerini patlat!', ['Pietà', 'Musa Heykeli', 'Âdem’in Yaratılışı', 'Son Yargı'], ['Atina Okulu', 'Venüs’ün Doğuşu', 'Gece Devriyesi', 'Mona Lisa', 'İnci Küpeli Kız'], 'gece', 'istanbul', 'Atina Okulu Raffaello’nun, Venüs’ün Doğuşu Botticelli’nin, Gece Devriyesi Rembrandt’ın.'),
-		// Rus yazarlar; tuzaklar aynı yüzyılın Avrupalı ustaları (Kafka Prag’da Almanca yazdı). Doğumu Ukrayna’da olan Gogol bilerek yok
-		BL('yn-balon-75', 'sanat', 1, 'Rus yazarları patlat!', ['Tolstoy', 'Dostoyevski', 'Çehov', 'Turgenyev'], ['Kafka', 'Balzac', 'Dickens', 'Ibsen', 'Goethe'], 'safak', 'kapadokya', 'Kafka Prag’da Almanca yazdı; Balzac Fransız, Dickens İngiliz, Ibsen Norveçli.'),
+		// Latin Amerikalı yazarlar (Kolombiyalı García Márquez, Arjantinli Borges ve Cortázar, Şilili Neruda); tuzaklar aynı dillerde
+		// yazan İspanyol ve Portekizliler
+		BL('yn-balon-75', 'sanat', 3, 'Latin Amerikalı yazarları patlat!', ['Márquez', 'Borges', 'Neruda', 'Cortázar'], ['Cervantes', 'Unamuno', 'Saramago', 'Pessoa'], 'safak', 'kapadokya', 'Cervantes ve Unamuno İspanyol, Saramago ve Pessoa Portekizli yazarlar.'),
 		// Gotik katedraller; tuzaklar başka üslupların dev yapıları (Gotik etkili Sagrada Família bilerek yok)
 		BL('yn-balon-76', 'sanat', 2, 'Gotik yapıları patlat!', ['Notre-Dame', 'Köln Katedrali', 'Milano Katedrali', 'Chartres'], ['Ayasofya', 'Aziz Petrus', 'Pantheon', 'Tac Mahal', 'Aziz Vasil'], 'gece', 'istanbul', 'Ayasofya Bizans, Aziz Petrus Rönesans, Pantheon Roma, Tac Mahal Babür yapısı.'),
 		// heykeltıraşlar (Rodin, Bernini, Donatello, Canova); tuzaklar yalnız resimle ün kazanmış ustalar. Hem ressam hem heykeltıraş
