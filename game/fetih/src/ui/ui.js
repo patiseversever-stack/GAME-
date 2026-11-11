@@ -1677,8 +1677,10 @@ export class UI {
 	_kmPlace(P) {
 		const K = P.filter((p) => p.km);
 		if (!K.length) return;
-		const SW = this.el.clientWidth || innerWidth;
-		const SH = this.el.clientHeight || innerHeight;
+		// ekran boyu app.resize() önbelleğinden (kare içinde clientWidth okumak, DOM o karede değiştiyse tarayıcıya zorunlu
+		// stil ve yerleşim hesabı yaptırıyordu: 4× yavaş işlemcide savaş filminde 216 ms'lik kare ölçüldü)
+		const SW = this.app._rc?.width || this.el.clientWidth || innerWidth;
+		const SH = this.app._rc?.height || this.el.clientHeight || innerHeight;
 		const ov = (a, b) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
 		const obs = [];
 		for (const p of P) {
@@ -1763,8 +1765,10 @@ export class UI {
 		// yazı rozetleri (v1.7): öncelik sırasıyla BOŞ yere yerleşir. Önce kendi yeri, sonra bir önceki karedeki yeri (titremesin),
 		// sonra kademeli adaylar (yukarı, aşağı, yanlar, çaprazlar). Engeller: önce yerleşen rozetler, cevap damgası, ekran
 		// kenarı ve (haritalı soruda) kartın altı. Boş yer yoksa kendi yerinde kalır. Büyük rozet (cevap) önce yerleşir.
-		const SW = this.el.clientWidth || innerWidth;
-		const SH = this.el.clientHeight || innerHeight;
+		// ekran boyu app.resize() önbelleğinden (kare içinde clientWidth okumak, DOM o karede değiştiyse tarayıcıya zorunlu
+		// stil ve yerleşim hesabı yaptırıyordu: 4× yavaş işlemcide savaş filminde 216 ms'lik kare ölçüldü)
+		const SW = this.app._rc?.width || this.el.clientWidth || innerWidth;
+		const SH = this.app._rc?.height || this.el.clientHeight || innerHeight;
 		const nowT = performance.now();
 		let cutY = this.el.classList.contains('qmap') && this._mapTop ? this._mapTop * SH - 8 : -1e9;
 		const boxes = this._stampBox ? [this._stampBox] : [];
