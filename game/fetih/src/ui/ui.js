@@ -1027,13 +1027,23 @@ export class UI {
 		if (card.classList.contains('map') || typeof ResizeObserver === 'undefined') return; // haritalı kart: harita payı korunur
 		let raf = 0;
 		let refits = 0;
+		// gözlenen içerik öğeleri: her öğe YALNIZ BİR KEZ gözlemciye eklenir. Aynı öğeyi yeniden observe() etmek gözlemi
+		// sıfırlar (son ölçülen boy 0×0) ve bir sonraki karede yine tetikler: ölçüm her karede kendini yeniden başlatıyordu
+		// (soru boyunca kare başına ~8 zorunlu yerleşim hesabı; zoom her karede yeniden yazıldığı için Adam Asmaca harf
+		// kartlarının kayma geçişi hiç bitmiyor, kartlar yarı yolda üst üste kalıyordu)
+		const seen = new WeakSet();
 		const fit = () => {
 			raf = 0;
 			if (!body.isConnected) return this._cfo?.disconnect();
 			const kids = [...body.children];
-			for (const k of kids) ro.observe(k); // içerik kendi boyunu değiştirince (sahne, satır içi stil) de ölç
+			for (const k of kids) {
+				if (seen.has(k)) continue;
+				seen.add(k);
+				ro.observe(k); // içerik kendi boyunu değiştirince (sahne, satır içi stil) de ölç
+			}
 			const set = (z) => {
-				for (const k of kids) k.style.zoom = z === 1 ? '' : String(z);
+				const v = z === 1 ? '' : String(z);
+				for (const k of kids) if (k.style.zoom !== v) k.style.zoom = v;
 			};
 			const gap = () => body.scrollHeight - body.clientHeight;
 			set(1);
@@ -1076,16 +1086,21 @@ export class UI {
 		ro.observe(body);
 		const mo = new MutationObserver(kick);
 		mo.observe(body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] });
-		// giriş devinimi sürerken ölçülen boy (aşağıdan kayan kart taşma sayılır) devinim bitince yeniden ölçülür
-		body.addEventListener('animationend', kick);
-		body.addEventListener('transitionend', kick);
+		// giriş devinimi sürerken ölçülen boy (aşağıdan kayan kart taşma sayılır) devinim bitince yeniden ölçülür. Yalnız gövdenin
+		// kendisi ve doğrudan çocuklarının devinimi: içerideki öğelerin geçişleri (Adam Asmaca harf kartları) ölçüme bağlanınca
+		// ölçümün geçici zoom'u o geçişleri yeniden başlatıyor, biten geçiş yine ölçüyordu (kare başına süren döngü)
+		const onEnd = (e) => {
+			if (e.target === body || e.target.parentElement === body) kick();
+		};
+		body.addEventListener('animationend', onEnd);
+		body.addEventListener('transitionend', onEnd);
 		document.fonts?.ready?.then(kick);
 		this._cfo = {
 			disconnect: () => {
 				ro.disconnect();
 				mo.disconnect();
-				body.removeEventListener('animationend', kick);
-				body.removeEventListener('transitionend', kick);
+				body.removeEventListener('animationend', onEnd);
+				body.removeEventListener('transitionend', onEnd);
 				if (raf) cancelAnimationFrame(raf);
 				this._cfo = null;
 			},
