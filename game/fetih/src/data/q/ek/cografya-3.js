@@ -1,4 +1,53 @@
 // Ek soru bankası 3 (cografya): 2026-11 üçüncü büyütme (20 bin hedefi). Biçim: DESIGN.md "Soru veri biçimleri";
 // kimlikler <kat>-ek-<tip>-3NNN (halat ve Mancınık ek turları "-ek-" kimliklerinden kendiliğinden kurulur).
+// Konu: yalnız Türkiye coğrafyası (dağ, göl, akarsu, kıyı, iklim, ürün, tarihî yer, jeoloji). İl düz bilgileri (plaka,
+// komşu il, bölge) burada yok: veriden ayrıca üretilir.
 export default [
+	// ---------------------------------------------------------------- choice: dağlar, volkanlar, geçitler
+	{ id: "cog-ek-ch-3001", cat: "cografya", diff: 2, type: "choice", q: "Ağrı Dağı'nın güneydoğusunda yükselen ikinci, daha alçak volkan konisi hangisidir?", a: ["Küçük Ağrı", "Tendürek", "Süphan", "Aladağ"] },
+	{ id: "cog-ek-ch-3002", cat: "cografya", diff: 2, type: "choice", q: "Ağrı Dağı'ndan sonra Türkiye'nin en yüksek ikinci volkanik dağı hangisidir?", a: ["Süphan Dağı", "Erciyes Dağı", "Hasan Dağı", "Nemrut Dağı"] },
+	{ id: "cog-ek-ch-3003", cat: "cografya", diff: 2, type: "choice", q: "Kapadokya'daki peri bacalarının tüf katmanlarını başlıca hangi volkanlar püskürttü?", a: ["Erciyes ve Hasan Dağı", "Ağrı ve Süphan", "Nemrut ve Tendürek", "Uludağ ve Ilgaz"] },
+	{ id: "cog-ek-ch-3004", cat: "cografya", diff: 3, type: "choice", q: "Strabon'un \"Yanık Ülke\" dediği genç volkanlar yöresi bugün hangi ilimizdedir?", a: ["Manisa", "Kütahya", "Denizli", "Aydın"], tag: "il" },
+	{ id: "cog-ek-ch-3005", cat: "cografya", diff: 2, type: "choice", q: "Hatay ile Osmaniye arasında uzanan Nur Dağları'nın diğer adı nedir?", a: ["Amanos Dağları", "Binboğa Dağları", "Munzur Dağları", "Bolkar Dağları"] },
+	{ id: "cog-ek-ch-3006", cat: "cografya", diff: 2, type: "choice", q: "Kış sporlarıyla bilinen Ilgaz Dağı hangi iki ilimiz arasında yükselir?", a: ["Kastamonu ve Çankırı", "Bolu ve Düzce", "Çorum ve Amasya", "Sinop ve Samsun"] },
+	{ id: "cog-ek-ch-3009", cat: "cografya", diff: 2, type: "choice", q: "Toroslar'ı aşıp Çukurova'yı İç Anadolu'ya bağlayan tarihî geçit hangisidir?", a: ["Gülek Boğazı", "Belen Geçidi", "Zigana Geçidi", "Kop Geçidi"] },
+	{ id: "cog-ek-ch-3010", cat: "cografya", diff: 3, type: "choice", q: "İskenderun'u Antakya'ya bağlayan dağ geçidi hangisidir?", a: ["Belen Geçidi", "Gülek Boğazı", "Zigana Geçidi", "Kop Geçidi"] },
+	{ id: "cog-ek-ch-3011", cat: "cografya", diff: 2, type: "choice", q: "Toroslar ve Kuzey Anadolu Dağları oluşumlarına göre hangi tür dağlardır?", a: ["Kıvrım dağları", "Volkanik dağlar", "Kırık dağları", "Buzul dağları"] },
+	{ id: "cog-ek-ch-3012", cat: "cografya", diff: 3, type: "choice", q: "Ege'de iki çöküntü alanı (graben) arasında yükselen dağ bloklarına ne denir?", a: ["Horst", "Moren", "Polye", "Delta"] },
+	{ id: "cog-ek-ch-3014", cat: "cografya", diff: 1, type: "choice", q: "Ağrı Dağı yabancı dillerde hangi adla bilinir?", a: ["Ararat", "Elbrus", "Kazbek", "Demavend"] },
+	{ id: "cog-ek-ch-3015", cat: "cografya", diff: 2, type: "choice", q: "Kapuzbaşı Şelaleleri hangi dağ kütlesinin eteğindedir?", a: ["Aladağlar", "Erciyes Dağı", "Bolkar Dağları", "Hasan Dağı"] },
+	// ---------------------------------------------------------------- choice: göller
+	{ id: "cog-ek-ch-3017", cat: "cografya", diff: 2, type: "choice", q: "Marmara Bölgesi'nin yüzölçümü en büyük doğal gölü hangisidir?", a: ["İznik Gölü", "Uluabat Gölü", "Manyas Gölü", "Sapanca Gölü"] },
+	{ id: "cog-ek-ch-3018", cat: "cografya", diff: 3, type: "choice", q: "Kıyısındaki Gölyazı köyüyle bilinen göl hangisidir?", a: ["Uluabat Gölü", "İznik Gölü", "Sapanca Gölü", "Manyas Gölü"] },
+	{ id: "cog-ek-ch-3019", cat: "cografya", diff: 2, type: "choice", q: "Kuş Gölü'nün diğer adı nedir?", a: ["Manyas Gölü", "Uluabat Gölü", "Terkos Gölü", "Eymir Gölü"] },
+	{ id: "cog-ek-ch-3020", cat: "cografya", diff: 2, type: "choice", q: "İstanbul'un su kaynaklarından Terkos Gölü hangi denizin kıyısındadır?", a: ["Karadeniz", "Marmara Denizi", "Ege Denizi", "Akdeniz"] },
+	{ id: "cog-ek-ch-3021", cat: "cografya", diff: 2, type: "choice", q: "Ankara'nın Gölbaşı ilçesindeki iki göl Mogan ve hangisidir?", a: ["Eymir", "Abant", "Seyfe", "Tuzla"] },
+	{ id: "cog-ek-ch-3022", cat: "cografya", diff: 3, type: "choice", q: "Flamingolarıyla bilinen Seyfe Gölü hangi ilimizdedir?", a: ["Kırşehir", "Nevşehir", "Yozgat", "Aksaray"], tag: "il" },
+	{ id: "cog-ek-ch-3023", cat: "cografya", diff: 2, type: "choice", q: "Köyceğiz Gölü'nün suyunu denize taşıyan Dalyan Kanalı'nın ağzındaki kumsal hangisidir?", a: ["İztuzu", "Patara", "Çıralı", "Ölüdeniz"] },
+	{ id: "cog-ek-ch-3024", cat: "cografya", diff: 3, type: "choice", q: "Endemik sığla (günlük) ağacı ormanlarıyla bilinen göl hangisidir?", a: ["Köyceğiz Gölü", "Bafa Gölü", "Salda Gölü", "Eğirdir Gölü"] },
+	{ id: "cog-ek-ch-3026", cat: "cografya", diff: 2, type: "choice", q: "Konya'daki Meke Gölü'nün ortasında yükselen tepe nedir?", a: ["Sönmüş bir volkan konisi", "Bir mercan resifi", "Rüzgârın yığdığı kumul", "Buzulun bıraktığı moren"] },
+	// ---------------------------------------------------------------- choice: barajlar ve akarsular
+	{ id: "cog-ek-ch-3027", cat: "cografya", diff: 2, type: "choice", q: "Artvin'deki Yusufeli ve Deriner barajları hangi nehir üzerindedir?", a: ["Çoruh", "Kura", "Aras", "Harşit"] },
+	{ id: "cog-ek-ch-3028", cat: "cografya", diff: 2, type: "choice", q: "Atatürk'ün 1936'da açtığı Çubuk-1 Barajı hangi şehrin suyu için yapıldı?", a: ["Ankara", "İstanbul", "İzmir", "Bursa"], tag: "il" },
+	{ id: "cog-ek-ch-3029", cat: "cografya", diff: 2, type: "choice", q: "Şanlıurfa Tünelleri, Harran Ovası'na hangi barajın suyunu taşır?", a: ["Atatürk Barajı", "Keban Barajı", "Ilısu Barajı", "Karakaya Barajı"] },
+	{ id: "cog-ek-ch-3030", cat: "cografya", diff: 2, type: "choice", q: "Zeugma antik kentinin bir bölümü hangi barajın gölü altında kaldı?", a: ["Birecik Barajı", "Atatürk Barajı", "Ilısu Barajı", "Keban Barajı"] },
+	{ id: "cog-ek-ch-3031", cat: "cografya", diff: 3, type: "choice", q: "Samsun'daki Hasan Uğurlu ve Suat Uğurlu barajları hangi nehir üzerindedir?", a: ["Yeşilırmak", "Kızılırmak", "Filyos", "Melet"] },
+	{ id: "cog-ek-ch-3033", cat: "cografya", diff: 3, type: "choice", q: "Bergama'nın yakınından geçip Çandarlı Körfezi'ne dökülen akarsu hangisidir?", a: ["Bakırçay", "Gediz", "Küçük Menderes", "Karamenderes"] },
+	{ id: "cog-ek-ch-3034", cat: "cografya", diff: 3, type: "choice", q: "Truva ovasından geçip Çanakkale Boğazı'na dökülen akarsu hangisidir?", a: ["Karamenderes", "Bakırçay", "Gönen Çayı", "Susurluk Çayı"] },
+	{ id: "cog-ek-ch-3035", cat: "cografya", diff: 1, type: "choice", q: "Bafra Ovası'nı hangi nehrin taşıdığı alüvyonlar oluşturmuştur?", a: ["Kızılırmak", "Yeşilırmak", "Sakarya", "Filyos"] },
+	{ id: "cog-ek-ch-3036", cat: "cografya", diff: 2, type: "choice", q: "Çoruh Nehri Türkiye'den çıktıktan sonra hangi ülkede denize dökülür?", a: ["Gürcistan", "Ermenistan", "Azerbaycan", "Rusya"] },
+	{ id: "cog-ek-ch-3037", cat: "cografya", diff: 3, type: "choice", q: "Dicle Nehri Irak'a girmeden önce Türkiye ile hangi ülke arasında sınır çizer?", a: ["Suriye", "İran", "Ermenistan", "Gürcistan"] },
+	{ id: "cog-ek-ch-3038", cat: "cografya", diff: 2, type: "choice", q: "Trakya'yı boydan boya geçen Ergene Nehri hangi nehre karışır?", a: ["Meriç", "Tuna", "Tunca", "Arda"] },
+	{ id: "cog-ek-ch-3039", cat: "cografya", diff: 2, type: "choice", q: "Adana'daki Roma döneminden kalma Taşköprü hangi nehrin üzerindedir?", a: ["Seyhan", "Ceyhan", "Göksu", "Asi"] },
+	{ id: "cog-ek-ch-3040", cat: "cografya", diff: 3, type: "choice", q: "Hakkari'den Irak'a geçip Dicle'ye karışan akarsu hangisidir?", a: ["Zap Suyu", "Botan Çayı", "Batman Çayı", "Garzan Çayı"] },
+	{ id: "cog-ek-ch-3041", cat: "cografya", diff: 2, type: "choice", q: "Çamlıhemşin'den geçen, raftingiyle ünlü Rize deresi hangisidir?", a: ["Fırtına Deresi", "Harşit Çayı", "Melet Irmağı", "Kelkit Çayı"] },
+	{ id: "cog-ek-ch-3042", cat: "cografya", diff: 3, type: "choice", q: "Muş Ovası'nı sulayan akarsu hangisidir?", a: ["Murat", "Karasu", "Aras", "Zap Suyu"] },
+	{ id: "cog-ek-ch-3043", cat: "cografya", diff: 3, type: "choice", q: "Kahramanmaraş'taki Menzelet ve Sır barajları hangi nehir üzerindedir?", a: ["Ceyhan", "Seyhan", "Göksu", "Asi"] },
+	{ id: "cog-ek-ch-3044", cat: "cografya", diff: 3, type: "choice", q: "Büyük İskender'in Perslerle savaştığı Granikos Çayı bugün hangi adla bilinir?", a: ["Biga Çayı", "Gönen Çayı", "Karamenderes", "Bakırçay"] },
+	{ id: "cog-ek-ch-3045", cat: "cografya", diff: 3, type: "choice", q: "Kızılırmak'ın antik çağdaki adı nedir?", a: ["Halys", "Iris", "Sangarios", "Kaystros"] },
+	// ---------------------------------------------------------------- choice: ovalar ve platolar
+	{ id: "cog-ek-ch-3046", cat: "cografya", diff: 2, type: "choice", q: "Doğu Anadolu'da, alçak konumu sayesinde pamuk bile yetişen ova hangisidir?", a: ["Iğdır Ovası", "Muş Ovası", "Erzurum Ovası", "Pasinler Ovası"] },
+	{ id: "cog-ek-ch-3047", cat: "cografya", diff: 2, type: "choice", q: "Kurutularak tarlaya çevrilen Amik Gölü hangi ilimizdeydi?", a: ["Hatay", "Gaziantep", "Kahramanmaraş", "Adana"], tag: "il" },
+	{ id: "cog-ek-ch-3049", cat: "cografya", diff: 1, type: "choice", q: "GAP sulamasıyla kuru tarımdan pamuğa geçen ünlü ova hangisidir?", a: ["Harran Ovası", "Konya Ovası", "Bafra Ovası", "Muş Ovası"] },
+	{ id: "cog-ek-ch-3050", cat: "cografya", diff: 2, type: "choice", q: "Aydın'daki Söke Ovası'nı hangi nehrin alüvyonları oluşturmuştur?", a: ["Büyük Menderes", "Küçük Menderes", "Gediz", "Bakırçay"] },
 ];
