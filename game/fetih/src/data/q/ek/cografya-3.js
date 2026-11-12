@@ -192,6 +192,22 @@ export default [
 	{ id: "cog-ek-tf-3071", cat: "cografya", diff: 1, type: "tf", q: "Peri bacalarının tepesinde çoğu zaman daha sert bir kaya \"şapka\" bulunur.", ans: true },
 	{ id: "cog-ek-tf-3073", cat: "cografya", diff: 2, type: "tf", q: "Avrasya Tüneli iki katlı bir karayolu tünelidir.", ans: true },
 	{ id: "cog-ek-tf-3074", cat: "cografya", diff: 1, type: "tf", q: "Galata Köprüsü'nün alt katında lokantalar vardır.", ans: true },
+	{ id: "cog-ek-tf-3075", cat: "cografya", diff: 3, type: "tf", q: "Çanakkale şehri, Edirne şehrinden daha batıdadır.", ans: true },
+	{ id: "cog-ek-tf-3076", cat: "cografya", diff: 2, type: "tf", q: "Kars, Ankara'dan daha kuzeydedir.", ans: true },
+	{ id: "cog-ek-tf-3077", cat: "cografya", diff: 3, type: "tf", q: "Van Gölü'nün suyu, deniz suyundan daha az tuzludur.", ans: true },
+	{ id: "cog-ek-tf-3078", cat: "cografya", diff: 3, type: "tf", q: "Fırat'ın Türkiye'deki bölümü, Kızılırmak'tan daha kısadır.", ans: true },
+	{ id: "cog-ek-tf-3079", cat: "cografya", diff: 2, type: "tf", q: "Kura Nehri sonunda Hazar Denizi'ne dökülür.", ans: true },
+	{ id: "cog-ek-tf-3080", cat: "cografya", diff: 2, type: "tf", q: "Çoruh Nehri Bayburt'tan geçer.", ans: true },
+	{ id: "cog-ek-tf-3081", cat: "cografya", diff: 2, type: "tf", q: "Yeşilırmak, Tokat şehrinin içinden geçer.", ans: true },
+	{ id: "cog-ek-tf-3082", cat: "cografya", diff: 2, type: "tf", q: "Sakarya Nehri, Eskişehir şehrinin içinden geçer.", ans: false },
+	{ id: "cog-ek-tf-3083", cat: "cografya", diff: 2, type: "tf", q: "Gediz Nehri Manisa Ovası'nı sular.", ans: true },
+	{ id: "cog-ek-tf-3084", cat: "cografya", diff: 2, type: "tf", q: "Büyük Menderes Denizli topraklarından da geçer.", ans: true },
+	{ id: "cog-ek-tf-3085", cat: "cografya", diff: 2, type: "tf", q: "Bozcaada'da rüzgâr türbinleri vardır.", ans: true },
+	{ id: "cog-ek-tf-3086", cat: "cografya", diff: 2, type: "tf", q: "Kekova aynı zamanda bir adanın adıdır.", ans: true },
+	{ id: "cog-ek-tf-3087", cat: "cografya", diff: 1, type: "tf", q: "Ege Bölgesi'nde tütün tarımı yapılır.", ans: true },
+	{ id: "cog-ek-tf-3088", cat: "cografya", diff: 1, type: "tf", q: "Akdeniz kıyılarında portakal ve limon bahçeleri yaygındır.", ans: true },
+	{ id: "cog-ek-tf-3089", cat: "cografya", diff: 1, type: "tf", q: "Kızılırmak bir baraj gölünden doğar.", ans: false },
+	{ id: "cog-ek-tf-3090", cat: "cografya", diff: 1, type: "tf", q: "Ağrı Dağı'nın zirvesine yapılan tırmanışlar Doğubayazıt'tan başlar.", ans: true },
 
 	// ---------------------------------------------------------------- num
 	{ id: "cog-ek-nu-3002", cat: "cografya", diff: 2, type: "num", q: "Çanakkale Boğazı yaklaşık kaç kilometre uzunluğundadır?", ans: 61, unit: "km", min: 10, max: 200 },
@@ -210,6 +226,7 @@ export default [
 	{ id: "cog-ek-nu-3031", cat: "cografya", diff: 2, type: "num", q: "6 Şubat 2023 depremleri resmî olarak kaç ilimizi etkiledi?", ans: 11, unit: "il", min: 1, max: 30 },
 	{ id: "cog-ek-nu-3033", cat: "cografya", diff: 3, type: "num", q: "Marmara Denizi'nin yüzölçümü yaklaşık kaç km²'dir?", ans: 11350, unit: "km²", min: 1000, max: 50000 },
 	{ id: "cog-ek-nu-3034", cat: "cografya", diff: 3, type: "num", q: "Dicle üzerindeki Ilısu Barajı hangi yıl su tutmaya başladı?", ans: 2019, unit: "", min: 1990, max: 2030 },
+	{ id: "cog-ek-nu-3036", cat: "cografya", diff: 3, type: "num", q: "Türkiye'nin yedi coğrafi bölgesi toplam kaç bölüme ayrılır?", ans: 21, unit: "bölüm", min: 7, max: 50 },
 
 	// ---------------------------------------------------------------- order
 	{ id: "cog-ek-or-3001", cat: "cografya", diff: 2, type: "order", q: "Zirveleri yüksekliklerine göre alçaktan yükseğe sırala.", items: [{ t: "Uludoruk (Cilo)", v: 4135, s: "≈ 4.135 m" }, { t: "Uludağ", v: 2543, s: "≈ 2.543 m" }, { t: "Hasan Dağı", v: 3268, s: "≈ 3.268 m" }] },
@@ -331,6 +348,7 @@ export default [
 	{ id: "cog-ek-hg-3035", cat: "cografya", diff: 2, type: "hang", q: "Bir yamacın güneşe göre baktığı yön", w: "BAKI" },
 	{ id: "cog-ek-hg-3036", cat: "cografya", diff: 1, type: "hang", q: "Samanlı çamurdan yapılıp güneşte kurutulan yapı malzemesi", w: "KERPİÇ" },
 	{ id: "cog-ek-hg-3038", cat: "cografya", diff: 1, type: "hang", q: "Akdeniz kıyısında sebzenin cam ya da naylon altında yetiştirildiği yer", w: "SERA" },
+	{ id: "cog-ek-hg-3040", cat: "cografya", diff: 1, type: "hang", q: "Deniz kıyısında kumla kaplı düz alan", w: "KUMSAL" },
 	// ---------------------------------------------------------------- anagram
 	{ id: "cog-ek-an-3001", cat: "cografya", diff: 2, type: "anagram", q: "Isparta'daki, içinde Yeşilada bulunan göl", w: "EĞİRDİR" },
 	{ id: "cog-ek-an-3002", cat: "cografya", diff: 2, type: "anagram", q: "Peri bacalarıyla ünlü, Nevşehir'in şarap ilçesi", w: "ÜRGÜP" },
@@ -382,4 +400,10 @@ export default [
 	{ id: "cog-ek-ch-3168", cat: "cografya", diff: 2, type: "choice", q: "Pamukkale'de içinde antik sütunların yattığı termal havuza ne ad verilir?", a: ["Antik Havuz", "Kral Havuzu", "Roma Hamamı", "Bizans Gölü"] },
 	{ id: "cog-ek-ch-3169", cat: "cografya", diff: 2, type: "choice", q: "İç Anadolu'da eskiden kerpiç evlerin yaygın olmasının başlıca nedeni nedir?", a: ["Ormanın az olması", "Bol yağış alması", "Taşın hiç bulunmaması", "Depremin hiç olmaması"] },
 	{ id: "cog-ek-ch-3170", cat: "cografya", diff: 1, type: "choice", q: "Akdeniz kıyısında örtü altı (sera) tarımının gelişmesinin başlıca nedeni nedir?", a: ["Kışların ılık geçmesi", "Bol kar yağışı", "Yazların kısa olması", "Toprağın tuzlu olması"] },
+	{ id: "cog-ek-ch-3171", cat: "cografya", diff: 1, type: "choice", q: "Bursa'dan Uludağ'a çıkmak için kullanılan ünlü ulaşım aracı hangisidir?", a: ["Teleferik", "Füniküler", "Tramvay", "Metro"] },
+	{ id: "cog-ek-ch-3173", cat: "cografya", diff: 1, type: "choice", q: "Doğu Karadeniz'deki geleneksel yayla evlerinde en çok hangi malzeme kullanılır?", a: ["Ahşap", "Kerpiç", "Mermer", "Tuğla"] },
+	{ id: "cog-ek-ch-3174", cat: "cografya", diff: 2, type: "choice", q: "Kızılırmak'ın suyuna kızılımsı rengini veren nedir?", a: ["Taşıdığı kızıl topraklar", "Suyundaki yosunlar", "Yataktaki demir borular", "Kıyıdaki kızıl çiçekler"] },
+	{ id: "cog-ek-ch-3175", cat: "cografya", diff: 1, type: "choice", q: "Akdeniz kıyımızın yüzölçümü en büyük ovası hangisidir?", a: ["Çukurova", "Antalya Ovası", "Amik Ovası", "Silifke Ovası"] },
+	{ id: "cog-ek-ch-3176", cat: "cografya", diff: 2, type: "choice", q: "Türkiye'de sıcak su kaynaklarının çok olmasının başlıca nedeni nedir?", a: ["Fay hatlarının çokluğu", "Bol kar yağışı", "Denizlerle çevrili olması", "Ormanların çokluğu"] },
+	{ id: "cog-ek-ch-3178", cat: "cografya", diff: 3, type: "choice", q: "Burdur Gölü, kışın hangi nadir ördek türünün önemli bir barınağıdır?", a: ["Dikkuyruk", "Yeşilbaş", "Elmabaş", "Angıt"] },
 ];
