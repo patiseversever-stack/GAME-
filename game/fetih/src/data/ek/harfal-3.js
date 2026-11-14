@@ -1,7 +1,7 @@
 // Ek harfal soruları 3: 2026-11 üçüncü büyütme (20 bin hedefi). Biçim: src/data/ek/harfal.js ile birebir.
 export default [
 	{ id: 'ek-ha-3001', cat: 'tarih', diff: 1, type: 'harfal', q: 'Eski Türklerde davulla ayin yapan, ruhlarla aracı sayılan kişi; öbür adı kam', w: 'ŞAMAN' },
-	{ id: 'ek-ha-3002', cat: 'tarih', diff: 1, type: 'harfal', q: 'Lozan’da kararlaştırılan, Türkiye ile Yunanistan arasındaki karşılıklı nüfus değişimi', w: 'MÜBADELE' },
+	{ id: 'ek-ha-3002', cat: 'tarih', diff: 1, type: 'harfal', q: 'İki ülkenin azınlıklarını karşılıklı yer değiştirmesi; sözlük anlamı “değiş tokuş”', w: 'MÜBADELE' },
 	{ id: 'ek-ha-3003', cat: 'tarih', diff: 1, type: 'harfal', q: 'Feodal Japonya’nın gizlenme ustası casus ve suikastçı savaşçısı', w: 'NİNJA' },
 	{ id: 'ek-ha-3004', cat: 'tarih', diff: 2, type: 'harfal', q: 'Hindistan’da “büyük kral” anlamına gelen, prenslik hükümdarlarına verilen unvan', w: 'MİHRACE' },
 	{ id: 'ek-ha-3005', cat: 'tarih', diff: 2, type: 'harfal', q: 'Adını 1519’da ayaklanan Bozoklu Celal’den alan Anadolu isyanları', w: 'CELALİ' },
@@ -52,8 +52,8 @@ export default [
 	{ id: 'ek-ha-3050', cat: 'spor', diff: 1, type: 'harfal', q: 'Kasın aniden ve ağrılı biçimde kasılıp kalması; maç sonlarında sık görülür', w: 'KRAMP' },
 	{ id: 'ek-ha-3051', cat: 'spor', diff: 1, type: 'harfal', q: 'Bisiklette pedal çevirirken üstüne oturulan yer', w: 'SELE' },
 	{ id: 'ek-ha-3052', cat: 'bilim', diff: 3, type: 'harfal', q: 'Zürafagilde zürafa dışında yaşayan tek tür; Kongo ormanlarında saklı yaşar', w: 'OKAPİ' },
-	{ id: 'ek-ha-3053', cat: 'bilim', diff: 2, type: 'harfal', q: 'Sürüyle avlanan, büyük beyaz köpekbalığını bile alt edebilen siyah-beyaz deniz memelisi', w: 'ORKA' },
-	{ id: 'ek-ha-3054', cat: 'bilim', diff: 2, type: 'harfal', q: 'En küçük kuş türünü de barındıran, çiçek nektarıyla beslenen Amerika kuşu', w: 'KOLİBRİ' },
+	{ id: 'ek-ha-3053', cat: 'bilim', diff: 2, type: 'harfal', q: 'Sürüyle avlanan, büyük beyaz köpekbalığını bile alt eden siyah-beyaz memeli', w: 'ORKA' },
+	{ id: 'ek-ha-3054', cat: 'bilim', diff: 2, type: 'harfal', q: 'En küçük kuş türünü de barındıran, yalnızca Amerika kıtasında yaşayan kuş ailesi', w: 'KOLİBRİ' },
 	{ id: 'ek-ha-3055', cat: 'bilim', diff: 2, type: 'harfal', q: 'Etkin madde içermediği hâlde hastayı iyileşmiş gibi hissettirebilen sahte ilaç', w: 'PLASEBO' },
 	{ id: 'ek-ha-3056', cat: 'bilim', diff: 2, type: 'harfal', q: 'Suda pusu kurup avını sararak boğan, Güney Amerika’nın dev su boası', w: 'ANAKONDA' },
 	{ id: 'ek-ha-3057', cat: 'bilim', diff: 1, type: 'harfal', q: 'Jilet gibi keskin dişleriyle ünlü, sürüler hâlinde yaşayan Amazon balığı', w: 'PİRANA' },
@@ -62,7 +62,7 @@ export default [
 	{ id: 'ek-ha-3060', cat: 'bilim', diff: 2, type: 'harfal', q: 'Toprak kuleler biçiminde dev yuvalar yapan, odun yiyen sosyal böcek', w: 'TERMİT' },
 	{ id: 'ek-ha-3061', cat: 'bilim', diff: 2, type: 'harfal', q: 'Kan emerken pıhtılaşmayı önleyen madde salgılayan, tıpta da kullanılan solucan', w: 'SÜLÜK' },
 	{ id: 'ek-ha-3062', cat: 'bilim', diff: 2, type: 'harfal', q: 'Su buharının soğuk yüzeyde sıvıya dönmesi; soğuk bardağın “terlemesi” bundandır', w: 'YOĞUŞMA' },
-	{ id: 'ek-ha-3063', cat: 'bilim', diff: 2, type: 'harfal', q: 'İçinde hava ya da hiçbir madde bulunmayan boşluk; termosun çift cidarı arasında bulunur', w: 'VAKUM' },
+	{ id: 'ek-ha-3063', cat: 'bilim', diff: 2, type: 'harfal', q: 'İçinde hiç hava ya da madde bulunmayan boşluk; termosun iki cidarı arasındadır', w: 'VAKUM' },
 	{ id: 'ek-ha-3064', cat: 'bilim', diff: 2, type: 'harfal', q: 'Samanyolu gibi milyarlarca yıldızı çekimle bir arada tutan dev sistem', w: 'GÖKADA' },
 	{ id: 'ek-ha-3065', cat: 'bilim', diff: 3, type: 'harfal', q: 'Boğa takımyıldızında, çıplak gözle altı yedi yıldızı seçilebilen parlak küme', w: 'ÜLKER' },
 	{ id: 'ek-ha-3066', cat: 'bilim', diff: 1, type: 'harfal', q: 'Cerrahların deriyi kesmek için kullandığı küçük, çok keskin bıçak', w: 'NEŞTER' },
