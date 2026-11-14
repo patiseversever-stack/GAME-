@@ -172,6 +172,12 @@ const ans = (id) => Q.get(id)?.a || [];
 	const roma = (s) => [...s].reduce((t, c, i, a) => t + (rom[c] < (rom[a[i + 1]] || 0) ? -rom[c] : rom[c]), 0);
 	ok(ans('yn-penalti-113')[0] === String(roma('MCM')), 'yn-penalti-113: MCM');
 	ok(ans('yn-penalti-120')[0] === String(2 * 3), 'yn-penalti-120: Braille hücresi');
+	// 121–190 ekinin hesapla doğrulananları: düzinenin yarısının yarısı, üçgen ve altıgenin köşegenleri n(n−3)/2, 30 günlük aylar
+	ok(ans('yn-penalti-180')[0] === String(12 / 2 / 2), 'yn-penalti-180: düzinenin yarısının yarısı');
+	const kosegen = (n) => (n * (n - 3)) / 2;
+	ok(ans('yn-penalti-186')[0] === String(kosegen(3)) && ans('yn-penalti-187')[0] === String(kosegen(6)), 'yn-penalti-186/187: köşegen sayısı');
+	const otuz = Array.from({ length: 12 }, (_, m) => new Date(Date.UTC(2023, m + 1, 0)).getUTCDate()).filter((g) => g === 30).length;
+	ok(ans('yn-penalti-188')[0] === String(otuz), 'yn-penalti-188: 30 gün çeken ay sayısı ' + otuz);
 }
 
 // ---------------------------------------------------------------- tip davranışı
