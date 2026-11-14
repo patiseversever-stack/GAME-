@@ -29,8 +29,9 @@ import ek4Spor from './ek/spor-4.js';
 import ek4Bilim from './ek/bilim-4.js';
 import ek4Sanat from './ek/sanat-4.js';
 import ek4Eglence from './ek/eglence-4.js';
+import ekTahmin from './ek/tahmin.js'; // "kim daha yakın" tahmin soruları (num → Mancınık ikizi)
 import veri from './veri.js'; // il verisinden üretilen sorular (tools/soru/veri_uret.mjs), bankanın küçük payı
 
-export const ALL = [...tarih, ...cografya, ...spor, ...bilim, ...sanat, ...eglence, ...ekTarih, ...ekCografya, ...ekSpor, ...ekBilim, ...ekSanat, ...ekEglence, ...ek2Tarih, ...ek2Cografya, ...ek2Spor, ...ek2Bilim, ...ek2Sanat, ...ek2Eglence, ...ek3Tarih, ...ek3Cografya, ...ek3Spor, ...ek3Bilim, ...ek3Sanat, ...ek3Eglence, ...ek4Tarih, ...ek4Cografya, ...ek4Spor, ...ek4Bilim, ...ek4Sanat, ...ek4Eglence, ...veri];
+export const ALL = [...tarih, ...cografya, ...spor, ...bilim, ...sanat, ...eglence, ...ekTarih, ...ekCografya, ...ekSpor, ...ekBilim, ...ekSanat, ...ekEglence, ...ek2Tarih, ...ek2Cografya, ...ek2Spor, ...ek2Bilim, ...ek2Sanat, ...ek2Eglence, ...ek3Tarih, ...ek3Cografya, ...ek3Spor, ...ek3Bilim, ...ek3Sanat, ...ek3Eglence, ...ek4Tarih, ...ek4Cografya, ...ek4Spor, ...ek4Bilim, ...ek4Sanat, ...ek4Eglence, ...ekTahmin, ...veri];
 export { tarih, cografya, spor, bilim, sanat, eglence };
 export default ALL;
