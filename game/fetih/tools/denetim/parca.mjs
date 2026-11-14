@@ -83,8 +83,14 @@ function parcalar(q) {
 		for (const e of q[k]) P.push((q.type === 'order' || q.type === 'hilo' ? str(q.q) + ' ' : '') + ogeMetni(e));
 	}
 	if (q.left && q.right) for (const s of [q.left, q.right]) P.push(str(q.prop) + ' ' + ogeMetni(s));
-	return P.map((t) => ({ id: q.id, t, k: kokler(t) })).filter((p) => p.k.size >= 3);
+	const out = P.map((t) => ({ id: q.id, t, k: kokler(t) }));
+	// halat turu bankadaki doğru/yanlış ve karşılaştırma sorularından da kurulur (dn-htN): maddenin ham metni, kaynak
+	// sorunun kendi metniyle aynıysa bu sorunun kopyasıdır, tekrar sayılmaz
+	if (q.type === 'halat') q.items?.forEach((e, i) => (out[out.length - q.items.length + i].ham = norm(e.t)));
+	return out.filter((p) => p.k.size >= 3);
 }
+// bir sorunun kendi metinleri (halat kopyasını tanımak için)
+const kendi = (q) => new Set([q.q, q.t, ...(q.items || []).map((e) => e.t)].filter(Boolean).map(norm));
 
 const yeni = all.filter((q) => re.test(q.id));
 const eski = all.filter((q) => !re.test(q.id));
@@ -95,6 +101,7 @@ const idx = new Map();
 E.forEach((p, i) => {
 	for (const k of p.k) (idx.get(k) || idx.set(k, []).get(k)).push(i);
 });
+const kendiOf = new Map(yeni.map((q) => [q.id, kendi(q)]));
 const bulgu = [];
 for (const p of Y) {
 	const say = new Map();
@@ -106,7 +113,7 @@ for (const p of Y) {
 	let best = null;
 	for (const [i, c] of say) {
 		const e = E[i];
-		if (e.id === p.id) continue;
+		if (e.id === p.id || (e.ham && kendiOf.get(p.id).has(e.ham))) continue;
 		const oran = c / Math.min(p.k.size, e.k.size);
 		if (!((c >= 3 && oran >= 0.6) || (c >= 4 && oran >= 0.5))) continue;
 		const puan = oran * Math.min(c, 6);
