@@ -637,6 +637,552 @@ export default [
 		"r": 14
 	},
 	{
+		"id": "har-cog-60",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Göller Yöresi'nin tuzlu gölü Burdur Gölü nerede?",
+		"lat": 37.74,
+		"lon": 30.179,
+		"gol": "Burdur Gölü"
+	},
+	{
+		"id": "har-cog-61",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Sultan Dağları'nın eteğindeki Akşehir Gölü nerede?",
+		"lat": 38.513,
+		"lon": 31.412,
+		"gol": "Akşehir Gölü"
+	},
+	{
+		"id": "har-cog-62",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Gölyazı'nın kıyısındaki Uluabat Gölü nerede?",
+		"lat": 40.168,
+		"lon": 28.614,
+		"gol": "Uluabat Gölü"
+	},
+	{
+		"id": "har-cog-63",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Dalyan kanalıyla denize bağlanan Köyceğiz Gölü nerede?",
+		"lat": 36.935,
+		"lon": 28.672,
+		"gol": "Köyceğiz Gölü"
+	},
+	{
+		"id": "har-cog-64",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Sodalı suyuyla bilinen Erçek Gölü nerede?",
+		"lat": 38.694,
+		"lon": 43.583,
+		"gol": "Erçek Gölü"
+	},
+	{
+		"id": "har-cog-65",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Gölmarmara ilçesine adını veren Marmara Gölü nerede?",
+		"lat": 38.631,
+		"lon": 28.042,
+		"gol": "Marmara Gölü"
+	},
+	{
+		"id": "har-cog-66",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "İstanbul'a su veren Terkos (Durusu) Gölü nerede?",
+		"lat": 41.351,
+		"lon": 28.572,
+		"gol": "Durusu Gölü"
+	},
+	{
+		"id": "har-cog-67",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Fırat üzerindeki Karakaya Baraj Gölü nerede?",
+		"lat": 38.436,
+		"lon": 38.812,
+		"gol": "Karakaya Baraj Gölü"
+	},
+	{
+		"id": "har-cog-68",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Adana kentinin kuzeyindeki Seyhan Baraj Gölü nerede?",
+		"lat": 37.09,
+		"lon": 35.303,
+		"gol": "Seyhan Baraj Gölü"
+	},
+	{
+		"id": "har-cog-69",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Göçmen kuşların durağı Seyfe Gölü nerede?",
+		"lat": 39.225,
+		"lon": 34.389,
+		"gol": "Seyfe Gölü"
+	},
+	{
+		"id": "har-cog-70",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Yürüyüş parkuruyla ünlü Abant Gölü nerede?",
+		"lat": 40.606,
+		"lon": 31.28,
+		"r": 2
+	},
+	{
+		"id": "har-cog-71",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Ağrı Dağı'nın yanı başındaki Küçük Ağrı nerede?",
+		"lat": 39.651,
+		"lon": 44.413,
+		"r": 5,
+		"alt": [
+			39.65,
+			44.42
+		]
+	},
+	{
+		"id": "har-cog-72",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Doğubayazıt'ın güneyindeki Tendürek Dağı nerede?",
+		"lat": 39.366,
+		"lon": 43.875,
+		"r": 8,
+		"alt": [
+			39.37,
+			43.88
+		]
+	},
+	{
+		"id": "har-cog-73",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Binbir Kilise'nin bulunduğu Karadağ nerede?",
+		"lat": 37.4,
+		"lon": 33.15,
+		"r": 8,
+		"alt": [
+			37.4,
+			33.12
+		]
+	},
+	{
+		"id": "har-cog-74",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Siverek yakınındaki Karacadağ nerede?",
+		"lat": 37.67,
+		"lon": 39.83,
+		"r": 15,
+		"alt": [
+			37.67,
+			39.83
+		]
+	},
+	{
+		"id": "har-cog-75",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Denizli'nin güneyindeki Honaz Dağı nerede?",
+		"lat": 37.68,
+		"lon": 29.28,
+		"r": 6,
+		"alt": [
+			37.67,
+			29.27
+		]
+	},
+	{
+		"id": "har-cog-76",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Ağlayan Kaya'nın bulunduğu Spil Dağı nerede?",
+		"lat": 38.55,
+		"lon": 27.43,
+		"r": 6,
+		"alt": [
+			38.55,
+			27.43
+		]
+	},
+	{
+		"id": "har-cog-77",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Bolkar Dağları'nın en yüksek doruğu Medetsiz nerede?",
+		"lat": 37.4,
+		"lon": 34.62,
+		"r": 8,
+		"alt": [
+			37.4,
+			34.62
+		]
+	},
+	{
+		"id": "har-cog-78",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Beyşehir Gölü'nün batısındaki Dedegöl Dağı nerede?",
+		"lat": 37.65,
+		"lon": 31.28,
+		"r": 8,
+		"alt": [
+			37.65,
+			31.28
+		]
+	},
+	{
+		"id": "har-cog-79",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Beydağları'nın en yüksek doruğu Kızlar Sivrisi nerede?",
+		"lat": 36.61,
+		"lon": 30.15,
+		"r": 8,
+		"alt": [
+			36.61,
+			30.15
+		]
+	},
+	{
+		"id": "har-cog-80",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Kayaya oyulmuş kiliseleriyle Ihlara Vadisi nerede?",
+		"lat": 38.245,
+		"lon": 34.3,
+		"r": 6
+	},
+	{
+		"id": "har-cog-81",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Buz gibi suyuyla Saklıkent Kanyonu nerede?",
+		"lat": 36.47,
+		"lon": 29.405,
+		"r": 3
+	},
+	{
+		"id": "har-cog-82",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Denize dökülen Aşağı Düden Şelalesi nerede?",
+		"lat": 36.852,
+		"lon": 30.783,
+		"r": 3
+	},
+	{
+		"id": "har-cog-83",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Manavgat Çayı üzerindeki Manavgat Şelalesi nerede?",
+		"lat": 36.8,
+		"lon": 31.45,
+		"r": 3
+	},
+	{
+		"id": "har-cog-84",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Kaplıcasıyla ünlü Ayder Yaylası nerede?",
+		"lat": 40.953,
+		"lon": 41.105,
+		"r": 3
+	},
+	{
+		"id": "har-cog-85",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Tunç Çağı batığıyla bilinen Gelidonya Burnu nerede?",
+		"lat": 36.2,
+		"lon": 30.42,
+		"r": 4
+	},
+	{
+		"id": "har-cog-86",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Bağlarıyla ünlü Bozcaada nerede?",
+		"lat": 39.82,
+		"lon": 26.04,
+		"r": 6
+	},
+	{
+		"id": "har-cog-87",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Mermeriyle ünlü Marmara Adası nerede?",
+		"lat": 40.62,
+		"lon": 27.6,
+		"r": 8
+	},
+	{
+		"id": "har-cog-88",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Marmara'nın tatil adası Avşa nerede?",
+		"lat": 40.51,
+		"lon": 27.51,
+		"r": 4
+	},
+	{
+		"id": "har-cog-89",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Adalar'ın en büyüğü Büyükada nerede?",
+		"lat": 40.86,
+		"lon": 29.12,
+		"r": 3
+	},
+	{
+		"id": "har-cog-90",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Batık kentiyle ünlü Kekova nerede?",
+		"lat": 36.17,
+		"lon": 29.85,
+		"r": 4
+	},
+	{
+		"id": "har-cog-91",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Erdek'in bulunduğu Kapıdağ Yarımadası nerede?",
+		"lat": 40.45,
+		"lon": 27.85,
+		"r": 12
+	},
+	{
+		"id": "har-cog-92",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "İzmir'in kuzeybatısındaki Karaburun Yarımadası nerede?",
+		"lat": 38.55,
+		"lon": 26.5,
+		"r": 15
+	},
+	{
+		"id": "har-cog-93",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Kızılırmak'ın denize ulaştığı Bafra Ovası nerede?",
+		"lat": 41.62,
+		"lon": 35.92,
+		"r": 15
+	},
+	{
+		"id": "har-cog-94",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Yeşilırmak'ın denize ulaştığı Çarşamba Ovası nerede?",
+		"lat": 41.25,
+		"lon": 36.7,
+		"r": 15
+	},
+	{
+		"id": "har-cog-95",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Asi Nehri'nin geçtiği verimli Amik Ovası nerede?",
+		"lat": 36.35,
+		"lon": 36.38,
+		"r": 12
+	},
+	{
+		"id": "har-cog-96",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Silifke'deki kuş cenneti Göksu Deltası nerede?",
+		"lat": 36.3,
+		"lon": 33.98,
+		"r": 8
+	},
+	{
+		"id": "har-cog-97",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Türkiye'nin ilk sakin şehri Seferihisar nerede?",
+		"lat": 38.197,
+		"lon": 26.838,
+		"r": 3
+	},
+	{
+		"id": "har-cog-98",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Taş Yol'uyla ünlü Kemaliye nerede?",
+		"lat": 39.262,
+		"lon": 38.495,
+		"r": 3
+	},
+	{
+		"id": "har-cog-99",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Ödemiş'teki tarihi kasaba Birgi nerede?",
+		"lat": 38.255,
+		"lon": 28.065,
+		"r": 3
+	},
+	{
+		"id": "har-cog-100",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Havucu ve tarihi evleriyle Beypazarı nerede?",
+		"lat": 40.167,
+		"lon": 31.92,
+		"r": 3
+	},
+	{
+		"id": "har-cog-101",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Ahşap konaklarıyla sakin şehir Taraklı nerede?",
+		"lat": 40.397,
+		"lon": 30.495,
+		"r": 3
+	},
+	{
+		"id": "har-cog-102",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Tarihi kalesi ve limanıyla Amasra nerede?",
+		"lat": 41.746,
+		"lon": 32.386,
+		"r": 3
+	},
+	{
+		"id": "har-cog-103",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Zeytinlikleriyle ünlü Ayvalık nerede?",
+		"lat": 39.318,
+		"lon": 26.693,
+		"r": 3
+	},
+	{
+		"id": "har-cog-104",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Akdeniz foklarıyla bilinen Foça nerede?",
+		"lat": 38.67,
+		"lon": 26.755,
+		"r": 3
+	},
+	{
+		"id": "har-cog-105",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Pamuklu beziyle ünlü Şile nerede?",
+		"lat": 41.175,
+		"lon": 29.61,
+		"r": 3
+	},
+	{
+		"id": "har-cog-106",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Bolu'nun tarihi ilçesi Mudurnu nerede?",
+		"lat": 40.463,
+		"lon": 31.21,
+		"r": 3
+	},
+	{
+		"id": "har-cog-107",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "pin",
+		"q": "Bursa'nın sahil ilçesi Mudanya nerede?",
+		"lat": 40.375,
+		"lon": 28.883,
+		"r": 3
+	},
+	{
+		"id": "har-cog-108",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Marmara'nın doğu ucundaki İzmit Körfezi nerede?",
+		"lat": 40.72,
+		"lon": 29.65,
+		"r": 10
+	},
+	{
+		"id": "har-cog-109",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Gelibolu Yarımadası'nın kuzeyindeki Saroz Körfezi nerede?",
+		"lat": 40.55,
+		"lon": 26.45,
+		"r": 15
+	},
+	{
+		"id": "har-cog-110",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "pin",
+		"q": "Kaz Dağları'nın eteğindeki Edremit Körfezi nerede?",
+		"lat": 39.5,
+		"lon": 26.7,
+		"r": 15
+	},
+	{
 		"id": "har-tar-01",
 		"cat": "tarih",
 		"diff": 1,
@@ -1071,6 +1617,420 @@ export default [
 		"r": 6
 	},
 	{
+		"id": "har-tar-36",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Likya'nın liman kenti Patara nerede?",
+		"lat": 36.26,
+		"lon": 29.315,
+		"r": 3
+	},
+	{
+		"id": "har-tar-37",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Likya'nın başkenti Ksanthos nerede?",
+		"lat": 36.356,
+		"lon": 29.318,
+		"r": 3
+	},
+	{
+		"id": "har-tar-38",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Yanartaş'ın yanındaki Olimpos Antik Kenti nerede?",
+		"lat": 36.397,
+		"lon": 30.473,
+		"r": 3
+	},
+	{
+		"id": "har-tar-39",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Üç limanlı antik kent Phaselis nerede?",
+		"lat": 36.524,
+		"lon": 30.552,
+		"r": 3
+	},
+	{
+		"id": "har-tar-40",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Büyük İskender'in alamadığı Termessos nerede?",
+		"lat": 36.983,
+		"lon": 30.467,
+		"r": 3
+	},
+	{
+		"id": "har-tar-41",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Aksu ilçesindeki antik kent Perge nerede?",
+		"lat": 36.961,
+		"lon": 30.854,
+		"r": 3
+	},
+	{
+		"id": "har-tar-42",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Antik tiyatrosu ve limanıyla Side nerede?",
+		"lat": 36.767,
+		"lon": 31.39,
+		"r": 3
+	},
+	{
+		"id": "har-tar-43",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Toroslardaki antik kent Sagalassos nerede?",
+		"lat": 37.677,
+		"lon": 30.517,
+		"r": 3
+	},
+	{
+		"id": "har-tar-44",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Thales'in kenti Milet nerede?",
+		"lat": 37.53,
+		"lon": 27.278,
+		"r": 3
+	},
+	{
+		"id": "har-tar-45",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Didim'deki dev Apollon Tapınağı nerede?",
+		"lat": 37.385,
+		"lon": 27.256,
+		"r": 3
+	},
+	{
+		"id": "har-tar-46",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Izgara planlı antik kent Priene nerede?",
+		"lat": 37.66,
+		"lon": 27.298,
+		"r": 3
+	},
+	{
+		"id": "har-tar-47",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Datça'nın ucundaki Knidos nerede?",
+		"lat": 36.686,
+		"lon": 27.374,
+		"r": 3
+	},
+	{
+		"id": "har-tar-48",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Dalyan'daki antik kent Kaunos nerede?",
+		"lat": 36.826,
+		"lon": 28.623,
+		"r": 3
+	},
+	{
+		"id": "har-tar-49",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Yatağan yakınındaki antik kent Stratonikeia nerede?",
+		"lat": 37.314,
+		"lon": 28.068,
+		"r": 3
+	},
+	{
+		"id": "har-tar-50",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Aristoteles'in yaşadığı Assos nerede?",
+		"lat": 39.49,
+		"lon": 26.337,
+		"r": 3
+	},
+	{
+		"id": "har-tar-51",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Kral Midas'ın başkenti Gordion nerede?",
+		"lat": 39.65,
+		"lon": 31.98,
+		"r": 3
+	},
+	{
+		"id": "har-tar-52",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Güneş kursularıyla ünlü Alacahöyük nerede?",
+		"lat": 40.235,
+		"lon": 34.695,
+		"r": 3
+	},
+	{
+		"id": "har-tar-53",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "UNESCO listesindeki Arslantepe Höyüğü nerede?",
+		"lat": 38.382,
+		"lon": 38.361,
+		"r": 3
+	},
+	{
+		"id": "har-tar-54",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Ergani yakınındaki Çayönü Höyüğü nerede?",
+		"lat": 38.216,
+		"lon": 39.726,
+		"r": 4
+	},
+	{
+		"id": "har-tar-55",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Paleolitik çağdan kalma Karain Mağarası nerede?",
+		"lat": 37.08,
+		"lon": 30.57,
+		"r": 3
+	},
+	{
+		"id": "har-tar-56",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Boğaz'daki Rumeli Hisarı nerede?",
+		"lat": 41.085,
+		"lon": 29.056,
+		"r": 2
+	},
+	{
+		"id": "har-tar-57",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Surların zindan kalesi Yedikule nerede?",
+		"lat": 40.993,
+		"lon": 28.923,
+		"r": 2
+	},
+	{
+		"id": "har-tar-58",
+		"cat": "tarih",
+		"diff": 1,
+		"type": "pin",
+		"q": "Boğaz kıyısındaki Dolmabahçe Sarayı nerede?",
+		"lat": 41.039,
+		"lon": 29.0,
+		"r": 2,
+		"alt": [
+			41.005,
+			28.528
+		]
+	},
+	{
+		"id": "har-tar-59",
+		"cat": "tarih",
+		"diff": 1,
+		"type": "pin",
+		"q": "Cenevizlilerin yaptığı Galata Kulesi nerede?",
+		"lat": 41.026,
+		"lon": 28.974,
+		"r": 2,
+		"alt": [
+			41.267,
+			28.841
+		]
+	},
+	{
+		"id": "har-tar-60",
+		"cat": "tarih",
+		"diff": 1,
+		"type": "pin",
+		"q": "Atatürk'ün anıt mezarı Anıtkabir nerede?",
+		"lat": 39.925,
+		"lon": 32.837,
+		"r": 2,
+		"alt": [
+			40.23,
+			33.141
+		]
+	},
+	{
+		"id": "har-tar-61",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Başkentin tarihi kalesi Ankara Kalesi nerede?",
+		"lat": 39.941,
+		"lon": 32.865,
+		"r": 2,
+		"alt": [
+			39.508,
+			32.993
+		]
+	},
+	{
+		"id": "har-tar-62",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Sualtı müzesine ev sahipliği yapan Bodrum Kalesi nerede?",
+		"lat": 37.032,
+		"lon": 27.429,
+		"r": 2,
+		"alt": [
+			36.873,
+			28.073
+		]
+	},
+	{
+		"id": "har-tar-63",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Urartuların yaptığı Van Kalesi nerede?",
+		"lat": 38.502,
+		"lon": 43.343,
+		"r": 3,
+		"alt": [
+			38.667,
+			43.041
+		]
+	},
+	{
+		"id": "har-tar-64",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Kalesiyle bilinen tarihi Harput nerede?",
+		"lat": 38.706,
+		"lon": 39.255,
+		"r": 3
+	},
+	{
+		"id": "har-tar-65",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Anamur'daki deniz kalesi Mamure nerede?",
+		"lat": 36.082,
+		"lon": 32.895,
+		"r": 3
+	},
+	{
+		"id": "har-tar-66",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "İnönü Muharebelerine adını veren İnönü nerede?",
+		"lat": 39.817,
+		"lon": 30.143,
+		"r": 6
+	},
+	{
+		"id": "har-tar-67",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Yavuz'un Safevileri yendiği Çaldıran nerede?",
+		"lat": 39.14,
+		"lon": 43.91,
+		"r": 10
+	},
+	{
+		"id": "har-tar-68",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Kuva-yi Milliye'nin kongre yaptığı Alaşehir nerede?",
+		"lat": 38.35,
+		"lon": 28.517,
+		"r": 3
+	},
+	{
+		"id": "har-tar-69",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Milli Mücadele'de kongre toplanan Pozantı nerede?",
+		"lat": 37.43,
+		"lon": 34.873,
+		"r": 3
+	},
+	{
+		"id": "har-tar-70",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Ayastefanos Antlaşması'nın imzalandığı Yeşilköy nerede?",
+		"lat": 40.963,
+		"lon": 28.825,
+		"r": 3
+	},
+	{
+		"id": "har-tar-71",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Sezar'ın \"Geldim, gördüm, yendim\" dediği Zile nerede?",
+		"lat": 40.303,
+		"lon": 35.886,
+		"r": 3
+	},
+	{
+		"id": "har-tar-72",
+		"cat": "tarih",
+		"diff": 3,
+		"type": "pin",
+		"q": "Kütahya Antlaşması'na adını veren Kütahya ili nerede?",
+		"lat": 39.42,
+		"lon": 29.98,
+		"il": "Kütahya"
+	},
+	{
+		"id": "har-tar-73",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Osman Bey'in fethettiği Bilecik ili nerede?",
+		"lat": 40.14,
+		"lon": 29.98,
+		"il": "Bilecik"
+	},
+	{
+		"id": "har-tar-74",
+		"cat": "tarih",
+		"diff": 2,
+		"type": "pin",
+		"q": "Balıkesir Kongresi'nin toplandığı Balıkesir ili nerede?",
+		"lat": 39.65,
+		"lon": 27.88,
+		"il": "Balıkesir"
+	},
+	{
 		"id": "har-spo-01",
 		"cat": "spor",
 		"diff": 2,
@@ -1143,5 +2103,305 @@ export default [
 			38.53,
 			35.45
 		]
+	},
+	{
+		"id": "har-spo-08",
+		"cat": "spor",
+		"diff": 2,
+		"type": "pin",
+		"q": "Kıtalararası İstanbul Maratonu'nun başladığı köprü nerede?",
+		"lat": 41.045,
+		"lon": 29.034,
+		"r": 2,
+		"alt": [
+			41.052,
+			29.036
+		]
+	},
+	{
+		"id": "har-spo-09",
+		"cat": "spor",
+		"diff": 2,
+		"type": "pin",
+		"q": "2005 Şampiyonlar Ligi finalinin oynandığı stat nerede?",
+		"lat": 41.074,
+		"lon": 28.766,
+		"r": 3
+	},
+	{
+		"id": "har-spo-10",
+		"cat": "spor",
+		"diff": 1,
+		"type": "pin",
+		"q": "Fenerbahçe'nin stadı Şükrü Saracoğlu nerede?",
+		"lat": 40.988,
+		"lon": 29.037,
+		"r": 2
+	},
+	{
+		"id": "har-spo-11",
+		"cat": "spor",
+		"diff": 2,
+		"type": "pin",
+		"q": "Galatasaray'ın Seyrantepe'deki stadı nerede?",
+		"lat": 41.103,
+		"lon": 28.991,
+		"r": 2
+	},
+	{
+		"id": "har-spo-12",
+		"cat": "spor",
+		"diff": 2,
+		"type": "pin",
+		"q": "Yamaç paraşütçülerinin gözdesi Babadağ nerede?",
+		"lat": 36.53,
+		"lon": 29.18,
+		"r": 5,
+		"alt": [
+			36.55,
+			29.18
+		]
+	},
+	{
+		"id": "har-spo-13",
+		"cat": "spor",
+		"diff": 2,
+		"type": "pin",
+		"q": "Isparta'nın kayak merkezi Davraz nerede?",
+		"lat": 37.75,
+		"lon": 30.75,
+		"r": 6,
+		"alt": [
+			37.75,
+			30.75
+		]
+	},
+	{
+		"id": "har-spo-14",
+		"cat": "spor",
+		"diff": 2,
+		"type": "pin",
+		"q": "Raftingin gözde adresi Köprülü Kanyon nerede?",
+		"lat": 37.19,
+		"lon": 31.17,
+		"r": 5
+	},
+	{
+		"id": "har-spo-15",
+		"cat": "spor",
+		"diff": 3,
+		"type": "pin",
+		"q": "Uçurtma sörfünün gözde koyu Akyaka nerede?",
+		"lat": 37.055,
+		"lon": 28.325,
+		"r": 3
+	},
+	{
+		"id": "har-spo-16",
+		"cat": "spor",
+		"diff": 3,
+		"type": "pin",
+		"q": "Türkiye Rallisi'ne ev sahipliği yapan Marmaris nerede?",
+		"lat": 36.855,
+		"lon": 28.27,
+		"r": 4
+	},
+	{
+		"id": "har-spo-17",
+		"cat": "spor",
+		"diff": 2,
+		"type": "pin",
+		"q": "Golf sahalarıyla ünlü Belek nerede?",
+		"lat": 36.862,
+		"lon": 31.055,
+		"r": 4
+	},
+	{
+		"id": "har-spo-18",
+		"cat": "spor",
+		"diff": 3,
+		"type": "pin",
+		"q": "Dağcıların gözdesi Aladağlar'daki Demirkazık nerede?",
+		"lat": 37.82,
+		"lon": 35.15,
+		"r": 8,
+		"alt": [
+			37.84,
+			35.15
+		]
+	},
+	{
+		"id": "har-spo-19",
+		"cat": "spor",
+		"diff": 2,
+		"type": "pin",
+		"q": "Kayak merkeziyle bilinen Ilgaz Dağı nerede?",
+		"lat": 41.07,
+		"lon": 33.73,
+		"r": 10,
+		"alt": [
+			41.07,
+			33.73
+		]
+	},
+	{
+		"id": "har-san-01",
+		"cat": "sanat",
+		"diff": 1,
+		"type": "pin",
+		"q": "Justinianus'un yaptırdığı Ayasofya nerede?",
+		"lat": 41.009,
+		"lon": 28.98,
+		"r": 2,
+		"alt": [
+			40.987,
+			29.028
+		]
+	},
+	{
+		"id": "har-san-02",
+		"cat": "sanat",
+		"diff": 1,
+		"type": "pin",
+		"q": "Boğaz'ın girişindeki Kız Kulesi nerede?",
+		"lat": 41.021,
+		"lon": 29.004,
+		"r": 2,
+		"alt": [
+			41.022,
+			29.004
+		]
+	},
+	{
+		"id": "har-san-03",
+		"cat": "sanat",
+		"diff": 2,
+		"type": "pin",
+		"q": "Yıldırım Bayezid'in yaptırdığı Bursa Ulu Camii nerede?",
+		"lat": 40.184,
+		"lon": 29.062,
+		"r": 2,
+		"alt": [
+			40.483,
+			29.362
+		]
+	},
+	{
+		"id": "har-san-04",
+		"cat": "sanat",
+		"diff": 2,
+		"type": "pin",
+		"q": "Erzurum'daki Çifte Minareli Medrese nerede?",
+		"lat": 39.904,
+		"lon": 41.276,
+		"r": 2,
+		"alt": [
+			39.533,
+			41.923
+		]
+	},
+	{
+		"id": "har-san-05",
+		"cat": "sanat",
+		"diff": 2,
+		"type": "pin",
+		"q": "Konak Meydanı'ndaki İzmir Saat Kulesi nerede?",
+		"lat": 38.419,
+		"lon": 27.129,
+		"r": 2,
+		"alt": [
+			38.653,
+			27.087
+		]
+	},
+	{
+		"id": "har-san-06",
+		"cat": "sanat",
+		"diff": 3,
+		"type": "pin",
+		"q": "Selçuklu kervansarayı Sultanhanı nerede?",
+		"lat": 38.248,
+		"lon": 33.546,
+		"r": 3
+	},
+	{
+		"id": "har-san-07",
+		"cat": "sanat",
+		"diff": 2,
+		"type": "pin",
+		"q": "Telkari ve taş evleriyle Midyat nerede?",
+		"lat": 37.418,
+		"lon": 41.37,
+		"r": 3
+	},
+	{
+		"id": "har-san-08",
+		"cat": "sanat",
+		"diff": 2,
+		"type": "pin",
+		"q": "Müslüm Gürses'in doğduğu Halfeti nerede?",
+		"lat": 37.245,
+		"lon": 37.87,
+		"r": 3
+	},
+	{
+		"id": "har-san-09",
+		"cat": "sanat",
+		"diff": 3,
+		"type": "pin",
+		"q": "Ömer Seyfettin'in doğduğu Gönen nerede?",
+		"lat": 40.105,
+		"lon": 27.653,
+		"r": 4
+	},
+	{
+		"id": "har-san-10",
+		"cat": "sanat",
+		"diff": 2,
+		"type": "pin",
+		"q": "Neşet Ertaş'ın memleketi Kırşehir ili nerede?",
+		"lat": 39.146,
+		"lon": 34.16,
+		"il": "Kırşehir"
+	},
+	{
+		"id": "har-san-11",
+		"cat": "sanat",
+		"diff": 3,
+		"type": "pin",
+		"q": "Yaşar Kemal'in doğduğu Osmaniye ili nerede?",
+		"lat": 37.07,
+		"lon": 36.25,
+		"il": "Osmaniye"
+	},
+	{
+		"id": "har-san-12",
+		"cat": "sanat",
+		"diff": 3,
+		"type": "pin",
+		"q": "Sait Faik'in doğduğu Sakarya ili nerede?",
+		"lat": 40.78,
+		"lon": 30.4,
+		"il": "Sakarya"
+	},
+	{
+		"id": "har-san-13",
+		"cat": "sanat",
+		"diff": 2,
+		"type": "pin",
+		"q": "Namık Kemal'in doğduğu Tekirdağ ili nerede?",
+		"lat": 41.05,
+		"lon": 27.45,
+		"il": "Tekirdağ"
+	},
+	{
+		"id": "har-san-14",
+		"cat": "sanat",
+		"diff": 2,
+		"type": "pin",
+		"q": "Mesir Macunu Festivali'nin yapıldığı Manisa ili nerede?",
+		"lat": 38.61,
+		"lon": 27.43,
+		"il": "Manisa"
 	}
 ];
