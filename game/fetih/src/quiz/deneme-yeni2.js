@@ -300,11 +300,11 @@ export const SAMPLES = {
 		// Avustralya kentleri (başkent Canberra ve Sidney bankada); tuzaklar Yeni Zelanda ve öbür ülkelerin kıyı kentleri
 		BL('yn-balon-104', 'cografya', 2, 'Avustralya’daki şehirleri patlat!', ['Melbourne', 'Perth', 'Brisbane', 'Adelaide'], ['Auckland', 'Wellington', 'Vancouver', 'Cape Town', 'Honolulu'], 'batim', 'kiyi', 'Auckland ve Wellington Yeni Zelanda’da, Vancouver Kanada’da, Cape Town Güney Afrika’da.'),
 		// tatlı su gölleri; tuzaklar tuzlu ve sodalı göller (Erçek Van’da, pH ~10). Bankadaki Van Gölü önermesi yinelenmesin diye Van yok
-		BL('yn-balon-105', 'cografya', 2, 'Tatlı su göllerimizi patlat!', ['Eğirdir Gölü', 'Sapanca Gölü', 'Uluabat Gölü', 'Abant Gölü'], ['Tuz Gölü', 'Burdur Gölü', 'Acıgöl', 'Erçek Gölü'], 'safak', 'kapadokya', 'Tuz Gölü, Burdur Gölü, Acıgöl ve Van’daki Erçek Gölü’nün suyu tuzlu ya da sodalıdır.'),
+		BL('yn-balon-105', 'cografya', 2, 'Tatlı su göllerimizi patlat!', ['Eğirdir Gölü', 'Sapanca Gölü', 'Uluabat Gölü', 'Abant Gölü'], ['Tuz Gölü', 'Burdur Gölü', 'Acıgöl', 'Erçek Gölü'], 'gunduz', 'ege', 'Tuz Gölü, Burdur Gölü, Acıgöl ve Van’daki Erçek Gölü’nün suyu tuzlu ya da sodalıdır.'),
 		// Akdeniz’e dökülenler (Asi Lübnan’dan gelip Samandağ’da); tuzaklar öbür denizlere dökülen büyük akarsular
 		BL('yn-balon-106', 'cografya', 2, 'Akdeniz’e dökülen akarsuları patlat!', ['Seyhan', 'Ceyhan', 'Asi', 'Manavgat'], ['Çoruh', 'Sakarya', 'Küçük Menderes', 'Bakırçay', 'Meriç'], 'gunduz', 'ege', 'Çoruh ve Sakarya Karadeniz’e; Küçük Menderes, Bakırçay ve Meriç Ege’ye dökülür.'),
 		// Baltık kıyısı; Norveç’in kıyısı Skagerrak’ta biter (Baltık’a ulaşmaz), Belarus ve Çekya denizsiz
-		BL('yn-balon-107', 'cografya', 2, 'Baltık Denizi’ne kıyısı olan ülkeleri patlat!', ['Estonya', 'Litvanya', 'Finlandiya', 'Polonya'], ['Norveç', 'Belarus', 'Hollanda', 'Ukrayna', 'Çekya'], 'safak', 'kapadokya', 'Norveç ve Hollanda Kuzey Denizi’ne, Ukrayna Karadeniz’e bakar; Belarus ve Çekya denizsiz.'),
+		BL('yn-balon-107', 'cografya', 2, 'Baltık Denizi’ne kıyısı olan ülkeleri patlat!', ['Estonya', 'Litvanya', 'Finlandiya', 'Polonya'], ['Norveç', 'Belarus', 'Hollanda', 'Ukrayna', 'Çekya'], 'batim', 'kiyi', 'Norveç ve Hollanda Kuzey Denizi’ne, Ukrayna Karadeniz’e bakar; Belarus ve Çekya denizsiz.'),
 		// iki kıtaya yayılanlar (Kazakistan’ın Ural Nehri’nin batısı Avrupa’da); tartışmalı Azerbaycan ve Gürcistan bilerek yok; Mısır
 		// Afrika ile Asya’ya (Sina) yayılır ama Avrupa’da toprağı yok
 		BL('yn-balon-108', 'cografya', 2, 'Toprakları hem Avrupa’da hem Asya’da olan ülkeleri patlat!', ['Türkiye', 'Rusya', 'Kazakistan'], ['Ukrayna', 'İran', 'Moğolistan', 'Mısır', 'Polonya'], 'gece', 'istanbul', 'Kazakistan’ın Ural Nehri’nin batısı Avrupa’da; Mısır ise Afrika’yla Asya’ya yayılır.'),
@@ -314,11 +314,11 @@ export const SAMPLES = {
 		// Soğuk Savaş (1947–1991): Kore 1950–53, Berlin Duvarı 1961, Küba 1962, Vietnam 1955–75; tuzaklar başka dönemlerden
 		BL('yn-balon-110', 'tarih', 1, 'Soğuk Savaş döneminden olayları patlat!', ['Küba Füze Krizi', 'Berlin Duvarı', 'Kore Savaşı', 'Vietnam Savaşı'], ['Pearl Harbor', 'Waterloo', 'Kırım Savaşı', 'Otuz Yıl Savaşları', 'Titanik’in batışı'], 'gece', 'istanbul', 'Soğuk Savaş 1947–1991; Pearl Harbor 1941, Titanik 1912, Kırım Savaşı 1853, Waterloo 1815.'),
 		// Başkomutan 1921 (5 Ağustos), Gazi ve Mareşal 1921 (19 Eylül), Ebedî Şef 1938; tuzaklar İnönü’nün sanı ve padişah lakapları
-		BL('yn-balon-111', 'tarih', 1, 'Atatürk’e verilen unvanları patlat!', ['Gazi', 'Mareşal', 'Başkomutan', 'Ebedî Şef'], ['Millî Şef', 'Fatih', 'Kanuni', 'Yavuz', 'Veziriazam'], 'safak', 'kapadokya', 'Millî Şef İnönü’ye denirdi; Fatih, Kanuni, Yavuz padişah lakabı; veziriazam sadrazamdır.'),
+		BL('yn-balon-111', 'tarih', 1, 'Atatürk’e verilen unvanları patlat!', ['Gazi', 'Mareşal', 'Başkomutan', 'Ebedî Şef'], ['Millî Şef', 'Fatih', 'Kanuni', 'Yavuz', 'Veziriazam'], 'gece', 'istanbul', 'Millî Şef İnönü’ye denirdi; Fatih, Kanuni, Yavuz padişah lakabı; veziriazam sadrazamdır.'),
 		// Cumhuriyetin ilk 15 yılının başbakanları (Bayar 1 Kasım 1937); tuzaklar sonraki başbakanlar ve hiç başbakan olmayan Karabekir
 		BL('yn-balon-112', 'tarih', 2, '1923–1938 arasında başbakanlık yapanları patlat!', ['İsmet İnönü', 'Fethi Okyar', 'Celal Bayar'], ['Refik Saydam', 'Adnan Menderes', 'Şükrü Saracoğlu', 'Kâzım Karabekir', 'Hasan Saka'], 'gunduz', 'ege', 'Celal Bayar 1937’de başbakan oldu, Refik Saydam 1939’da; Karabekir hiç başbakan olmadı.'),
 		// 1991’de SSCB’den ayrılanlar; tuzaklar Varşova Paktı üyeleri (SSCB’nin parçası değildi), uydu Moğolistan ve 1917’de ayrılan Finlandiya
-		BL('yn-balon-113', 'tarih', 2, '1991’de Sovyetler Birliği’nden ayrılan ülkeleri patlat!', ['Ukrayna', 'Estonya', 'Gürcistan', 'Belarus'], ['Polonya', 'Finlandiya', 'Moğolistan', 'Romanya', 'Macaristan'], 'batim', 'kiyi', 'Finlandiya 1917’de ayrıldı; Polonya, Romanya, Macaristan ve Moğolistan SSCB’de hiç olmadı.'),
+		BL('yn-balon-113', 'tarih', 2, '1991’de Sovyetler Birliği’nden ayrılan ülkeleri patlat!', ['Ukrayna', 'Estonya', 'Gürcistan', 'Belarus'], ['Polonya', 'Finlandiya', 'Moğolistan', 'Romanya', 'Macaristan'], 'batim', 'kiyi', 'Finlandiya 1917’de Rusya’dan koptu; Polonya, Romanya, Macaristan, Moğolistan SSCB’de olmadı.'),
 		// I. Balkan Savaşı (1912–13) Balkan Birliği; Romanya yalnız II. Balkan Savaşı’na (Bulgaristan’a karşı) girdi
 		BL('yn-balon-114', 'tarih', 2, 'I. Balkan Savaşı’nda Osmanlı’ya karşı savaşanları patlat!', ['Bulgaristan', 'Sırbistan', 'Yunanistan', 'Karadağ'], ['Romanya', 'Arnavutluk', 'İtalya', 'Rusya', 'Avusturya'], 'gunduz', 'ege', 'Balkan Birliği: Bulgaristan, Sırbistan, Yunanistan, Karadağ; Romanya ikinci savaşa girdi.'),
 		// ABD başkanları (Rushmore’dakiler bankada); tuzaklar başkan olmamış kurucu atalar ve Avrupalı liderler
@@ -326,7 +326,7 @@ export const SAMPLES = {
 		// 1801–1900 arasında tahta çıkanlar (II. Mahmud 1808, Abdülmecid 1839, Abdülaziz 1861, II. Abdülhamid 1876)
 		BL('yn-balon-116', 'tarih', 3, '19. yüzyılda tahta çıkan Osmanlı padişahlarını patlat!', ['II. Mahmud', 'Abdülmecid', 'Abdülaziz', 'II. Abdülhamid'], ['III. Selim', 'I. Abdülhamid', 'III. Ahmed', 'Mehmed Reşad', 'Vahdettin'], 'gece', 'istanbul', 'I. Abdülhamid 1774’te, III. Selim 1789’da, Mehmed Reşad 1909’da, Vahdettin 1918’de.'),
 		// Anzavur 1919–20, Delibaş 1920 (Konya), Çerkez Ethem 1920–21, Koçgiri 1921; tuzaklar öncesinin ve sonrasının ayaklanmaları
-		BL('yn-balon-117', 'tarih', 3, 'Kurtuluş Savaşı yıllarında çıkan iç isyanları patlat!', ['Anzavur', 'Çerkez Ethem', 'Delibaş', 'Koçgiri'], ['Şeyh Sait', 'Menemen', '31 Mart', 'Patrona Halil', 'Kabakçı Mustafa'], 'safak', 'kapadokya', 'Şeyh Sait 1925’te, Menemen 1930’da; 31 Mart, Kabakçı ve Patrona Halil Osmanlı döneminde.'),
+		BL('yn-balon-117', 'tarih', 3, 'Kurtuluş Savaşı yıllarında çıkan iç isyanları patlat!', ['Anzavur', 'Çerkez Ethem', 'Delibaş', 'Koçgiri'], ['Şeyh Sait', 'Menemen', '31 Mart', 'Patrona Halil', 'Kabakçı Mustafa'], 'gece', 'istanbul', 'Şeyh Sait 1925’te, Menemen 1930’da; 31 Mart, Kabakçı ve Patrona Halil Osmanlı döneminde.'),
 		// ---------------------------------------------------------------- bilim
 		// hayvansal lifler (tiftik Ankara keçisinden, kaşmir keçisinden); tuzaklar bitkisel ve yapay lifler
 		BL('yn-balon-118', 'bilim', 1, 'Hayvanlardan elde edilen lifleri patlat!', ['Yün', 'İpek', 'Tiftik', 'Kaşmir'], ['Pamuk', 'Keten', 'Kenevir', 'Jüt', 'Naylon'], 'gunduz', 'ege', 'Pamuk, keten, kenevir ve jüt bitkiden gelir; naylon petrolden yapılan yapay bir lif.'),
@@ -336,7 +336,7 @@ export const SAMPLES = {
 		// iletkenler (grafit ametal, tuzlu suda iyonlar); tuzaklar yalıtkanlar (ıslakken ileten tahta ve kâğıt bilerek yok)
 		BL('yn-balon-120', 'bilim', 2, 'Elektriği ileten maddeleri patlat!', ['Alüminyum', 'Gümüş', 'Grafit', 'Tuzlu su'], ['Cam', 'Plastik', 'Lastik', 'Porselen'], 'gece', 'istanbul', 'Grafit ametal olduğu hâlde iletir; tuzlu suda akımı iyonlar taşır.'),
 		// dinozorlar; tuzaklar dinozor sanılan deniz sürüngenleri ve buzul çağı memelileri (bankada sorulan pterosaur yok)
-		BL('yn-balon-121', 'bilim', 2, 'Dinozorları patlat!', ['Tiranozor', 'Triceratops', 'Stegozor', 'Velociraptor'], ['Plesiyozor', 'Mozazor', 'Mamut', 'Kılıç dişli kaplan'], 'safak', 'kapadokya', 'Plesiyozor ve mozazor deniz sürüngeni; mamut ve kılıç dişli kaplan memeli.'),
+		BL('yn-balon-121', 'bilim', 2, 'Dinozorları patlat!', ['Tiranozor', 'Triceratops', 'Stegozor', 'Velociraptor'], ['Plesiyozor', 'Mozazor', 'Mamut', 'Kılıç dişli kaplan'], 'gunduz', 'ege', 'Plesiyozor ve mozazor deniz sürüngeni; mamut ve kılıç dişli kaplan memeli.'),
 		// kalıtsal hastalıklar; tuzaklar bakteri ve virüslerle bulaşan hastalıklar (balon-69’daki kümeden ayrı)
 		BL('yn-balon-122', 'bilim', 2, 'Kalıtsal hastalıkları patlat!', ['Hemofili', 'Renk körlüğü', 'Akdeniz anemisi', 'Kistik fibrozis'], ['Kabakulak', 'Boğmaca', 'Difteri', 'Zatürre', 'Kolera'], 'gunduz', 'ege', 'Kabakulak, boğmaca, difteri, zatürre ve kolera mikropla bulaşır; anne babadan geçmez.'),
 		// Alman bilim insanları (Kepler Württemberg’de, Röntgen Lennep’te doğdu); tuzaklar başka ülkelerin ünlüleri. Uyruk değiştiren
@@ -351,32 +351,32 @@ export const SAMPLES = {
 		BL('yn-balon-126', 'sanat', 1, 'The Beatles’ın üyelerini patlat!', ['John Lennon', 'Paul McCartney', 'George Harrison', 'Ringo Starr'], ['Mick Jagger', 'Freddie Mercury', 'Elton John', 'David Bowie', 'Bob Dylan'], 'gece', 'istanbul', 'Jagger Rolling Stones’un üyesi; Mercury, Elton John, Bowie ve Dylan Beatles’ta yer almadı.'),
 		// İngiliz yazarlar (Orwell İngiliz anne babadan Hindistan’da doğdu); tuzaklar Amerika ve Avrupa’nın büyük yazarları. Bankadaki
 		// "Rus yazarları" çengeliyle çakışmasın diye Rus yazarlar yok
-		BL('yn-balon-127', 'sanat', 1, 'İngiliz yazarları patlat!', ['Dickens', 'Shakespeare', 'Jane Austen', 'George Orwell'], ['Hemingway', 'Mark Twain', 'Balzac', 'Goethe', 'Kafka'], 'safak', 'kapadokya', 'Hemingway ve Mark Twain Amerikalı, Balzac Fransız, Goethe Alman; Kafka Prag’da yaşadı.'),
+		BL('yn-balon-127', 'sanat', 1, 'İngiliz yazarları patlat!', ['Dickens', 'Shakespeare', 'Jane Austen', 'George Orwell'], ['Hemingway', 'Mark Twain', 'Balzac', 'Goethe', 'Kafka'], 'batim', 'kiyi', 'Hemingway ve Mark Twain Amerikalı, Balzac Fransız, Goethe Alman; Kafka Prag’da yaşadı.'),
 		// Harry Potter kitaplarının kişileri; tuzaklar başka fantastik öykülerin büyücü ve kahramanları
-		BL('yn-balon-128', 'sanat', 1, 'Harry Potter kitaplarının kahramanlarını patlat!', ['Hermione', 'Dumbledore', 'Hagrid', 'Ron Weasley'], ['Gandalf', 'Frodo', 'Merlin', 'Yoda', 'Pinokyo'], 'gunduz', 'ege', 'Gandalf ve Frodo Tolkien’in, Merlin Arthur efsanelerinin, Yoda Yıldız Savaşları’nın kişisi.'),
+		BL('yn-balon-128', 'sanat', 1, 'Harry Potter kitaplarının kahramanlarını patlat!', ['Hermione', 'Dumbledore', 'Hagrid', 'Ron Weasley'], ['Gandalf', 'Frodo', 'Peter Pan', 'Yoda', 'Pinokyo'], 'gunduz', 'ege', 'Gandalf ve Frodo Tolkien’in, Peter Pan Barrie’nin, Yoda Yıldız Savaşları’nın kişisi.'),
 		// Andersen (bankada sorulan Çirkin Ördek Yavrusu bilerek yok); tuzaklar Grimm, Perrault ve Collodi
 		BL('yn-balon-129', 'sanat', 2, 'Andersen’in masallarını patlat!', ['Küçük Deniz Kızı', 'Kar Kraliçesi', 'İmparatorun Yeni Giysileri', 'Prenses ve Bezelye'], ['Pamuk Prenses', 'Kırmızı Başlıklı Kız', 'Hansel ve Gretel', 'Çizmeli Kedi', 'Pinokyo'], 'batim', 'kiyi', 'Pamuk Prenses, Hansel ve Gretel, Çizmeli Kedi ve Pinokyo başka yazarların masalları.'),
 		// Rus besteciler; tuzaklar Doğu ve Kuzey Avrupa’nın ulusal bestecileri
 		BL('yn-balon-130', 'sanat', 2, 'Rus bestecileri patlat!', ['Çaykovski', 'Rahmaninov', 'Şostakoviç', 'Prokofyev'], ['Chopin', 'Liszt', 'Dvořák', 'Grieg', 'Sibelius'], 'gece', 'istanbul', 'Chopin Polonyalı, Liszt Macar, Dvořák Çek, Grieg Norveçli, Sibelius Fin besteci.'),
 		// Sefiller’in kişileri; tuzaklar 19. yüzyılın başka romanlarının kahramanları
-		BL('yn-balon-131', 'sanat', 2, 'Sefiller romanının kahramanlarını patlat!', ['Marius', 'Javert', 'Cosette', 'Fantine'], ['D’Artagnan', 'Raskolnikov', 'Edmond Dantès', 'Oliver Twist'], 'safak', 'kapadokya', 'D’Artagnan Üç Silahşörler’in, Dantès Monte Kristo’nun, Raskolnikov Suç ve Ceza’nın kişisi.'),
+		BL('yn-balon-131', 'sanat', 2, 'Sefiller romanının kahramanlarını patlat!', ['Marius', 'Javert', 'Cosette', 'Fantine'], ['D’Artagnan', 'Raskolnikov', 'Edmond Dantès', 'Oliver Twist'], 'gece', 'istanbul', 'D’Artagnan Üç Silahşörler’in, Dantès Monte Kristo’nun, Raskolnikov Suç ve Ceza’nın kişisi.'),
 		// İspanyol ressamlar (Yunan doğumlu El Greco bilerek yok); tuzaklar başka ülkelerin ustaları
 		BL('yn-balon-132', 'sanat', 2, 'İspanyol ressamları patlat!', ['Velázquez', 'Murillo', 'Dalí', 'Miró'], ['Caravaggio', 'Rubens', 'Monet', 'Rembrandt', 'Munch'], 'gunduz', 'ege', 'Caravaggio İtalyan, Rubens Flaman, Monet Fransız, Rembrandt Hollandalı, Munch Norveçli.'),
 		// hattatlar (Şeyh Hamdullah 15.–16., Ahmed Karahisari 16., Hafız Osman 17., Mustafa Rakım 18.–19. yüzyıl); tuzaklar aynı
 		// çağların başka sanatçıları
-		BL('yn-balon-133', 'sanat', 3, 'Hattatları patlat!', ['Şeyh Hamdullah', 'Hafız Osman', 'Ahmed Karahisari', 'Mustafa Rakım'], ['Itri', 'Levni', 'Nedim', 'Baki', 'Evliya Çelebi'], 'batim', 'kiyi', 'Itri besteci, Levni nakkaş, Nedim ve Baki divan şairi, Evliya Çelebi gezgin.'),
+		BL('yn-balon-133', 'sanat', 3, 'Hattatları patlat!', ['Şeyh Hamdullah', 'Hafız Osman', 'Ahmed Karahisari', 'Mustafa Rakım'], ['Itri', 'Levni', 'Nedim', 'Baki', 'Piri Reis'], 'batim', 'kiyi', 'Itri besteci, Levni nakkaş, Nedim ve Baki divan şairi, Piri Reis denizci.'),
 		// ---------------------------------------------------------------- spor
 		// Londra kulüpleri (bankada sorulan Arsenal ve Chelsea bilerek yok); tuzaklar İngiltere’nin öbür kentlerinin köklü kulüpleri
 		BL('yn-balon-134', 'spor', 2, 'Londra’nın futbol kulüplerini patlat!', ['Tottenham', 'West Ham', 'Fulham', 'Crystal Palace'], ['Everton', 'Sunderland', 'Newcastle', 'Leeds United', 'Manchester City'], 'gece', 'istanbul', 'Everton Liverpool’un kulübü; Sunderland, Newcastle, Leeds ve Manchester City kuzeyde.'),
 		// NBA takımları; tuzaklar beyzbol (MLB) ve Amerikan futbolu (NFL) takımları
 		BL('yn-balon-135', 'spor', 1, 'NBA takımlarını patlat!', ['Lakers', 'Celtics', 'Bulls', 'Knicks'], ['Yankees', 'Dodgers', 'Red Sox', 'Patriots', 'Cowboys'], 'gece', 'istanbul', 'Yankees, Dodgers ve Red Sox beyzbol; Patriots ve Cowboys Amerikan futbolu takımı.'),
 		// koşucular (Süreyya Ayhan 1500 m, Kipchoge maraton; bankada sorulan Bolt bilerek yok); tuzaklar başka dalların efsaneleri
-		BL('yn-balon-136', 'spor', 1, 'Atletizmde koşucu olan sporcuları patlat!', ['Kipchoge', 'Carl Lewis', 'Haile Gebrselassie', 'Süreyya Ayhan'], ['Michael Phelps', 'Nadia Comaneci', 'Naim Süleymanoğlu', 'Mike Tyson', 'Roger Federer'], 'gunduz', 'ege', 'Phelps yüzücü, Comaneci cimnastikçi, Naim halterci, Tyson boksör, Federer tenisçi.'),
+		BL('yn-balon-136', 'spor', 1, 'Koşucuları patlat!', ['Kipchoge', 'Carl Lewis', 'Haile Gebrselassie', 'Süreyya Ayhan'], ['Michael Phelps', 'Nadia Comaneci', 'Naim Süleymanoğlu', 'Mike Tyson', 'Roger Federer'], 'gunduz', 'ege', 'Phelps yüzücü, Comaneci cimnastikçi, Naim halterci, Tyson boksör, Federer tenisçi.'),
 		// ABD’de icat edilenler (basketbol Springfield 1891, voleybol Holyoke 1895, softbol Chicago 1887); kökeni tartışmalı beyzbol
 		// bilerek yok; tuzaklar Avrupa kökenli sporlar
 		BL('yn-balon-137', 'spor', 2, 'ABD’de icat edilen sporları patlat!', ['Basketbol', 'Voleybol', 'Softbol'], ['Futbol', 'Ragbi', 'Kriket', 'Golf', 'Hentbol'], 'batim', 'kiyi', 'Basketbolu Naismith, voleybolu Morgan ABD’de icat etti; futbol, ragbi ve kriket İngiliz.'),
 		// Hollandalı futbolcular; tuzaklar aynı kuşağın öbür Avrupa yıldızları (Belçikalı kaleci Pfaff komşudan)
-		BL('yn-balon-138', 'spor', 2, 'Hollandalı futbolcuları patlat!', ['Clarence Seedorf', 'Van Basten', 'Ruud Gullit', 'Dennis Bergkamp'], ['Hagi', 'Stoichkov', 'Matthäus', 'Michael Laudrup', 'Jean-Marie Pfaff'], 'safak', 'kapadokya', 'Hagi Rumen, Stoichkov Bulgar, Matthäus Alman, Laudrup Danimarkalı, Pfaff Belçikalı.'),
+		BL('yn-balon-138', 'spor', 2, 'Hollandalı futbolcuları patlat!', ['Clarence Seedorf', 'Van Basten', 'Ruud Gullit', 'Dennis Bergkamp'], ['Hagi', 'Stoichkov', 'Matthäus', 'Michael Laudrup', 'Jean-Marie Pfaff'], 'batim', 'kiyi', 'Hagi Rumen, Stoichkov Bulgar, Matthäus Alman, Laudrup Danimarkalı, Pfaff Belçikalı.'),
 		// 2002: Çin 3-0, Japonya 1-0, Senegal 1-0 (altın gol), Güney Kore 3-2; Brezilya’ya 1-2 ve 0-1, Kosta Rika 1-1
 		BL('yn-balon-139', 'spor', 2, '2002 Dünya Kupası’nda Türkiye’nin yendiği takımları patlat!', ['Çin', 'Japonya', 'Senegal', 'Güney Kore'], ['Brezilya', 'Kosta Rika', 'Almanya', 'İspanya', 'Belçika'], 'gece', 'istanbul', 'Türkiye Brezilya’ya iki kez yenildi, Kosta Rika’yla 1-1 berabere kaldı.'),
 		// Brezilyalı pilotlar (bankada sorulan Senna bilerek yok); tuzaklar başka ülkelerin şampiyon pilotları
@@ -393,13 +393,13 @@ export const SAMPLES = {
 		// Paris’in yapıları (bankada sorulan Eyfel bilerek yok); tuzaklar başka kentlerin simgeleri ve Paris’in dışındaki Versay
 		BL('yn-balon-145', 'eglence', 2, 'Paris’teki yapıları patlat!', ['Louvre', 'Zafer Takı', 'Notre-Dame', 'Sacré-Cœur'], ['Big Ben', 'Kolezyum', 'Versay Sarayı', 'Brandenburg Kapısı', 'Atomium'], 'gece', 'istanbul', 'Versay Sarayı Paris’in dışında, Versay kentinde; Big Ben Londra’da, Atomium Brüksel’de.'),
 		// Hicri aylar; tuzaklar Miladi takvimin ayları
-		BL('yn-balon-146', 'eglence', 2, 'Hicri takvimin aylarını patlat!', ['Muharrem', 'Ramazan', 'Şaban', 'Recep'], ['Temmuz', 'Haziran', 'Ağustos', 'Eylül', 'Şubat'], 'safak', 'kapadokya', 'Temmuz, haziran, ağustos, eylül ve şubat Miladi takvimin aylarıdır.'),
+		BL('yn-balon-146', 'eglence', 1, 'Hicri takvimin aylarını patlat!', ['Muharrem', 'Ramazan', 'Şaban', 'Recep'], ['Temmuz', 'Haziran', 'Ağustos', 'Eylül', 'Şubat'], 'gece', 'istanbul', 'Temmuz, haziran, ağustos, eylül ve şubat Miladi takvimin aylarıdır.'),
 		// BM’ye bağlı kuruluşlar (UNICEF fon olarak, öbürleri uzman kuruluş); tuzaklar BM dışı uluslararası örgütler
 		BL('yn-balon-147', 'eglence', 2, 'Birleşmiş Milletler’e bağlı kuruluşları patlat!', ['UNESCO', 'UNICEF', 'FAO', 'Dünya Sağlık Örgütü'], ['NATO', 'OPEC', 'FIFA', 'Interpol'], 'gunduz', 'ege', 'NATO askerî ittifak, OPEC petrol örgütü, FIFA futbol birliği; Interpol de BM’den ayrı.'),
 		// yalnız kırmızı-beyaz bayraklar; tuzaklar mavisi olan benzer bayraklar (Norveç Danimarka’nınkine çok benzer)
 		BL('yn-balon-148', 'eglence', 2, 'Bayrağında yalnız kırmızı ve beyaz olan ülkeleri patlat!', ['Tunus', 'Polonya', 'Kanada', 'Danimarka'], ['Norveç', 'Fransa', 'Hollanda', 'ABD', 'İsveç'], 'batim', 'kiyi', 'Norveç, Fransa, Hollanda ve ABD bayraklarında mavi de var; İsveç’inki mavi-sarı.'),
 		// 2007 New7Wonders seçimi (Kolezyum ve Kurtarıcı İsa balonda yok); tuzaklar listeye giremeyen ünlü yapılar
-		BL('yn-balon-149', 'eglence', 2, 'Dünyanın yeni yedi harikasını patlat!', ['Petra', 'Machu Picchu', 'Tac Mahal', 'Chichén Itzá'], ['Eyfel Kulesi', 'Stonehenge', 'Akropolis', 'Angkor Wat', 'Özgürlük Heykeli'], 'safak', 'kapadokya', 'Eyfel, Stonehenge, Akropolis, Angkor Wat ve Özgürlük Heykeli 2007 listesine giremedi.'),
+		BL('yn-balon-149', 'eglence', 2, 'Dünyanın yeni yedi harikasını patlat!', ['Petra', 'Machu Picchu', 'Tac Mahal', 'Chichén Itzá'], ['Eyfel Kulesi', 'Stonehenge', 'Akropolis', 'Angkor Wat', 'Özgürlük Heykeli'], 'gunduz', 'ege', 'Eyfel, Stonehenge, Akropolis, Angkor Wat ve Özgürlük Heykeli 2007 listesine giremedi.'),
 		// Latinceden türeyen (Roman) diller; tuzaklar Latince sözcükleri bol ama başka kökenden diller
 		BL('yn-balon-150', 'eglence', 3, 'Latinceden türeyen dilleri patlat!', ['Rumence', 'Portekizce', 'İtalyanca', 'Fransızca'], ['İngilizce', 'Maltaca', 'Arnavutça', 'Macarca', 'Yunanca'], 'gece', 'istanbul', 'İngilizce Germen, Maltaca Sami kökenli; Arnavutça ve Yunanca ayrı dal, Macarca Ural dili.'),
 	],

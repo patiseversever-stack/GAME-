@@ -304,124 +304,66 @@ export const SAMPLES = {
 		PK('yn-penalti-121', 'spor', 1, 'Futbolda kenar çizgisindeki yardımcı hakemler elinde ne taşır?', ['Bayrak', 'Düdük', 'Sarı kart', 'Megafon']),
 		// FIFA Altın Eldiven turnuvanın en iyi kalecisine verilir (2010’dan beri bu adla)
 		PK('yn-penalti-122', 'spor', 2, 'Dünya Kupası’nda “Altın Eldiven” ödülü kime verilir?', ['En iyi kaleciye', 'Gol kralına', 'En genç oyuncuya', 'En iyi hakeme']),
-		// Pelé 1956–1974 Santos’ta, ardından 1975–1977 New York Cosmos’ta oynadı
-		PK('yn-penalti-123', 'spor', 2, 'Pelé, Brezilya’da hangi kulübün formasıyla efsaneleşti?', ['Santos', 'Flamengo', 'Corinthians', 'Palmeiras']),
+		// Pelé 10 numaralı formayı Brezilya’da 1958 Dünya Kupası’ndan başlayarak giydi; numara onunla simgeleşti
+		PK('yn-penalti-123', 'spor', 1, 'Pelé hangi forma numarasıyla özdeşleşmiştir?', ['10', '9', '7', '11']),
 		// Ronaldo 2002’de Sporting CP’de profesyonel oldu, 2003’te Manchester United’a geçti
 		PK('yn-penalti-124', 'spor', 3, 'Cristiano Ronaldo profesyonel kariyerine hangi kulüpte başladı?', ['Sporting', 'Benfica', 'Porto', 'Braga']),
-		// Napoli 1986–87 ve 1989–90 Serie A şampiyonlukları, ikisi de Maradona’yla
-		PK('yn-penalti-125', 'spor', 2, 'Diego Maradona İtalya’da hangi kulübü iki kez şampiyon yaptı?', ['Napoli', 'Juventus', 'Milan', 'Roma']),
-		// FIBA ve NBA: normal süre berabere biterse 5 dakikalık uzatmalar oynanır
-		PK('yn-penalti-126', 'spor', 2, 'Basketbolda normal süre berabere biterse uzatma kaç dakika sürer?', ['5', '10', '3', '15']),
 		// su topu maçı 4 periyottan oluşur (her biri 8 dakika etkin oyun)
-		PK('yn-penalti-127', 'spor', 2, 'Su topunda bir maç kaç periyottan oluşur?', ['4', '2', '3', '6']),
+		PK('yn-penalti-127', 'spor', 3, 'Su topunda bir maç kaç periyottan oluşur?', ['4', '2', '3', '6']),
 		// efsaneye göre Feidippides Maraton’dan Atina’ya zaferi haber vermek için koştu
 		PK('yn-penalti-128', 'spor', 3, 'Efsaneye göre Maraton’dan Atina’ya koşan haberci kimdir?', ['Feidippides', 'Leonidas', 'Perikles', 'Odysseus']),
-		// 2004’ten beri Yaz Olimpiyatları madalyalarının bir yüzünde zafer tanrıçası Nike var
-		PK('yn-penalti-129', 'spor', 2, 'Yaz Olimpiyatları madalyalarında hangi zafer tanrıçası yer alır?', ['Nike', 'Athena', 'Hera', 'Afrodit']),
-		// 2010 FIBA Dünya Şampiyonası İstanbul’da; Türkiye finalde ABD’ye yenilip ikinci oldu
-		PK('yn-penalti-130', 'spor', 2, 'Türkiye 2010 FIBA Dünya Şampiyonası’nı kaçıncı bitirdi?', ['İkinci', 'Birinci', 'Üçüncü', 'Dördüncü']),
+		// Yaz Olimpiyatları madalyalarının ön yüzünde Yunan zafer tanrıçası Nike var (2004’ten beri Panathinaiko Stadı önünde)
+		PK('yn-penalti-129', 'spor', 2, 'Yaz Olimpiyatları madalyalarında hangi Yunan tanrıçası yer alır?', ['Nike', 'Athena', 'Hera', 'Afrodit']),
 		// EURO 2008’de Türkiye’yi Fatih Terim çalıştırdı (yarı final)
-		PK('yn-penalti-131', 'spor', 2, 'EURO 2008’de yarı final oynayan Türkiye’nin teknik direktörü kimdi?', ['Fatih Terim', 'Şenol Güneş', 'Mustafa Denizli', 'Lucescu']),
+		PK('yn-penalti-131', 'spor', 2, 'EURO 2008’de yarı final oynayan Türkiye’nin teknik direktörü kimdi?', ['Fatih Terim', 'Şenol Güneş', 'Mustafa Denizli', 'Mircea Lucescu']),
 		// FIBA topları turuncu tonlarındadır
 		PK('yn-penalti-132', 'spor', 1, 'Basketbol topu genellikle hangi renktir?', ['Turuncu', 'Kırmızı', 'Sarı', 'Beyaz']),
 		// Amerikan bilardosu (pool) masasında dört köşede ve iki uzun kenarın ortasında 6 cep
 		PK('yn-penalti-133', 'spor', 1, 'Amerikan bilardosu masasında kaç cep vardır?', ['6', '4', '8', '2']),
 
 		// ---------------------------------------------------------------- tarih
-		// Kasım 1950, Kunuri: Türk Tugayı BM kuvvetlerinin çekilmesini korudu
-		PK('yn-penalti-134', 'tarih', 2, 'Kore Savaşı’nda Türk Tugayı’nın destan yazdığı muharebe hangisidir?', ['Kunuri', 'Inchon', 'Pusan', 'Pyongyang']),
-		// Ertuğrul Fırkateyni 1889’da yola çıktı, Eylül 1890’da Kuşimoto açıklarında battı
-		PK('yn-penalti-135', 'tarih', 2, 'Osmanlı’nın 1889’da Japonya’ya gönderdiği, dönüşte batan gemi hangisidir?', ['Ertuğrul', 'Yavuz', 'Hamidiye', 'Nusret']),
+		// Kore’ye tugay gönderme kararını 1950 yazında Adnan Menderes hükümeti aldı (Günaltay Mayıs 1950’de görevi bırakmıştı)
+		PK('yn-penalti-134', 'tarih', 2, 'Türkiye’nin Kore Savaşı’na asker gönderme kararını veren başbakan kimdir?', ['Adnan Menderes', 'Şemsettin Günaltay', 'İsmet İnönü', 'Recep Peker']),
+		// Ertuğrul Fırkateyni’ni 1889’da II. Abdülhamid Japonya’ya elçilik gemisi olarak gönderdi
+		PK('yn-penalti-135', 'tarih', 2, 'Ertuğrul Fırkateyni’ni Japonya’ya hangi padişah gönderdi?', ['II. Abdülhamid', 'Abdülaziz', 'Abdülmecid', 'V. Murad']),
 		// ABD İç Savaşı (1861–65): Lincoln’ün Kuzey’i köleliğin kaldırılmasını savundu
 		PK('yn-penalti-136', 'tarih', 1, 'Amerikan İç Savaşı’nda köleliğin kaldırılmasını savunan taraf hangisiydi?', ['Kuzey', 'Güney', 'Batı', 'Doğu']),
-		// Sinan 1538’de başmimar oldu; Kanuni, II. Selim ve III. Murad dönemlerinde (öl. 1588)
-		PK('yn-penalti-137', 'tarih', 2, 'Mimar Sinan kaç padişahın başmimarlığını yaptı?', ['3', '2', '4', '5']),
-		// Enderun: Topkapı Sarayı’nda devşirmelerin yetiştirildiği saray okulu
-		PK('yn-penalti-138', 'tarih', 2, 'Osmanlı’da devşirmelerin saray için yetiştirildiği okul hangisidir?', ['Enderun', 'Darülfünun', 'Mülkiye', 'Harbiye']),
-		// Yüz Yıl Savaşları (1337–1453) İngiltere ile Fransa arasında
-		PK('yn-penalti-139', 'tarih', 2, 'Yüz Yıl Savaşları hangi iki ülke arasında yapıldı?', ['İngiltere ve Fransa', 'Fransa ve İspanya', 'İngiltere ve İspanya', 'Fransa ve Almanya']),
 		// 12 Ekim 1492: Bahamalar’daki Guanahani (San Salvador) adası
 		PK('yn-penalti-140', 'tarih', 3, 'Kolomb’un 1492’de ilk ayak bastığı ada bugün hangi ülkededir?', ['Bahamalar', 'Küba', 'Haiti', 'Jamaika']),
-		// Macellan 27 Nisan 1521’de Mactan’da (Filipinler) yerlilerle çatışmada öldü
-		PK('yn-penalti-141', 'tarih', 2, 'Macellan dünya turu sırasında hangi ülkede öldürüldü?', ['Filipinler', 'Brezilya', 'Endonezya', 'Şili']),
 		// Hiroşima’ya atılan bomba Little Boy, Nagasaki’ye atılan Fat Man
 		PK('yn-penalti-142', 'tarih', 3, 'Hiroşima’ya atılan atom bombasının adı nedir?', ['Little Boy', 'Fat Man', 'Trinity', 'Enola Gay']),
-		// Nizamülmülk, Alparslan ve Melikşah’ın veziri; Nizamiye medreselerinin kurucusu
-		PK('yn-penalti-143', 'tarih', 2, 'Nizamiye medreselerini kuran Selçuklu veziri kimdir?', ['Nizamülmülk', 'Sadeddin Köpek', 'Celaleddin Karatay', 'Kutalmış']),
-		// Truva Savaşı’nda Akhalar kente tahta atın içine saklanarak girdi
-		PK('yn-penalti-144', 'tarih', 1, 'Efsaneye göre Akhalar Truva’ya neyin içine saklanarak girdi?', ['Tahta at', 'Fıçı', 'Sandık', 'Araba']),
 
 		// ---------------------------------------------------------------- coğrafya
 		// Tac Mahal Uttar Pradeş’in Agra kentinde, Yamuna kıyısında
 		PK('yn-penalti-145', 'cografya', 2, 'Tac Mahal hangi Hindistan kentindedir?', ['Agra', 'Delhi', 'Mumbai', 'Kalküta']),
 		// Kanarya Adaları İspanya’ya bağlı, Fas açıklarında Atlas Okyanusu’nda
 		PK('yn-penalti-146', 'cografya', 2, 'Kanarya Adaları hangi okyanustadır?', ['Atlas', 'Hint', 'Büyük Okyanus', 'Arktik']),
-		// Manş Denizi (La Manche) İngiltere ile Fransa arasında; altından Manş Tüneli geçer
-		PK('yn-penalti-147', 'cografya', 2, 'İngiltere ile Fransa’yı ayıran su yolu hangisidir?', ['Manş Denizi', 'Kuzey Denizi', 'Baltık Denizi', 'Biskay Körfezi']),
 		// Venedik lagünü Adriyatik Denizi’nin kuzeyinde
 		PK('yn-penalti-148', 'cografya', 2, 'Venedik hangi denizin kıyısındadır?', ['Adriyatik', 'Tiren', 'Ege', 'İyon']),
-		// Girit Yunanistan’ın en büyük adası
-		PK('yn-penalti-149', 'cografya', 1, 'Girit adası hangi ülkeye bağlıdır?', ['Yunanistan', 'İtalya', 'Kıbrıs', 'Malta']),
-		// Nijerya’nın başkenti 1991’den beri Abuja; Lagos en kalabalık kent
-		PK('yn-penalti-150', 'cografya', 2, 'Nijerya’nın başkenti neresidir?', ['Abuja', 'Lagos', 'Akra', 'Dakar']),
-		// Fas’ın başkenti Rabat; Kazablanka en büyük kent, Marakeş turizm kenti
-		PK('yn-penalti-151', 'cografya', 2, 'Fas’ın başkenti neresidir?', ['Rabat', 'Kazablanka', 'Marakeş', 'Tunus']),
-		// Paris’ten Sen (Seine) Nehri geçer
-		PK('yn-penalti-152', 'cografya', 1, 'Paris’in içinden geçen nehir hangisidir?', ['Sen', 'Ren', 'Tuna', 'Thames']),
 		// Menemen İzmir’in kuzeyindeki bir ilçesidir
 		PK('yn-penalti-153', 'cografya', 1, 'Adı bir yemekle aynı olan Menemen hangi ilimizin ilçesidir?', ['İzmir', 'Manisa', 'Aydın', 'Muğla']),
-		// Kapadokya’nın simgesi peribacaları ve sıcak hava balonları
-		PK('yn-penalti-154', 'cografya', 1, 'Sabahları gökyüzü sıcak hava balonlarıyla dolan bölgemiz hangisidir?', ['Kapadokya', 'Truva', 'Sümela', 'Uludağ']),
 
 		// ---------------------------------------------------------------- bilim
 		// ksilem (odun borusu) suyu ve mineralleri kökten yaprağa, floem besini taşır
 		PK('yn-penalti-155', 'bilim', 2, 'Bitkilerde suyu kökten yapraklara taşıyan iletim dokusu hangisidir?', ['Ksilem', 'Floem', 'Epidermis', 'Kambiyum']),
-		// kelebeklerin tat alıcıları ayaklarındadır; konduğu yaprağı ayaklarıyla tadar
-		PK('yn-penalti-156', 'bilim', 2, 'Kelebekler tadı vücutlarının hangi bölümüyle alır?', ['Ayaklarıyla', 'Antenleriyle', 'Kanatlarıyla', 'Gözleriyle']),
-		// su, basınç düştükçe daha düşük sıcaklıkta kaynar (Everest’te ~70 °C)
-		PK('yn-penalti-157', 'bilim', 2, 'Yüksek bir dağda su, deniz kıyısına göre nasıl kaynar?', ['Daha düşük ısıda', 'Daha yüksek ısıda', 'Aynı ısıda', 'Hiç kaynamaz']),
-		// görünür ışıkta dalga boyu kırmızıda en uzun (~700 nm), morda en kısa
-		PK('yn-penalti-158', 'bilim', 2, 'Görünür ışıkta dalga boyu en uzun olan renk hangisidir?', ['Kırmızı', 'Mor', 'Mavi', 'Yeşil']),
-		// kuş kemikleri içi hava boşluklu (pnömatik) ve hafiftir
-		PK('yn-penalti-159', 'bilim', 1, 'Kuşların uçmasını kolaylaştıran kemiklerinin özelliği nedir?', ['İçi boş ve hafif', 'Dolu ve ağır', 'Kıkırdaktan', 'Çok sayıda']),
-		// atmosfer: azot ~%78, oksijen ~%21, argon ~%0,9
-		PK('yn-penalti-160', 'bilim', 2, 'Atmosferde azottan sonra en çok bulunan gaz hangisidir?', ['Oksijen', 'Argon', 'Karbondioksit', 'Hidrojen']),
-		// yalnız dişi sivrisinekler yumurta için kan emer; erkekler bitki özsuyuyla beslenir
-		PK('yn-penalti-161', 'bilim', 2, 'Sivrisineklerde insanı ısırıp kan emen hangisidir?', ['Yalnız dişiler', 'Yalnız erkekler', 'Her ikisi de', 'Yalnız yavrular']),
-		// gökkuşağı gözlemcinin arkasında Güneş, önünde yağmur damlaları varken görülür
-		PK('yn-penalti-162', 'bilim', 2, 'Gökkuşağını görmek için Güneş’e göre nasıl durulmalıdır?', ['Sırtımız Güneş’e', 'Yüzümüz Güneş’e', 'Güneş tam tepede', 'Güneş batmışken']),
-		// bal peteğinin gözleri altıgendir
-		PK('yn-penalti-163', 'bilim', 1, 'Arıların yaptığı bal peteğinin gözleri kaç kenarlıdır?', ['6', '4', '5', '8']),
 		// fil hortumu burun ile üst dudağın birleşip uzamasından oluşur
 		PK('yn-penalti-164', 'bilim', 2, 'Filin hortumu aslında hangi organlarının birleşimidir?', ['Burun ve üst dudak', 'Dil ve alt dudak', 'Burun ve dil', 'Çene ve dudak']),
-		// deniz yıldızlarının çoğu beş kolludur
-		PK('yn-penalti-165', 'bilim', 1, 'Deniz yıldızlarının çoğunun kaç kolu vardır?', ['5', '4', '6', '8']),
 		// ay tutulmasında Dünya, Güneş ile Ay arasına girer
 		PK('yn-penalti-166', 'bilim', 1, 'Ay tutulmasında hangi gök cismi Güneş ile Ay’ın arasına girer?', ['Dünya', 'Venüs', 'Mars', 'Merkür']),
 
 		// ---------------------------------------------------------------- sanat ve edebiyat
-		// Nâzım Hikmet 1902’de Selanik’te doğdu
-		PK('yn-penalti-167', 'sanat', 2, 'Nâzım Hikmet hangi şehirde doğdu?', ['Selanik', 'İstanbul', 'Halep', 'Bursa']),
-		// ud, Türk ve Arap müziğinde “sazların sultanı” diye anılır
-		PK('yn-penalti-168', 'sanat', 2, 'Hangi çalgı “sazların sultanı” diye anılır?', ['Ud', 'Ney', 'Kanun', 'Bağlama']),
 		// Van Gogh 29 Temmuz 1890’da Fransa’da, Auvers-sur-Oise’da öldü
 		PK('yn-penalti-169', 'sanat', 2, 'Vincent van Gogh hangi ülkede öldü?', ['Fransa', 'Hollanda', 'Belçika', 'İngiltere']),
 		// Beethoven 1770’te Bonn’da doğdu, Viyana’da öldü; Mozart Salzburg doğumlu
 		PK('yn-penalti-170', 'sanat', 2, 'Beethoven hangi şehirde doğdu?', ['Bonn', 'Viyana', 'Salzburg', 'Berlin']),
-		// Lewis Carroll (Charles Dodgson) Oxford’da matematik okutmanıydı
-		PK('yn-penalti-171', 'sanat', 2, 'Alice’in yazarı Lewis Carroll’ın asıl mesleği neydi?', ['Matematikçi', 'Doktor', 'Avukat', 'Ressam']),
 		// Othello’nun eşi Desdemona
-		PK('yn-penalti-172', 'sanat', 2, 'Shakespeare’in Othello’sunda Othello’nun eşinin adı nedir?', ['Desdemona', 'Ofelya', 'Cordelia', 'Juliet']),
-		// Gece Devriyesi Amsterdam’daki Rijksmuseum’da
-		PK('yn-penalti-173', 'sanat', 2, 'Rembrandt’ın Gece Devriyesi hangi müzede sergilenir?', ['Rijksmuseum', 'Louvre', 'Prado', 'Uffizi']),
+		PK('yn-penalti-172', 'sanat', 2, 'Shakespeare’in oyununda Othello’nun eşinin adı nedir?', ['Desdemona', 'Ofelya', 'Cordelia', 'Juliet']),
 		// Picasso 1881’de İspanya’nın Málaga kentinde doğdu
 		PK('yn-penalti-174', 'sanat', 2, 'Pablo Picasso hangi şehirde doğdu?', ['Málaga', 'Madrid', 'Barselona', 'Paris']),
 		// Kaplumbağa Terbiyecisi İstanbul’daki Pera Müzesi’nde
-		PK('yn-penalti-175', 'sanat', 2, 'Osman Hamdi’nin Kaplumbağa Terbiyecisi hangi müzededir?', ['Pera Müzesi', 'Topkapı Sarayı', 'Louvre', 'Resim Müzesi']),
+		PK('yn-penalti-175', 'sanat', 3, 'Osman Hamdi’nin Kaplumbağa Terbiyecisi hangi müzededir?', ['Pera Müzesi', 'Topkapı Sarayı', 'Louvre', 'Resim Müzesi']),
 		// Fuzuli Irak’ta, Bağdat ve Kerbela çevresinde yaşadı
 		PK('yn-penalti-176', 'sanat', 2, 'Divan şairi Fuzuli ömrünü hangi bölgede geçirdi?', ['Irak', 'Anadolu', 'Azerbaycan', 'Mısır']),
-		// klasik ve elektro gitarın standart tel sayısı altıdır
-		PK('yn-penalti-177', 'sanat', 1, 'Standart bir gitarda kaç tel bulunur?', ['6', '4', '5', '8']),
 		// piyanoda 52 beyaz, 36 siyah tuş bulunur
 		PK('yn-penalti-178', 'sanat', 1, 'Tuşları siyah ve beyaz olan çalgı hangisidir?', ['Piyano', 'Bağlama', 'Arp', 'Ksilofon']),
 
@@ -436,10 +378,6 @@ export const SAMPLES = {
 		PK('yn-penalti-182', 'eglence', 1, 'Rapunzel kuleye çıkılsın diye neyini aşağı sarkıtır?', ['Saçını', 'İpini', 'Pelerinini', 'Merdivenini']),
 		// Mr. Bean’i Rowan Atkinson canlandırdı
 		PK('yn-penalti-183', 'eglence', 1, 'Mr. Bean karakterini canlandıran oyuncu kimdir?', ['Rowan Atkinson', 'Jim Carrey', 'Charlie Chaplin', 'Robin Williams']),
-		// mangala tahtasında 12 kuyu ve 2 hazine var
-		PK('yn-penalti-184', 'eglence', 2, 'Mangala tahtasında (hazineler hariç) kaç kuyu vardır?', ['12', '10', '14', '8']),
-		// Türk tombalasında 1’den 90’a kadar sayılar
-		PK('yn-penalti-185', 'eglence', 1, 'Tombalada torbadan kaç farklı sayı çekilebilir?', ['90', '100', '75', '60']),
 		// üçgende her köşe öbür ikisine kenarla bağlı: köşegen yok
 		PK('yn-penalti-186', 'eglence', 1, 'Bir üçgenin kaç köşegeni vardır?', ['0', '1', '3', '2']),
 		// n kenarlı çokgende n(n−3)/2 köşegen: altıgende 9
@@ -448,7 +386,5 @@ export const SAMPLES = {
 		PK('yn-penalti-188', 'eglence', 1, 'Takvimde 30 gün çeken kaç ay vardır?', ['4', '5', '6', '3']),
 		// dikey trafik lambalarında sıra yukarıdan aşağı kırmızı, sarı, yeşil
 		PK('yn-penalti-189', 'eglence', 1, 'Trafik lambasında en üstte hangi renk bulunur?', ['Kırmızı', 'Yeşil', 'Sarı', 'Mavi']),
-		// simit susamlı, pekmeze batırılıp pişirilir
-		PK('yn-penalti-190', 'eglence', 1, 'Simidin üzerine geleneksel olarak ne serpilir?', ['Susam', 'Haşhaş', 'Çörekotu', 'Kimyon']),
 	],
 };

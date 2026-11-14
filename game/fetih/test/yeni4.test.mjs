@@ -65,8 +65,13 @@ ok(PROFILE.penalti && limits('penalti').lo >= 10, 'PROFILE');
 const L = SAMPLES.penalti;
 const T = TYPES.penalti;
 ok(L.length >= 40, 'en az 40 örnek: ' + L.length);
+// 121–190 ekinin denetimde silinenleri (bankada aynı bilgi ya da doğrulanamayan bilgi); kalanlar numarasını korur
+const SILINEN = new Set([125, 126, 130, 137, 138, 139, 141, 143, 144, 147, 149, 150, 151, 152, 154, 156, 157, 158, 159, 160, 161, 162, 163, 165, 167, 168, 171, 173, 177, 184, 185, 190]);
+let no = 0;
 L.forEach((q, i) => {
-	ok(q.id === 'yn-penalti-' + (i + 1), q.id + ': kimlik sırası');
+	do no++;
+	while (SILINEN.has(no));
+	ok(q.id === 'yn-penalti-' + no, q.id + ': kimlik sırası');
 	ok(q.type === 'penalti', q.id + ': tip');
 	ok(!!CATS[q.cat], q.id + ': kategori ' + q.cat);
 	ok([1, 2, 3].includes(q.diff), q.id + ': zorluk ' + q.diff);
