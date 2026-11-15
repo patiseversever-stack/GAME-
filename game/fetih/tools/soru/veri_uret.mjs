@@ -32,6 +32,15 @@ const tohum = (n) => (s = n);
 // bankada zaten sorulan bilgi: aynı soruyu üretme (plaka soruları 21, 33, 41, 67, 68; Penaltı'da Konya'nın komşuları)
 const PLAKA_VAR = new Set([21, 33, 41, 67, 68]);
 const KOMSU_VAR = new Set([42]);
+// Mayın Tarlası'nın "X'e komşu illere bas" tarlaları X'in bütün komşularını açar: aynı bilgiyi "Hangisi X ile komşu
+// değildir?" diye bir daha sorma (merkez ilin güvenli illeri komşularının hepsi ya da biri eksik)
+await import('../../test/kanca.mjs');
+const { SAMPLES: Y3 } = await import('../../src/quiz/deneme-yeni3.js');
+for (const q of Y3.mayin || []) {
+	const nb = new Set(P.get(q.merkez)?.nb || []);
+	const g = q.guvenli || [];
+	if (nb.size && g.length && g.every((x) => nb.has(x)) && g.length >= nb.size - 1) KOMSU_VAR.add(q.merkez);
+}
 // bölge: bankadaki "farklı olanı bul" sorularının ikilileri (bölge:tuzak il)
 const BOLGE_VAR = new Set(['marmara:26', 'karadeniz:40', 'akdeniz:9', 'icanadolu:60', 'dogu:56']);
 const karis = (a) => {
