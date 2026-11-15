@@ -24,8 +24,8 @@ Fetih Ligi'nin görselli soru tipi **Göz Kararı** için 200 yeni görselin tam
 ## Nasıl kullanılır
 
 1. **Yeni bir ChatGPT sohbeti aç**, en başta aşağıdaki **başlangıç mesajını** bir kez yapıştır.
-2. **Paketleri sırayla yapıştır.** Aşağıdaki "Paketler" bölümünde 20 paket var (Paket 21–40), her biri 10 komut. Her paket tek kutu, tek kopyala-yapıştır.
-3. **Tablolar paketlerinden önce** (Paket 39, GK-491'den itibaren) **tablo ek mesajını** bir kez yapıştır. Ek mesaj, Paket 39'un hemen üstünde duruyor.
+2. **Paketleri sırayla yapıştır.** Aşağıdaki "Paketler" bölümünde 20 paket var (Paket 32–51), her biri 10 komut. Her paket tek kutu, tek kopyala-yapıştır.
+3. **Tablolar paketlerinden önce** (Paket 50, GK-491'den itibaren) **tablo ek mesajını** bir kez yapıştır. Ek mesaj, Paket 50'nin hemen üstünde duruyor.
 4. **En sonda tek ZIP iste.** Bütün paketler bitince en alttaki **ZIP mesajını** yapıştır; ChatGPT 200 görselin hepsini `GozKarari-2.zip` içinde `GK-311.png … GK-510.png` adlarıyla verir. O tek ZIP'i buraya at, ben açarım.
    - **Yeni sohbete geçmek zorunda kalırsan** (kurallar kayarsa ya da sohbet kilitlenirse) geçmeden önce aynı ZIP mesajını o sohbette de yapıştır: önceki sohbetin görselleri yeni sohbete taşınmaz. Sonra elinde 2–3 ZIP olur, hepsini at, birleştirmeyi ben yaparım.
    - ChatGPT ZIP'i hazırlarken "görsellere erişemiyorum" derse (bazen ürettiği görsellere kendi dosya aracından ulaşamıyor) tek tek indirip at; hangisinin hangi maddeye ait olduğunu kendim bulurum.
@@ -53,7 +53,7 @@ Kurallar (her görselde geçerli):
 
 ## Paketler (kopyala-yapıştır)
 
-### Paket 21 · GK-311–GK-320 · Hayvanlar II
+### Paket 32 · GK-311–GK-320 · Hayvanlar II
 
 ```
 GK-311 · Gerçekçi fotoğraf
@@ -87,7 +87,7 @@ GK-320 · Gerçekçi fotoğraf
 A sea otter floating on its back in calm blue sea water among brown kelp, centered: dense dark-brown fur, a pale cream-coloured face with whiskers, small front paws holding a clam shell above a flat stone resting on its chest, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 22 · GK-321–GK-330 · Hayvanlar II
+### Paket 33 · GK-321–GK-330 · Hayvanlar II
 
 ```
 GK-321 · Japon ahşap baskısı
@@ -121,7 +121,7 @@ GK-330 · Gerçekçi fotoğraf
 A fallow deer stag standing in a sunny Mediterranean pine forest clearing, full body in side view, centered: a chestnut-brown coat dotted with many white spots, a white rump with a black-edged tail, and broad flat palmate shovel-shaped antlers with short points along their edges, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 23 · GK-331–GK-340 · Bitkiler ve meyveler
+### Paket 34 · GK-331–GK-340 · Bitkiler ve meyveler
 
 ```
 GK-331 · Klasik yağlı boya
@@ -155,7 +155,7 @@ GK-340 · Gerçekçi fotoğraf
 A close view of a whole globe artichoke lying on a rustic wooden table next to one cut in half: tightly overlapping thick green-purple scale-like bracts, the cut half showing the pale tender heart and the fuzzy choke inside, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 24 · GK-341–GK-350 · Bitkiler ve meyveler
+### Paket 35 · GK-341–GK-350 · Bitkiler ve meyveler
 
 ```
 GK-341 · Supercell 3D
@@ -189,7 +189,7 @@ GK-350 · Eski gravür
 A caper bush growing from a crack in an old stone wall, botanical plate centered with empty margins: round fleshy leaves on trailing stems, a large open flower with four white petals and a burst of long purple-tipped stamens, several small round green flower buds, and one elongated fruit, 19th century encyclopedia engraving, fine cross-hatched line work, sepia ink on aged paper, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 25 · GK-351–GK-360 · Türk mutfağı
+### Paket 36 · GK-351–GK-360 · Türk mutfağı
 
 ```
 GK-351 · Gerçekçi fotoğraf
@@ -223,7 +223,7 @@ GK-360 · Gerçekçi fotoğraf
 A close view of a shallow bowl of çılbır: two soft poached eggs with runny yellow yolks resting on a bed of thick white garlic yogurt, drizzled with sizzling red pepper butter, sprinkled with fresh dill, a piece of crusty bread beside the bowl, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 26 · GK-361–GK-370 · Türk mutfağı
+### Paket 37 · GK-361–GK-370 · Türk mutfağı
 
 ```
 GK-361 · Gerçekçi fotoğraf
@@ -257,7 +257,7 @@ GK-370 · Gerçekçi fotoğraf
 A plate of tirit: pieces of stale pide bread soaked in hot meat broth, topped with tender shredded boiled lamb, a dollop of garlic yogurt and browned butter with red pepper drizzled over, sprinkled with sumac and parsley, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 27 · GK-371–GK-380 · Müzik aletleri
+### Paket 38 · GK-371–GK-380 · Müzik aletleri
 
 ```
 GK-371 · Supercell 3D
@@ -291,7 +291,7 @@ GK-380 · Gerçekçi fotoğraf
 A sitar lying on a red Indian carpet: a large round gourd resonator body, a very long wide hollow wooden neck with curved metal frets, many tuning pegs on the neck and its side, a second smaller round gourd near the top, ornate carved and inlaid decoration, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 28 · GK-381–GK-390 · Müzik aletleri
+### Paket 39 · GK-381–GK-390 · Müzik aletleri
 
 ```
 GK-381 · Gerçekçi fotoğraf
@@ -325,7 +325,7 @@ GK-390 · Gerçekçi fotoğraf
 A Black Sea kemençe standing upright on a wooden chair next to its small bow: a narrow bottle-shaped carved wooden body with a short neck, three strings, two small vertical sound holes, a small curved horsehair bow beside it, a misty green tea-garden hillside behind, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 29 · GK-391–GK-400 · Tarihî nesneler
+### Paket 40 · GK-391–GK-400 · Tarihî nesneler
 
 ```
 GK-391 · Supercell 3D
@@ -359,7 +359,7 @@ GK-400 · Klasik yağlı boya
 A single ancient Greek Corinthian bronze helmet on a plinth, three-quarter front view: a one-piece hammered bronze helmet enclosing the whole head, almond-shaped eye openings, a long nose guard, cheek pieces leaving a narrow vertical opening at the mouth, a tall horsehair crest on top, golden-brown patina; centered with empty space around it, classical oil painting, rich chiaroscuro, dark background, visible canvas texture, old master style, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 30 · GK-401–GK-410 · Tarihî nesneler
+### Paket 41 · GK-401–GK-410 · Tarihî nesneler
 
 ```
 GK-401 · Gerçekçi fotoğraf
@@ -393,7 +393,7 @@ GK-410 · Gerçekçi fotoğraf
 A close view of an Ottoman archer's thumb ring on a dark cloth next to the tip of a recurved composite bow: a thick ring of polished jade-green stone with a flat protruding lip on one side that protects the thumb when drawing the bowstring, inlaid with tiny gold floral motifs, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 31 · GK-411–GK-420 · Mimari öğeler
+### Paket 42 · GK-411–GK-420 · Mimari öğeler
 
 ```
 GK-411 · Gerçekçi fotoğraf
@@ -427,7 +427,7 @@ GK-420 · Gerçekçi fotoğraf
 The interior of a huge Byzantine underground cistern: a forest of tall marble columns in long rows supporting brick vaults, shallow still water covering the floor and reflecting warm orange lights, dim atmospheric lighting, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 32 · GK-421–GK-430 · Mimari öğeler
+### Paket 43 · GK-421–GK-430 · Mimari öğeler
 
 ```
 GK-421 · Gerçekçi fotoğraf
@@ -461,7 +461,7 @@ GK-430 · Gerçekçi fotoğraf
 The interior of a great Moorish mosque hall in the style of Córdoba: endless rows of columns supporting double-tiered arches whose curves continue beyond a semicircle and narrow toward the bottom like a horseshoe, with alternating red brick and white stone wedge stripes, warm dim light, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 33 · GK-431–GK-440 · Bilim ve teknoloji II
+### Paket 44 · GK-431–GK-440 · Bilim ve teknoloji II
 
 ```
 GK-431 · Supercell 3D
@@ -495,7 +495,7 @@ GK-440 · Gerçekçi fotoğraf
 A close view of an open laboratory centrifuge: a white benchtop machine with its lid open showing a round metal rotor with angled holes holding small test tubes of blood separated into a dark red bottom layer and a clear yellow top layer, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 34 · GK-441–GK-450 · Bilim ve teknoloji II
+### Paket 45 · GK-441–GK-450 · Bilim ve teknoloji II
 
 ```
 GK-441 · Supercell 3D
@@ -529,7 +529,7 @@ GK-450 · Gerçekçi fotoğraf
 A glass laboratory desiccator on a bench: a thick heavy-walled glass vessel with a wide ground-glass rim and a domed lid with a knob, a perforated porcelain plate inside holding small dishes, blue and pink silica gel beads in the bottom compartment, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 35 · GK-451–GK-460 · Spor II
+### Paket 46 · GK-451–GK-460 · Spor II
 
 ```
 GK-451 · Supercell 3D
@@ -563,7 +563,7 @@ GK-460 · Gerçekçi fotoğraf
 A close view of a small black rubber squash ball marked with two tiny yellow dots lying on the light wooden floor of an enclosed court near a red line, a squash racket with a long thin handle and a small head out of focus beside it, white walls behind, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 36 · GK-461–GK-470 · Spor II
+### Paket 47 · GK-461–GK-470 · Spor II
 
 ```
 GK-461 · Klasik yağlı boya
@@ -597,7 +597,7 @@ GK-470 · Gerçekçi fotoğraf
 An indoor gymnastics arena: a competition trampoline with a taut black woven bed inside a blue padded frame, a small anonymous gymnast seen from a distance high in the air in the middle of a somersault above it, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 37 · GK-471–GK-480 · Yer bilimi ve gökyüzü
+### Paket 48 · GK-471–GK-480 · Yer bilimi ve gökyüzü
 
 ```
 GK-471 · Yıldızlı Gece fırçası
@@ -631,7 +631,7 @@ GK-480 · Gerçekçi fotoğraf
 A towering cumulonimbus thundercloud over a flat green plain: a huge white and grey cauliflower-like column rising very high, its top flattened and spread out sideways into a wide anvil shape, dark rain shafts falling from its base, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 38 · GK-481–GK-490 · Yer bilimi ve gökyüzü
+### Paket 49 · GK-481–GK-490 · Yer bilimi ve gökyüzü
 
 ```
 GK-481 · Gerçekçi fotoğraf
@@ -665,13 +665,13 @@ GK-490 · Eski gravür
 A single fossil trilobite seen from above: an oval segmented body divided lengthwise into three lobes, a rounded head shield with crescent-shaped eyes, many ribbed body segments and a small tail shield; centered with empty space around it, on a plain flat pale background with strong contrast, 19th century encyclopedia engraving, fine cross-hatched line work, sepia ink on aged paper, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Tablo ek mesajı (Paket 39'dan önce bir kez)
+### Tablo ek mesajı (Paket 50'den önce bir kez)
 
 ```
 Bundan sonraki komutlar telifi dolmuş, kamu malı ünlü tabloların yeniden üretimi. Bunlarda tabloyu aslına olabildiğince sadık çiz: kompozisyon, renkler, figürlerin yeri ve duruşu orijinaldeki gibi olsun. Tablodaki figürler için "gerçek kişi yüzü yok" kuralı geçerli değil, orijinalde nasılsa öyle. Yazı, imza, çerçeve ve filigran yine olmayacak. Dikey tabloları yatay 4:3 tuvalin ortasına sığdır, yanları sade koyu müze duvarı olsun.
 ```
 
-### Paket 39 · GK-491–GK-500 · Tablolar II
+### Paket 50 · GK-491–GK-500 · Tablolar II
 
 ```
 GK-491 · Tablo (aslına sadık)
@@ -705,7 +705,7 @@ GK-500 · Tablo (aslına sadık)
 A faithful full reproduction of the watercolour "Young Hare" by Albrecht Dürer (1502), entire composition exactly as the original, accurate colors and details, public domain artwork, no frame, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo. A brown European hare crouching on a plain cream paper background, seen in three-quarter view facing left, every hair of its soft fur painted in fine detail in brown, ochre and grey tones, long ears raised, fine whiskers, a tiny window reflection in its dark eye, a light shadow beneath it, no monogram and no date; nearly square painting: fit the full painting within a 4:3 landscape canvas with plain dark museum wall on the sides, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
 ```
 
-### Paket 40 · GK-501–GK-510 · Tablolar II
+### Paket 51 · GK-501–GK-510 · Tablolar II
 
 ```
 GK-501 · Tablo (aslına sadık)
