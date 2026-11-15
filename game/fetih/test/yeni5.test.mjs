@@ -39,8 +39,16 @@ for (const t of Object.keys(TYPES)) {
 	ok(list.length >= 30, t + ': en az 30 örnek (' + list.length + ')');
 	// ilk üç örnek (galeri bağlantıları) değişmez: kolay, orta, zor
 	ok(list.slice(0, 3).every((q, i) => q.diff === i + 1), t + ': ilk üç örneğin zorluğu');
+	// denetimde silinen kimlikler (yeniden numaralanmaz)
+	const SILINEN = {
+		tunel: new Set([102, 104, 105, 112, 113, 145]),
+		kelimeavi: new Set([101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 113, 115, 116, 117, 118, 125, 126, 127, 128, 133, 134, 135, 140, 142, 143, 144, 147, 148, 149]),
+	}[t];
+	let no = 0;
 	list.forEach((q, i) => {
-		ok(q.id === 'yn-' + t + '-' + (i + 1), q.id + ': kimlik sırası');
+		do no++;
+		while (SILINEN.has(no));
+		ok(q.id === 'yn-' + t + '-' + no, q.id + ': kimlik sırası');
 		ok([1, 2, 3].includes(q.diff), q.id + ': zorluk ' + q.diff);
 		ok(!!CATS[q.cat], q.id + ': kategori ' + q.cat);
 		ok(q.type === t, q.id + ': tip');
