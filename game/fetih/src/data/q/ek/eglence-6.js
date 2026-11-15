@@ -311,7 +311,7 @@ export default [
 	{ id: "egl-ek-od-7015", cat: "eglence", diff: 2, type: "odd", q: "Hangisi bir Meksika yemeği değildir?", opts: ["Tamale", "Enchilada", "Pozole", "Arepa"], odd: 3, why: "Arepa, Venezuela ve Kolombiya'nın mısır ekmeğidir.", tag: "yemek" },
 	{ id: "egl-ek-od-7016", cat: "eglence", diff: 1, type: "odd", q: "Hangisi bir Hint bayramı değildir?", opts: ["Diwali", "Holi", "Navratri", "Hanuka"], odd: 3, why: "Hanuka bir Yahudi bayramıdır.", tag: "kultur" },
 	{ id: "egl-ek-od-7017", cat: "eglence", diff: 1, type: "odd", q: "Hangisinin değeri ötekilerden farklıdır?", opts: ["0,5", "1/2", "%50", "0,05"], odd: 3, why: "0,05 yüzde 5 eder; ötekilerin hepsi yarımdır.", tag: "zeka" },
-	{ id: "egl-ek-od-7018", cat: "eglence", diff: 2, type: "odd", q: "Hangisi asal sayılar arasında yer almaz?", opts: ["3", "19", "41", "91"], odd: 3, why: "91, 7 ile 13'ün çarpımıdır.", tag: "zeka" },
+	{ id: "egl-ek-od-7018", cat: "eglence", diff: 2, type: "odd", q: "Hangisi asal sayılar arasında yer almaz?", opts: ["7", "23", "47", "119"], odd: 3, why: "119, 7 ile 17'nin çarpımıdır.", tag: "zeka" },
 	// ---------------------------------------------------------------- adam asmaca
 	{ id: "egl-ek-hg-7001", cat: "eglence", diff: 2, type: "hang", q: "Saksıda yetiştirilen minyatür ağaç sanatı", w: "BONSAİ", tag: "kultur" },
 	{ id: "egl-ek-hg-7002", cat: "eglence", diff: 3, type: "hang", q: "Yahudi geleneğinin çok kollu şamdanı", w: "MENORA", tag: "kultur" },
