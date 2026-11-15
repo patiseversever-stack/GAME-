@@ -47,8 +47,12 @@ const REGIONS = ['ege', 'marmara', 'akdeniz', 'icanadolu', 'karadeniz', 'dogu', 
 	ok(old.yas('x') === 1 && old.size === 2, 'eski kayıttan geçiş');
 	const big = new Hafiza();
 	big.yeniMac();
-	for (let i = 0; i < 16000; i++) big.gor({ id: 'k' + i });
-	ok(big.size === 15000 && big.yas('k0') === Infinity && big.yas('k15999') === 0, 'kırpma: en eskiler düşer');
+	const { MAX_ID } = await import('../src/quiz/hafiza.js');
+	const BANKA_N = (await import('../src/data/bank.js')).BANK.length + (await import('../src/quiz/mac.js')).yeniBank().length;
+	for (let i = 0; i < MAX_ID + 1000; i++) big.gor({ id: 'k' + i });
+	ok(big.size === MAX_ID && big.yas('k0') === Infinity && big.yas('k' + (MAX_ID + 999)) === 0, 'kırpma: en eskiler düşer');
+	// yerel kayıt bankanın tamamını tutar (havuz tükenmeden görülen soru unutulmaz)
+	ok(MAX_ID >= BANKA_N, `yerel hafıza sınırı (${MAX_ID}) bankadan (${BANKA_N}) küçük`);
 	ok(JSON.stringify(big.ozet()).length < 120000, 'çevrimiçi özet küçük');
 	// ilerleme kaydı: eski 'seen' dizisi hafızaya geçer
 	const st = memStore();

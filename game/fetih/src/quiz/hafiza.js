@@ -16,11 +16,13 @@
  *            depodan okunur, cihazın özetiyle birleşir (birlestir), maç sonunda ya da yarıda kalınca depoya yazılır. Telefon
  *            değiştiren ya da veriyi silen oyuncu gördüğü soruları yeniden görmez.
  *  Saklama   { v: 2, n, g: { maç: 'id id …' }, k: { maç: 'anahtar anahtar …' } }: kimlik bir kez, maç sırası grup başına
- *            bir kez yazılır. En çok 15000 kimlik ve 8000 kardeş (eskiler düşer): 100+ maçlık geçmiş.
+ *            bir kez yazılır. En çok 25000 kimlik ve 12000 kardeş (eskiler düşer): bankanın tamamı (20 bin) sığar.
  */
 
-const MAX_ID = 15000;
-const MAX_K = 8000;
+// yerel kayıt bankanın tamamını tutar: banka 20 bini geçti, 15 000'lik sınırda en eski görülenler unutulup havuz
+// tükenmeden yeniden çıkabiliyordu (~350 KB, localStorage sınırının çok altında)
+export const MAX_ID = 25000;
+const MAX_K = 12000;
 // çevrimiçi özet: son görülen en çok 10 000 kimlik ve 5 000 kardeş (~150 KB JSON, gzip'le ~40 KB; maç başına bir kez).
 // Banka 10 bini geçince 6 000 dar kaldı (~190 maç). Hesaplı oyuncuda sınır yok: kayıt sunucuda tam (sunucu.js).
 export const OZET_ID = 10000;
