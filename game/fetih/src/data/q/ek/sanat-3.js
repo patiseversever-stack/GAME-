@@ -178,7 +178,7 @@ export default [
 	{ id: "san-ek-tf-3011", cat: "sanat", diff: 3, type: "tf", q: "Neyin üflenen ucuna takılan başlığa başpare denir.", ans: true },
 	{ id: "san-ek-tf-3012", cat: "sanat", diff: 2, type: "tf", q: "Bursa Ulu Camii'nin içinde bir şadırvan bulunur.", ans: true },
 	{ id: "san-ek-tf-3013", cat: "sanat", diff: 2, type: "tf", q: "Divriği Ulu Camii, UNESCO Dünya Mirası Listesi'ne giren ilk Türk yapılarındandır.", ans: true },
-	{ id: "san-ek-tf-3014", cat: "sanat", diff: 1, type: "tf", q: "Osman Hamdi Bey'in kurduğu Sanayi-i Nefise Mektebi bir müzik okuluydu.", ans: false },
+	{ id: "san-ek-tf-3014", cat: "sanat", diff: 2, type: "tf", q: "Sanayi-i Nefise Mektebi bir müzik okuluydu.", ans: false },
 	{ id: "san-ek-tf-3015", cat: "sanat", diff: 3, type: "tf", q: "Bedri Rahmi Eyüboğlu'nun eşi Eren Eyüboğlu da bir ressamdı.", ans: true },
 	{ id: "san-ek-tf-3016", cat: "sanat", diff: 3, type: "tf", q: "Bestekâr Dede Efendi, hac yolculuğu sırasında Mekke'de öldü.", ans: true },
 	{ id: "san-ek-tf-3017", cat: "sanat", diff: 2, type: "tf", q: "Hüseyin Rahmi Gürpınar, ömrünün son yıllarını Heybeliada'da geçirdi.", ans: true },
