@@ -126,6 +126,8 @@ const UNVAN = ids('Gaziantep,Kahramanmaraş,Şanlıurfa');
 const reg = (id) => P.get(id).region;
 const nbs = (id) => P.get(id).nb;
 
+// telefon alan kodları (elle; yn-mayin-103/104 tarlalarındaki her il)
+const ALAN = { Samsun: 362, Ordu: 452, Giresun: 454, Tokat: 356, Sivas: 346, Erzincan: 446, Gümüşhane: 456, Trabzon: 462, Malatya: 422, Kahramanmaraş: 344, Adıyaman: 416, Gaziantep: 342, Şanlıurfa: 414, Elazığ: 424, Eskişehir: 222, Afyonkarahisar: 272, Kütahya: 274, Uşak: 276, Isparta: 246, Burdur: 248, Antalya: 242, Bilecik: 228, Ankara: 312, Konya: 332, Karaman: 338, Bolu: 374, Aksaray: 382 };
 // Mayın Tarlası: her sorunun güvenli illeri = tarladan kurala uyanlar (kural veriden ya da yukarıdaki listelerden)
 const MK = {
 	'yn-mayin-1': (id) => nbs(6).includes(id),
@@ -211,8 +213,43 @@ const MK = {
 	'yn-mayin-73': (id) => reg(id) === 'dogu' && nbs(id).some((x) => reg(x) === 'guneydogu'),
 	'yn-mayin-74': (id) => reg(id) === 'icanadolu' && nbs(id).some(coast),
 	'yn-mayin-75': (id) => reg(id) === 'karadeniz' && nbs(id).every((x) => reg(x) === 'karadeniz'),
+	// 2026-11 ikinci büyütme (76–105): komşuluk, bölge sınırı, Kafkas sınırı (veriden) ve elle yazılmış, doğrulanmış listeler
+	'yn-mayin-76': (id) => nbs(19).includes(id),
+	'yn-mayin-77': (id) => nbs(4).includes(id),
+	'yn-mayin-78': (id) => nbs(20).includes(id),
+	'yn-mayin-79': (id) => nbs(7).includes(id),
+	'yn-mayin-80': (id) => nbs(1).includes(id),
+	'yn-mayin-81': (id) => nbs(16).includes(id),
+	'yn-mayin-82': (id) => nbs(60).includes(id),
+	'yn-mayin-83': (id) => nbs(63).includes(id),
+	'yn-mayin-84': (id) => nbs(45).includes(id),
+	'yn-mayin-85': (id) => nbs(68).includes(id),
+	'yn-mayin-86': (id) => nbs(28).includes(id),
+	'yn-mayin-87': (id) => nbs(71).includes(id),
+	'yn-mayin-88': (id) => nbs(32).includes(id),
+	'yn-mayin-89': (id) => nbs(50).includes(id),
+	'yn-mayin-90': (id) => nbs(36).includes(id),
+	'yn-mayin-91': (id) => nbs(42).includes(id) && nbs(33).includes(id),
+	'yn-mayin-92': (id) => reg(id) === 'akdeniz' && nbs(id).some((x) => reg(x) === 'guneydogu'),
+	'yn-mayin-93': (id) => reg(id) === 'marmara' && nbs(id).some((x) => reg(x) === 'ege'),
+	'yn-mayin-94': (id) => reg(id) === 'ege' && nbs(id).some((x) => reg(x) === 'akdeniz'),
+	'yn-mayin-95': (id) => reg(id) === 'icanadolu' && nbs(id).some((x) => reg(x) === 'karadeniz'),
+	'yn-mayin-96': (id) => reg(id) === 'akdeniz' && nbs(id).some((x) => reg(x) === 'icanadolu'),
+	'yn-mayin-97': (id) => reg(id) === 'dogu' && nbs(id).every((x) => reg(x) === 'dogu'),
+	// Gürcistan (Artvin, Ardahan), Ermenistan (Kars, Iğdır), Azerbaycan-Nahçıvan (Iğdır); hepsi verideki sınır illerinden
+	'yn-mayin-98': ((L) => (ok(L.every(sinir), 'Kafkas: veride sınır ili'), (id) => L.includes(id)))(ids('Artvin,Ardahan,Kars,Iğdır')),
+	// bor yatakları: Bigadiç ve Sultançayırı (Balıkesir), Kestelek (Bursa), Emet ve Hisarcık (Kütahya), Kırka (Eskişehir)
+	'yn-mayin-99': ((L) => (id) => L.includes(id))(ids('Balıkesir,Bursa,Kütahya,Eskişehir')),
+	// ekümenik konsiller: İznik (Bursa), İstanbul ve Kadıköy (İstanbul), Efes (İzmir)
+	'yn-mayin-100': ((L) => (id) => L.includes(id))(ids('Bursa,İstanbul,İzmir')),
+	'yn-mayin-101': (id) => id <= 9,
+	'yn-mayin-102': (id) => name(id).toLocaleLowerCase('tr-TR').includes('kara'),
+	'yn-mayin-103': (id) => ALAN[name(id)] >= 400 && ALAN[name(id)] < 500,
+	'yn-mayin-104': (id) => ALAN[name(id)] >= 200 && ALAN[name(id)] < 300,
+	'yn-mayin-105': (id) => id >= 60 && id <= 69,
 };
 ok(same(golKiyi('Tuz Gölü'), ids('Ankara,Konya,Aksaray')), 'veri: Tuz Gölü üç ilin sınırında');
+for (const k of ['yn-mayin-103', 'yn-mayin-104']) ok(SAMPLES.mayin.find((q) => q.id === k).alan.every((id) => ALAN[name(id)]), k + ': alan kodu tablosunda olmayan il');
 for (const q of SAMPLES.mayin) {
 	ok(q.alan.length >= 10 && q.alan.length <= 16, q.id + ': tarla 10–16 il (' + q.alan.length + ')');
 	ok(new Set(q.alan).size === q.alan.length && q.alan.every((id) => P.has(id)), q.id + ': tarla illeri');
@@ -259,6 +296,16 @@ const nehir = (ad) => {
 	}
 	return seq;
 };
+// bir ırmağın verideki bütün parçaları (her parçanın geçtiği iller sırasıyla)
+const nehirler = (ad) =>
+	DATA.rivers.filter((r) => r.name === ad).map((s) => {
+		const seq = [];
+		for (let k = 0; k < s.pts.length; k += 2) {
+			const p = DATA.provinces.find((p) => inP(p.id, s.pts[k], s.pts[k + 1]));
+			if (p && seq[seq.length - 1] !== p.id) seq.push(p.id);
+		}
+		return seq;
+	});
 const altdizi = (a, b) => {
 	let j = 0;
 	for (const x of b) if (x === a[j]) j++;
@@ -345,6 +392,36 @@ const RK = {
 			return p && inP(d.il, p.p[0], p.p[1]) && d.not === p.m + ' m';
 		}) && asc(q.duraklar, (d) => peak(d.ad).m),
 	'yn-rota-71': (I) => asc(I, lon) && I.map(name).join() === 'Bursa,Burdur,Sakarya,Elazığ,Van',
+	// 2026-11 ikinci büyütme (72–100): yazılı (kaynaklardan doğrulanmış) sıra; yıllarda artış, yönlerde il ortaları, ırmakta veri
+	'yn-rota-72': (I) => I.map(name).join() === 'Erzincan,Trabzon,Erzurum,Van,Kars',
+	'yn-rota-73': (I, q) => q.duraklar.map((d) => d.ad).join() === 'Kyzikos,İssos,İpsos,Magnesia,Zela' && I.map(name).join() === 'Balıkesir,Hatay,Afyonkarahisar,Manisa,Tokat',
+	'yn-rota-74': (I) => I.map(name).join() === 'Sivas,Kayseri,Nevşehir,Ankara',
+	'yn-rota-75': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Edirne,Çanakkale,Muş,Samsun,İzmir',
+	'yn-rota-76': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'İstanbul,Adana,Kayseri,Erzurum,Sakarya,Trabzon',
+	'yn-rota-77': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Uşak,Kayseri,Karabük,Zonguldak,Hatay',
+	'yn-rota-78': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Samsun,Adana,Muğla,Şanlıurfa,Denizli',
+	'yn-rota-79': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Eskişehir,Adana,İstanbul,Ordu',
+	'yn-rota-80': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Sinop,Giresun,Tokat,Diyarbakır,Tunceli,Kayseri',
+	'yn-rota-81': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'İstanbul,Konya,Ankara,Gaziantep,Çanakkale',
+	'yn-rota-82': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Tekirdağ,Balıkesir,İstanbul,Şanlıurfa',
+	'yn-rota-83': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Adana,İstanbul,İzmir,Isparta',
+	'yn-rota-84': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'İzmir,Adana,Samsun,Sakarya,Antalya',
+	'yn-rota-85': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'İzmir,Eskişehir,Ankara,Trabzon,Bursa,Sakarya',
+	'yn-rota-86': (I) => desc(I, lon) && I.map(name).join() === 'Bingöl,Elazığ,Malatya,Kahramanmaraş,Hatay',
+	'yn-rota-87': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Ankara,Trabzon,Erzurum,Sivas,Kayseri',
+	'yn-rota-88': (I) => asc(I, lon) && I.every((id) => reg(id) === 'dogu') && I.map(name).join() === 'Malatya,Elazığ,Bingöl,Muş,Van',
+	'yn-rota-89': (I) => I[0] === ID['Ağrı'] && nehirler('Murat').some((seq) => altdizi(I, seq)),
+	'yn-rota-90': (I) => asc(I, lon) && I.every((id) => reg(id) === 'icanadolu') && I.map(name).join() === 'Eskişehir,Ankara,Kırşehir,Kayseri,Sivas',
+	'yn-rota-91': (I) => asc(I, lon) && I.every((id) => reg(id) === 'guneydogu') && I.map(name).join() === 'Gaziantep,Şanlıurfa,Diyarbakır,Batman,Siirt',
+	'yn-rota-92': (I) => asc(I, lon) && I.every((id) => reg(id) === 'karadeniz' && !coast(id)) && I.map(name).join() === 'Bolu,Çorum,Amasya,Tokat,Gümüşhane',
+	'yn-rota-93': (I) => I.every((x, k) => !k || lat(I[k - 1]) - lat(x) > 0.4) && I.map(name).join() === 'Bilecik,Kütahya,Afyonkarahisar,Isparta,Antalya',
+	'yn-rota-94': (I) => I.every((x, k) => !k || lat(I[k - 1]) - lat(x) > 0.4) && I.map(name).join() === 'Trabzon,Gümüşhane,Erzincan,Elazığ,Diyarbakır,Mardin',
+	'yn-rota-95': (I) => I.every((x, k) => !k || lat(I[k - 1]) - lat(x) > 0.4) && I.map(name).join() === 'Kastamonu,Çankırı,Ankara,Konya,Karaman,Mersin',
+	'yn-rota-96': (I) => I.every((id) => reg(id) === 'icanadolu') && I.every((x, k) => !k || lat(I[k - 1]) - lat(x) > 0.4) && I.map(name).join() === 'Çankırı,Kırıkkale,Kırşehir,Nevşehir,Niğde',
+	'yn-rota-97': (I) => I.map(name).join() === 'Ankara,Eskişehir,Kütahya,Balıkesir,Manisa,İzmir' && I.every((x, k) => !k || nbs(I[k - 1]).includes(x)),
+	'yn-rota-98': (I) => I.map(name).join() === 'Kayseri,Sivas,Malatya,Elazığ,Muş,Bitlis',
+	'yn-rota-99': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Eskişehir,Konya,İstanbul,Karaman,Sivas',
+	'yn-rota-100': (I) => I.every((id) => reg(id) === 'ege') && I.every((x, k) => !k || lat(I[k - 1]) - lat(x) > 0.4) && I.map(name).join() === 'Kütahya,Uşak,Denizli,Muğla',
 };
 ok(altdizi([58, 38, 50, 40, 71], nehir('Kızılırmak')) && nehir('Dicle')[0] === ID['Elazığ'], 'veri: ırmak çizgileri');
 for (const q of SAMPLES.rota) {
