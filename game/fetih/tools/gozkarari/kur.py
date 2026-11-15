@@ -1,5 +1,6 @@
 # Göz Kararı kurulumu: python3 -I kur.py <görsel_klasörü>
-#   1. P1–P6.md'den 310 soruyu okur (denetle.py ile aynı düzen)
+#   1. P1–P8.md'den soruları okur (denetle.py ile aynı düzen; P1–P6: GK-001–310, P7–P8: GK-311–510). Görseli klasörde
+#      olmayan YENİ madde (GK-311+) atlanır: ikinci liste parça parça gelebilir; ilk 310'un hepsi şart
 #   2. gorsel_test.py'yi çalıştırır (hata varsa durur); siluet maskesi çıkmayanlar bulanık kipe geçer
 #   3. görselleri dist/gk/ altına kopyalar, siluet maskelerini 320×240 gri PNG olarak yazar (GK-xxx.m.png)
 #   4. yakın çekim / ayrıntı kipleri için odak noktası bulur (en yoğun ayrıntılı bölge, kenarlardan uzak)
@@ -16,14 +17,17 @@ OUT = os.path.join(ROOT, 'dist', 'gk')
 
 RX = re.compile(r'^### (GK-\d{3}) · ([^·]+) · ([^·]+) · Zorluk (\d) · Gösterim: ([^\n]+)\n```\n(.*?)\n```\n- \*\*Soru:\*\* (.*?)\n- \*\*Şıklar:\*\* (.*?)\n- \*\*Bilgi:\*\* (.*?)$', re.M | re.S)
 items = []
-for f in sorted(glob.glob(os.path.join(HERE, 'P[1-6].md'))):
+for f in sorted(glob.glob(os.path.join(HERE, 'P[1-8].md'))):
     for m in RX.finditer(open(f).read()):
         gid, konu, us, z, g, cmd, q, s, b = m.groups()
         opts = [x.strip() for x in s.split('·')]
         right = [o.replace('✅', '').strip() for o in opts if '✅' in o][0]
         rest = [o.replace('✅', '').strip() for o in opts if '✅' not in o]
         items.append(dict(id=gid, konu=konu.strip(), us=us.strip(), z=int(z), g=g.strip(), q=q.strip(), a=[right] + rest, b=b.strip(), dogru=right))
-assert len(items) == 310, len(items)
+assert len([i for i in items if int(i['id'][3:]) <= 310]) == 310, len(items)
+eksik = [i['id'] for i in items if int(i['id'][3:]) > 310 and not os.path.exists(os.path.join(SRC, i['id'] + '.webp'))]
+if eksik: print('görseli gelmemiş yeni madde (atlandı):', len(eksik))
+items = [i for i in items if i['id'] not in set(eksik)]
 
 tmp = tempfile.mkdtemp()
 js = os.path.join(tmp, 'items.json')
@@ -40,6 +44,10 @@ CAT = {
     'Hayvanlar': 'bilim', 'Dinozor ve deniz canlıları': 'bilim', 'İcatlar': 'bilim', 'Uzay': 'bilim', 'Bilim aletleri': 'bilim',
     'Genel tarih sahneleri': 'tarih', 'Doğa olayları': 'cografya', 'Spor': 'spor', 'El sanatları': 'sanat', 'Tablolar': 'sanat',
     'Eşyalar ve aletler': 'eglence', 'Eski ev eşyaları': 'eglence', 'Ulaşım araçları': 'eglence', 'Meslekler': 'eglence',
+    # ikinci liste (GK-311–510); sıra KONULAR dizinini belirler: eskilerin dizini kaymaz
+    'Hayvanlar II': 'bilim', 'Bitkiler ve meyveler': 'bilim', 'Türk mutfağı': 'eglence', 'Müzik aletleri': 'sanat',
+    'Tarihî nesneler': 'tarih', 'Mimari öğeler': 'sanat', 'Bilim ve teknoloji II': 'bilim', 'Spor II': 'spor',
+    'Yer bilimi ve gökyüzü': 'cografya', 'Tablolar II': 'sanat',
 }
 KONU = {k: i for i, k in enumerate(CAT)}
 MODE = {'bulanık': 'blur', 'yakın çekim': 'zoom', 'siluet': 'sil', 'ayrıntı': 'detail'}
@@ -86,14 +94,14 @@ for it in items:
     w, h = im.size
     row = dict(id='gk-' + it['id'][3:], img=it['id'], cat=CAT[it['konu']], konu=KONU[it['konu']], diff=it['z'], mode=mode, q=it['q'], a=it['a'], b=it['b'])
     if mode in ('zoom', 'detail'): row['f'] = focus(im)
-    if it['konu'] == 'Tablolar':
+    if it['konu'] in ('Tablolar', 'Tablolar II'):
         bx = paintbox(im)
         if bx: row['box'] = bx
     if it['id'] in UYARLAMA: row['uy'] = 1
     rows.append(row)
 
-head = """// ÜRETİLDİ: tools/gozkarari/kur.py (elle düzenleme; P1–P6.md'yi düzenleyip yeniden üret)
-// Göz Kararı: 310 görselli soru. img: dist/gk/<img>.webp (siluette <img>.m.png maske), mode: blur | zoom | sil | detail,
+head = """// ÜRETİLDİ: tools/gozkarari/kur.py (elle düzenleme; P1–P8.md'yi düzenleyip yeniden üret)
+// Göz Kararı: görselli sorular. img: dist/gk/<img>.webp (siluette <img>.m.png maske), mode: blur | zoom | sil | detail,
 // a[0] doğru şık, b: cevaptan sonra gösterilen tek satır bilgi, f: yakın çekim/ayrıntı odağı (0..1), uy: içeriği
 // uyarlanmış tablo (aslına birebir değil), konu: KONULAR dizini.
 """

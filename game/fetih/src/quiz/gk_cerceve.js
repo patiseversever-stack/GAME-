@@ -186,6 +186,16 @@ const POOL = [
 	['kemer', 'yaprak', 'bulut', 'yumak'], // Eski ev eşyaları
 	['egik', 'bilet', 'dalga', 'yontuk'], // Ulaşım araçları
 	['kalkan', 'yaprak', 'kesik', 'egik'], // Meslekler
+	['damla', 'bulut', 'yumak', 'yaprak'], // Hayvanlar II
+	['yaprak', 'damla', 'bulut', 'madalyon'], // Bitkiler ve meyveler
+	['kemer', 'yumak', 'bilet', 'yaprak'], // Türk mutfağı
+	['kemer', 'egik', 'yumak', 'madalyon'], // Müzik aletleri
+	['kalkan', 'kemer', 'yontuk', 'kesik'], // Tarihî nesneler
+	['kemer', 'petek', 'kalkan', 'yontuk'], // Mimari öğeler
+	['petek', 'yontuk', 'kesik', 'bilet'], // Bilim ve teknoloji II
+	['egik', 'petek', 'kesik', 'madalyon'], // Spor II
+	['madalyon', 'yirtik', 'petek', 'dalga'], // Yer bilimi ve gökyüzü
+	['kemer', 'yumak', 'kesik', 'yaprak'], // Tablolar II (tablonun kendi boyunda)
 ];
 
 export function hashStr(s) {
