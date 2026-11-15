@@ -19,7 +19,7 @@ Fetih Ligi'nin görselli soru tipi **Göz Kararı** için 200 yeni görselin tam
 | **Toplam** | GK-311–GK-510 | **200** | 70 / 80 / 50 |
 
 **Üslup:** Gerçekçi fotoğraf 113 · Supercell 3D 25 · Eski gravür 20 · Tablo (aslına sadık) 20 · Klasik yağlı boya 8 · Japon ahşap baskısı 6 · Osmanlı minyatürü 6 · Yıldızlı Gece fırçası 2  
-**Gösterim:** bulanık 89 · yakın çekim 52 · siluet 39 · ayrıntı 20
+**Gösterim:** bulanık 91 · yakın çekim 52 · siluet 37 · ayrıntı 20
 
 ## Nasıl kullanılır
 
