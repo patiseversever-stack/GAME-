@@ -408,7 +408,7 @@ export const SAMPLES = {
 			[31, 33, 38, 46, 51, 80, 27, 70, 50, 44, 2],
 			[31, 33, 38, 46, 51, 80],
 			{ merkez: 1, not: 'Adana’nın 6 komşusu var: Niğde ve Kayseri de. Karaman ve Nevşehir değil.' }),
-		MY('yn-mayin-81', 'cografya', 1, 'Bursa’ya komşu illere bas!', 'Bursa’ya komşu olmayan her il',
+		MY('yn-mayin-81', 'cografya', 2, 'Bursa’ya komşu illere bas!', 'Bursa’ya komşu olmayan her il',
 			[10, 11, 41, 43, 54, 77, 26, 17, 45, 14],
 			[10, 11, 41, 43, 54, 77],
 			{ merkez: 16, not: 'Bursa’nın 6 komşusu var: Kütahya ve Bilecik de. Eskişehir ve Manisa değil.' }),
@@ -460,11 +460,11 @@ export const SAMPLES = {
 		MY('yn-mayin-93', 'cografya', 2, 'Ege Bölgesi’ne komşu Marmara illerine bas!', 'Ege iline değmeyen her il',
 			[22, 39, 59, 34, 17, 77, 41, 54, 16, 10, 11],
 			[10, 16, 11],
-			{ not: 'Çanakkale Ege’ye kıyı ama Ege’de komşusu yok. Bilecik ise Kütahya’ya değer.' }),
+			{ not: 'Çanakkale Ege Denizi’ne kıyı ama Ege Bölgesi’nde komşusu yok. Bilecik ise Kütahya’ya değer.' }),
 		MY('yn-mayin-94', 'cografya', 2, 'Akdeniz Bölgesi’ne komşu Ege illerine bas!', 'Akdeniz ili ya da ona değmeyen il',
 			[48, 20, 3, 9, 64, 43, 45, 35, 15, 32, 7],
 			[48, 20, 3],
-			{ not: 'Afyon Isparta ve Burdur’a, Denizli Burdur’a değer. Aydın ve Uşak değmez.' }),
+			{ not: 'Muğla Antalya’ya, Denizli Burdur’a, Afyonkarahisar Isparta’ya değer; Aydın ile Uşak değmez.' }),
 		MY('yn-mayin-95', 'cografya', 2, 'Karadeniz iline komşu İç Anadolu illerine bas!', 'Karadeniz iline değmeyen her il',
 			[6, 18, 71, 66, 58, 40, 50, 38, 68, 51, 42, 70],
 			[6, 18, 71, 66, 58],
@@ -477,15 +477,12 @@ export const SAMPLES = {
 			[62, 4, 36, 76, 75, 25, 65, 13, 49, 12, 23, 24],
 			[62, 4, 36, 76],
 			{ not: 'Tunceli, Ağrı, Kars ve Iğdır’ın her komşusu Doğu’da. Ardahan ise Artvin’e değer.' }),
-		MY('yn-mayin-98', 'cografya', 2, 'Kafkas ülkelerine sınırı olan illere bas!', 'Kafkas ülkelerine sınırı olmayan her il',
-			[8, 75, 36, 76, 4, 25, 53, 61, 65, 49],
-			[8, 75, 36, 76],
-			{ not: 'Artvin ve Ardahan Gürcistan’a sınır. Ağrı, Iğdır’ın komşusu ama yalnız İran’a sınır.' }),
+		// (98 silindi: Kafkas sınırı yn-rota-8, yn-mayin-59 ve Gürcistan/Nahçıvan sorularında zaten açık)
 		// bor yatakları (ders kitaplarında dört il): Bigadiç ve Sultançayırı, Kestelek, Emet ve Hisarcık, Kırka
 		MY('yn-mayin-99', 'cografya', 2, 'Bor yatakları olan illere bas!', 'Bor yatağı bulunmayan her il',
 			[10, 16, 43, 26, 45, 35, 17, 11, 3, 64, 77, 41],
 			[10, 16, 43, 26],
-			{ not: 'Bigadiç (Balıkesir), Kestelek (Bursa), Emet (Kütahya) ve Kırka (Eskişehir) bor yatakları.' }),
+			{ not: 'Türkiye’nin bor yatakları dört ilde: Balıkesir, Bursa, Kütahya ve Eskişehir.' }),
 		// yedi ekümenik konsil: İznik 325 ve 787, İstanbul 381, 553, 680, Efes 431, Kadıköy (Khalkedon) 451
 		MY('yn-mayin-100', 'tarih', 3, 'Yedi ekümenik konsilin toplandığı illere bas!', 'Hiç konsil toplanmamış her il',
 			[34, 41, 77, 16, 10, 35, 45, 9, 43, 11, 54, 59],
@@ -495,7 +492,7 @@ export const SAMPLES = {
 		MY('yn-mayin-101', 'eglence', 1, 'Plakası 0 ile başlayan illere bas!', 'Plakası 0 ile başlamayan her il',
 			[6, 1, 7, 3, 68, 42, 51, 50, 40, 71, 26, 33],
 			[6, 1, 7, 3],
-			{ not: '01–09 plakalar A ile başlayan illerin. Aksaray da A’lı ama 1989’da il olduğu için 68.' }),
+			{ not: '01–09 plakalar A ile başlayan illerin; Aksaray ise 1989’da il olduğu için 68 aldı.' }),
 		MY('yn-mayin-102', 'eglence', 1, 'Adında “kara” geçen illere bas!', 'Adında “kara” geçmeyen her il',
 			[6, 78, 70, 3, 42, 26, 14, 18, 33, 7, 68, 67],
 			[6, 78, 70, 3],
@@ -509,7 +506,7 @@ export const SAMPLES = {
 			[26, 3, 43, 64, 32, 15, 7, 11, 6, 42, 70, 14, 68],
 			[26, 3, 43, 64, 32, 15, 7, 11],
 			{ not: 'Eskişehir İç Anadolu’da ama kodu 222. Ankara 312, Konya 332, Bolu 374.' }),
-		MY('yn-mayin-105', 'eglence', 2, 'Plakası 60 ile 69 arasında olan illere bas!', 'Plakası 60’lı olmayan her il',
+		MY('yn-mayin-105', 'eglence', 2, 'Plakası 60’lı olan illere bas!', 'Plakası 60’lı olmayan her il',
 			[61, 69, 62, 29, 28, 53, 24, 25, 8, 52],
 			[61, 69, 62],
 			{ not: 'Trabzon 61, Tunceli 62, Bayburt 69. Gümüşhane 29, Giresun 28, Rize 53.' }),
@@ -1113,17 +1110,16 @@ export const SAMPLES = {
 		// ---- 2026-11 ikinci büyütme (72–100). Sıralar yalnız kesin bilinenlerden; yönlerde il ortaları, ırmakta veri.
 		// tarih
 		// 72) Rus işgalinden kurtuluş: Erzincan 13 Şubat, Trabzon 24 Şubat, Erzurum 12 Mart, Van 2 Nisan 1918; Kars 30 Ekim 1920
-		RT('yn-rota-72', 'tarih', 2, 'Doğu illerinin kurtuluş günlerini sırayla uç!', [
+		RT('yn-rota-72', 'tarih', 2, 'Doğudaki illerin kurtuluş günlerini sırayla uç!', [
 			[24, '13 Şubat'],
 			[61, '24 Şubat'],
 			[25, '12 Mart'],
 			[65, '2 Nisan 1918'],
 			[36, '30 Ekim 1920'],
 		]),
-		// 73) antik savaşlar: Kyzikos (Erdek, MÖ 410), İssos (Hatay, MÖ 333), İpsos (Afyon, MÖ 301), Magnesia (Manisa, MÖ 190),
-		// Zela (Zile, MÖ 47: "Veni, vidi, vici")
+		// 73) antik savaşlar: İssos (Hatay, MÖ 333), İpsos (Afyon, MÖ 301), Magnesia (Manisa, MÖ 190), Zela (Zile, MÖ 47:
+		// "Veni, vidi, vici"). Kyzikos çıkarıldı: MÖ 410 deniz savaşı da MÖ 73 kuşatması da "Kyzikos" (sıra ikili okunuyordu)
 		RT('yn-rota-73', 'tarih', 3, 'Anadolu’daki antik savaşları sırayla uç!', [
-			[10, 'MÖ 410', 'Kyzikos'],
 			[31, 'MÖ 333', 'İssos'],
 			[3, 'MÖ 301', 'İpsos'],
 			[45, 'MÖ 190', 'Magnesia'],
@@ -1153,19 +1149,18 @@ export const SAMPLES = {
 			[54, '2000'],
 			[61, '2012'],
 		]),
-		// 77) sanayi: Uşak Şeker 1926, Kayseri Bez 1935, Karabük 1939, Erdemir 1965, İsdemir 1975 (üretime başlama)
+		// 77) sanayi: Uşak Şeker 1926, Kayseri Bez 1935, Karabük 1939, Erdemir 1965 (üretime başlama; İsdemir'in ilk üretim
+		// yılı kaynaklarda kesinleşmedi, çıkarıldı)
 		RT('yn-rota-77', 'tarih', 2, 'Fabrikaları üretime başladıkları sırayla uç!', [
 			[64, '1926', 'Uşak Şeker'],
 			[38, '1935', 'Kayseri Bez'],
 			[78, '1939', 'Karabük'],
 			[67, '1965', 'Erdemir'],
-			[31, '1975', 'İsdemir'],
 		]),
 		// sanat
-		// 78) müzisyenler doğum sırasıyla, doğdukları il
+		// 78) müzisyenler doğum sırasıyla, doğdukları il (Ferdi Tayfur 1945 çıkarıldı: Gencebay'la bir yıl, yalnız meraklısı ayırır)
 		RT('yn-rota-78', 'sanat', 2, 'Müzisyenleri doğum sırasıyla uç: doğdukları ile!', [
 			[55, '1944', 'O. Gencebay'],
-			[1, '1945', 'Ferdi Tayfur'],
 			[48, '1948', 'Selda Bağcan'],
 			[63, '1952', 'Tatlıses'],
 			[20, '1954', 'Sezen Aksu'],
@@ -1177,12 +1172,12 @@ export const SAMPLES = {
 			[34, '1947', 'H. Koçyiğit'],
 			[52, '1949', 'Kadir İnanır'],
 		]),
-		// 80) şairler (Dıranas Sinop, Bedri Rahmi Görele, Külebi Niksar, Ahmed Arif Diyarbakır, Cemal Süreya Pülümür, İsmet Özel Kayseri)
+		// 80) şairler (Dıranas Sinop, Bedri Rahmi Görele, Külebi Niksar, Cemal Süreya Pülümür, İsmet Özel Kayseri; Ahmed Arif'in
+		// doğduğu il san-ek-ch-3107'nin cevabı, çıkarıldı)
 		RT('yn-rota-80', 'sanat', 3, 'Anadolu doğumlu şairleri doğum sırasıyla uç!', [
 			[57, '1909', 'Muhip Dıranas'],
 			[28, '1911', 'Bedri Rahmi'],
 			[60, '1917', 'Cahit Külebi'],
-			[21, '1927', 'Ahmed Arif'],
 			[62, '1931', 'Cemal Süreya'],
 			[38, '1944', 'İsmet Özel'],
 		]),
@@ -1194,13 +1189,7 @@ export const SAMPLES = {
 			[27, '2011', 'Zeugma'],
 			[17, '2018', 'Troya'],
 		]),
-		// 82) öykücüler (Esendal Çorlu, Ömer Seyfettin Gönen, Refik Halit İstanbul, Bekir Yıldız Urfa)
-		RT('yn-rota-82', 'sanat', 3, 'Öykücüleri doğum sırasıyla uç: doğdukları ile!', [
-			[59, '1883', 'Esendal'],
-			[10, '1884', 'Ö. Seyfettin'],
-			[34, '1888', 'Refik Halit'],
-			[63, '1933', 'Bekir Yıldız'],
-		]),
+		// (82 silindi: Esendal 1883 / Ömer Seyfettin 1884 sırası yalnız uzmanın; Gönen'in yeri har-san-09'da soruluyor)
 		// 83) sinemacılar (Yılmaz Güney Adana, Nuri Bilge Ceylan İstanbul, Semih Kaplanoğlu İzmir, Zeki Demirkubuz Isparta)
 		RT('yn-rota-83', 'sanat', 3, 'Sinemacıları doğum sırasıyla uç: doğdukları ile!', [
 			[1, '1937', 'Yılmaz Güney'],
@@ -1236,9 +1225,8 @@ export const SAMPLES = {
 			[46, 'Pazarcık'],
 			[31, 'Amanoslar'],
 		]),
-		// 87) ilk üniversite: Ankara Ü. 1946, KTÜ 1955, Atatürk Ü. 1957, Cumhuriyet Ü. 1974, Erciyes Ü. 1978
+		// 87) ilk üniversite: KTÜ 1955, Atatürk Ü. 1957, Cumhuriyet Ü. 1974, Erciyes Ü. 1978 (Ankara Ü. 1946 tar-ek-nu-6012'de)
 		RT('yn-rota-87', 'bilim', 2, 'Şehirleri ilk üniversitelerinin kuruluşuna göre uç!', [
-			[6, '1946'],
 			[61, '1955'],
 			[25, '1957'],
 			[58, '1974'],
@@ -1253,7 +1241,7 @@ export const SAMPLES = {
 		]),
 		// coğrafya
 		// 89) Murat Irmağı (verideki ırmak çizgisi de bu sırayla geçer)
-		RT('yn-rota-89', 'cografya', 3, 'Murat Irmağı’nı kaynağından Fırat’a uç!', [
+		RT('yn-rota-89', 'cografya', 2, 'Murat Irmağı’nı kaynağından Fırat’a uç!', [
 			[4, 'Diyadin'],
 			[49, 'Malazgirt'],
 			[12, 'Genç'],
@@ -1273,14 +1261,8 @@ export const SAMPLES = {
 			[72, 'Petrol'],
 			[56, 'Botan'],
 		]),
-		RT('yn-rota-92', 'cografya', 1, 'Karadeniz’in denizsiz illerini batıdan doğuya uç!', [
-			[14, 'Abant'],
-			[19, 'Leblebi'],
-			[5, 'Şehzadeler'],
-			[60, 'Yazma'],
-			[29, 'Pestil'],
-		]),
-		RT('yn-rota-93', 'cografya', 1, 'Batı Anadolu’nun içini kuzeyden güneye uç!', [
+		// (92 silindi: Karadeniz'in denizsiz illerini yakarak yn-mayin-8'in kümesini açıyordu)
+		RT('yn-rota-93', 'cografya', 1, 'Marmara’dan Akdeniz’e iç yoldan kuzeyden güneye uç!', [
 			[11, 'Söğüt'],
 			[43, 'Simav'],
 			[3, 'Mermer'],
@@ -1329,11 +1311,10 @@ export const SAMPLES = {
 			[49, 'Muş Ovası'],
 			[13, 'Tatvan'],
 		]),
-		// 99) hızlı tren: Eskişehir 2009, Konya 2011, İstanbul 2014, Karaman 2022, Sivas 2023
+		// 99) hızlı tren: Eskişehir 2009, Konya 2011, Karaman 2022, Sivas 2023 (İstanbul 2014 cog-ek-nu-5019'un cevabı)
 		RT('yn-rota-99', 'eglence', 2, 'Hızlı trenin ulaştığı şehirleri sırayla uç!', [
 			[26, '2009'],
 			[42, '2011'],
-			[34, '2014'],
 			[70, '2022'],
 			[58, '2023'],
 		]),
