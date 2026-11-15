@@ -1,0 +1,20 @@
+deneme-akil: 304.607 denetim, 0 hata
+deneme-duello: 20.606 denetim, 0 hata
+deneme-harita: 135.917 denetim, 0 hata
+deneme-icat: 80.801 denetim, 0 hata
+deneme-icat3b: 200.331 denetim, 0 hata
+deneme: 3.613.489 denetim, 0 hata
+hafiza: 1.902 denetim, 0 hata
+kahraman: 42 yapı temiz, 0 hata
+kurallar: 1.118 denetim, 0 hata
+net: 81.612 denetim, 0 hata
+timing: 941.185 denetim, 0 hata
+types: 754.428 denetim, 0 hata
+yeni2: 2.219.928 denetim, 0 hata
+yeni3: 48.749 denetim, 0 hata
+yeni4: 15.141 denetim, 0 hata
+yeni5: 1.278.807 denetim, 0 hata
+yildirim: 197 denetim, 0 hata
+harita: 6 sınama geçti, 0 hata
+kare: 15 sınama geçti, 0 hata
+sim (maç benzetimi, katı kip): hepsi temiz, 0 hata

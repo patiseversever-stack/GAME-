@@ -2,6 +2,20 @@
 
 Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 
+## Son durum (15 Kasım 2026)
+
+- **Soru bankası:** 20.103 soru. Eski → yeni sayımlar `tools/soru/sayim/` altında. Oyun, galeri ve defter bu sürümle yayında.
+- **Sıradaki büyük iş: soru bankası 100 bin. BAŞLANMADI.** Kullanıcı "başla" demeden başlanmaz. Bütün plan, kullanıcının şartları ve kapılar `SORU-100K.md` dosyasında; şartlar özetle:
+  - dünya standardı, saçma soru yok, kusursuz Türkçe;
+  - her ekrana sığma, taşma ve binme yok;
+  - tip başına en çok karakter ölçülüp teste bağlanacak;
+  - testler her adımda koşulacak.
+- **Bekleyen: Göz Kararı +200.** Komutlar `GOZKARARI-TEK.md`'de. Kullanıcı `GozKarari-2.zip`'i (GK-311…GK-510 görselleri) gönderince yapılacaklar:
+  - PNG'ler 448×336 webp'ye (12–24 KB) çevrilir;
+  - `python3 -I tools/gozkarari/kur.py <klasör>` çalıştırılır (eski 310 webp de aynı klasörde olmalı);
+  - görseller tek tek denetlenir, testler koşulur, yayın yapılır.
+- **Ajan kuralı:** Aynı anda en çok 2 ajan (kota), kullanıcı izin verirse 4. Sırayı ben belirlerim.
+
 ## Kullanıcının istediği (kararlar)
 
 - **Oyun:** Bil ve Fethet + Trivia Crack birleşimi bir bilgi yarışması. Video oyunu kalitesinde,
