@@ -850,6 +850,414 @@ export const SAMPLES = {
 			['Takvim-i Vekayi gazetesi', 1831],
 			['İlk Türk astronot uzayda', 2024],
 		]),
+		// v1.2 (101–150): aynı zorluk düzeni; yalnız tek ve kesin yıllı olaylar (yayın/sahne, kuruluş/açılış, takvim farkı
+		// olanlar alınmadı). Bankanın sıralama, tahmin, yıldırım ve öbür tiplerinde yılıyla sorulan olaylar kullanılmadı.
+		// ---- tarih
+		TN('yn-tunel-101', 'tarih', 1, 'Sultanlar, paşalar, bilginler', [
+			['Barbaros’un ölümü', 1546],
+			['Kâtip Çelebi’nin ölümü', 1657],
+		], [
+			['Sokullu’nun öldürülmesi', 1579],
+			['Cem Sultan’ın ölümü', 1495],
+			['Tıphane-i Amire’nin açılışı', 1827],
+		]),
+		TN('yn-tunel-102', 'tarih', 3, 'Orta Çağ’ın dönüm noktaları', [
+			['Moğol Devleti’nin kuruluşu', 1206],
+			['Yüz Yıl Savaşları başladı', 1337],
+		], [
+			['Akka’nın Memlüklerce alınışı', 1291],
+			['İstanbul’un Latin işgali', 1204],
+			['Timur’un ölümü', 1405],
+		]),
+		TN('yn-tunel-103', 'tarih', 2, 'Osmanlı’da kalem ve kılıç', [
+			['Evliya Çelebi’nin doğumu', 1611],
+			['Belgrad Antlaşması', 1739],
+		], [
+			['Genç Osman’ın öldürülmesi', 1622],
+			['Yaş Antlaşması', 1792],
+			['Mekteb-i Harbiye’nin kuruluşu', 1834],
+		]),
+		TN('yn-tunel-104', 'tarih', 2, 'Avrupa’nın savaş ve barışları', [
+			['İngiliz İç Savaşı başladı', 1642],
+			['Kızılhaç’ın kuruluşu', 1863],
+		], [
+			['Utrecht Antlaşması', 1713],
+			['Yedi Yıl Savaşları başladı', 1756],
+			['Rus-Japon Savaşı başladı', 1904],
+		]),
+		TN('yn-tunel-105', 'tarih', 2, 'Tanzimat’tan Balkan Savaşı’na', [
+			['Kuleli’nin kuruluşu', 1845],
+			['Haydarpaşa Garı’nın açılışı', 1908],
+		], [
+			['Kızılay’ın kuruluşu', 1868],
+			['Robert Kolej’in kuruluşu', 1863],
+			['Selanik’in elden çıkışı', 1912],
+		]),
+		TN('yn-tunel-106', 'tarih', 2, 'Krallar, liderler, antlaşmalar', [
+			['Viktorya’nın tahta çıkışı', 1837],
+			['II. Elizabeth’in taç giyişi', 1953],
+		], [
+			['Balkan Antantı', 1934],
+			['Mao’nun ölümü', 1976],
+			['II. Elizabeth’in ölümü', 2022],
+		]),
+		TN('yn-tunel-107', 'tarih', 3, 'On dokuzuncu yüzyıldan sahneler', [
+			['Beethoven’ın ölümü', 1827],
+			['Dickens’ın ölümü', 1870],
+		], [
+			['Londra Boğazlar Sözleşmesi', 1841],
+			['Mekteb-i Sultani’nin açılışı', 1868],
+			['Tanpınar’ın doğumu', 1901],
+		]),
+		// ---- coğrafya
+		TN('yn-tunel-108', 'cografya', 1, 'Suyu ve dağı aşan yapılar', [
+			['Sidney Liman Köprüsü', 1932],
+			['Akashi Kaikyō Köprüsü', 1998],
+		], [
+			['Mont Blanc Tüneli’nin açılışı', 1965],
+			['Rialto Köprüsü', 1591],
+			['Millau Viyadüğü’nün açılışı', 2004],
+		]),
+		TN('yn-tunel-109', 'cografya', 1, 'Kentler kuruluyor', [
+			['Rio de Janeiro’nun kuruluşu', 1565],
+			['Sidney’in kuruluşu', 1788],
+		], [
+			['Montreal’in kuruluşu', 1642],
+			['Lima’nın kuruluşu', 1535],
+			['Tel Aviv’in kuruluşu', 1909],
+		]),
+		TN('yn-tunel-110', 'cografya', 2, 'Yeni kentlerin temelleri', [
+			['Quebec’in kuruluşu', 1608],
+			['Melbourne’un kuruluşu', 1835],
+		], [
+			['New Orleans’ın kuruluşu', 1718],
+			['Modern Singapur’un kuruluşu', 1819],
+			['Johannesburg’un kuruluşu', 1886],
+		]),
+		TN('yn-tunel-111', 'cografya', 2, 'Keşfin ve haritanın tarihi', [
+			['İdrisi’nin dünya haritası', 1154],
+			['Mercator’un dünya haritası', 1569],
+		], [
+			['Haritada ilk kez “Amerika”', 1507],
+			['Google Earth’ün çıkışı', 2005],
+			['Denizaltıyla Kuzey Kutbu’nda', 1958],
+		]),
+		TN('yn-tunel-112', 'cografya', 3, 'Ulaşımın büyük yapıları', [
+			['Thames Tüneli’nin açılışı', 1843],
+			['Kiel Kanalı’nın açılışı', 1895],
+		], [
+			['Korint Kanalı’nın açılışı', 1893],
+			['Forth Demiryolu Köprüsü', 1890],
+			['Verrazzano Köprüsü', 1964],
+		]),
+		TN('yn-tunel-113', 'cografya', 1, 'Yeri sarsan büyük depremler', [
+			['Büyük Kantō depremi', 1923],
+			['Kobe depremi', 1995],
+		], [
+			['Tangşan depremi', 1976],
+			['Messina depremi', 1908],
+			['Tōhoku depremi', 2011],
+		]),
+		TN('yn-tunel-114', 'cografya', 2, 'Haritada yeni bayraklar', [
+			['Norveç’in bağımsızlığı', 1905],
+			['Kenya’nın bağımsızlığı', 1963],
+		], [
+			['İzlanda’nın bağımsızlığı', 1944],
+			['Namibya’nın bağımsızlığı', 1990],
+			['Kosova’nın bağımsızlık ilanı', 2008],
+		]),
+		TN('yn-tunel-115', 'cografya', 2, 'Kâşifler, zirveler, yanardağlar', [
+			['Victoria Şelalesi’nin adlanışı', 1855],
+			['Pelée Yanardağı’nın patlaması', 1902],
+		], [
+			['Stanley Livingstone’u buldu', 1871],
+			['Aconcagua’ya ilk tırmanış', 1897],
+			['Eyjafjallajökull patlaması', 2010],
+		]),
+		TN('yn-tunel-116', 'cografya', 2, 'Anıtlar, parklar, tüneller', [
+			['Rushmore Dağı anıtının bitişi', 1941],
+			['Burj al Arab’ın açılışı', 1999],
+		], [
+			['Galápagos Ulusal Parkı', 1959],
+			['Bolu Dağı Tüneli’nin açılışı', 2007],
+			['Ovit Tüneli’nin açılışı', 2018],
+		]),
+		// ---- spor
+		TN('yn-tunel-117', 'spor', 1, 'Spor tarihinden sayfalar', [
+			['İnönü Stadı’nın açılışı', 1947],
+			['Bosman kararı', 1995],
+		], [
+			['İlk Super Bowl', 1967],
+			['Paavo Nurmi’nin beş altını', 1924],
+			['Atatürk Olimpiyat Stadı', 2002],
+		]),
+		TN('yn-tunel-118', 'spor', 2, 'Kortların büyük şampiyonları', [
+			['Borg’un ilk Wimbledon’u', 1976],
+			['Federer’in ilk Wimbledon’u', 2003],
+		], [
+			['Sampras’ın ilk Wimbledon’u', 1993],
+			['Murray’in ilk Wimbledon’u', 2013],
+			['Djokovic’in ilk Grand Slam’i', 2008],
+		]),
+		TN('yn-tunel-119', 'spor', 3, 'Pistlerin dünya şampiyonları', [
+			['Schumacher’in ilk şampiyonluğu', 1994],
+			['Räikkönen’in şampiyonluğu', 2007],
+		], [
+			['Alonso’nun ilk şampiyonluğu', 2005],
+			['Häkkinen’in ilk şampiyonluğu', 1998],
+			['Verstappen’in ilk şampiyonluğu', 2021],
+		]),
+		TN('yn-tunel-120', 'spor', 2, 'Efsanelerin zafer yılları', [
+			['Fangio’nun ilk şampiyonluğu', 1951],
+			['Kramnik’in dünya tacı', 2000],
+		], [
+			['Kareem’in ilk NBA şampiyonluğu', 1971],
+			['Lauda’nın ilk şampiyonluğu', 1975],
+			['Carlsen’in ilk dünya tacı', 2013],
+		]),
+		TN('yn-tunel-121', 'spor', 2, 'Sahalardan ve dağlardan', [
+			['Napoli’nin ilk Serie A tacı', 1987],
+			['Messi’nin ilk Altın Top ödülü', 2009],
+		], [
+			['İlk Kadınlar Dünya Kupası', 1991],
+			['Ajax’ın Devler Ligi zaferi', 1995],
+			['Eiger’in kuzey yüzü aşıldı', 1938],
+		]),
+		// ---- bilim
+		TN('yn-tunel-122', 'bilim', 1, 'Bilimin dev adımları', [
+			['Faraday’ın indüksiyon keşfi', 1831],
+			['Einstein’ın genel göreliliği', 1915],
+		], [
+			['Radyoaktivitenin keşfi', 1896],
+			['Royal Society’nin kuruluşu', 1660],
+			['İlk nükleer reaktör', 1942],
+		]),
+		TN('yn-tunel-123', 'bilim', 1, 'Laboratuvardan hastaneye', [
+			['Sıtma parazitinin keşfi', 1880],
+			['İlk vücut içi kalp pili', 1958],
+		], [
+			['Behçet hastalığının tanımı', 1937],
+			['Wöhler’in üre sentezi', 1828],
+			['HIV’in keşfi', 1983],
+		]),
+		TN('yn-tunel-124', 'bilim', 2, 'Uzaya açılan kapılar', [
+			['Goddard’ın sıvı yakıtlı roketi', 1926],
+			['Mir istasyonunun fırlatılışı', 1986],
+		], [
+			['Apollo 13 kazası', 1970],
+			['Venüs’ün yanından ilk geçiş', 1962],
+			['RASAT uydusu uzayda', 2011],
+		]),
+		TN('yn-tunel-125', 'bilim', 2, 'Periyodik tablonun doğuşu', [
+			['Klorun keşfi', 1774],
+			['Argonun keşfi', 1894],
+		], [
+			['Uranyumun keşfi', 1789],
+			['Sodyumun elde edilişi', 1807],
+			['Nükleer fisyonun keşfi', 1938],
+		]),
+		TN('yn-tunel-126', 'bilim', 3, 'Bilgisayar çağının adımları', [
+			['Bilgisayar faresinin tanıtımı', 1968],
+			['Linux’un doğuşu', 1991],
+		], [
+			['Apple Macintosh’un çıkışı', 1984],
+			['Windows 95’in çıkışı', 1995],
+			['Nvidia’nın kuruluşu', 1993],
+		]),
+		TN('yn-tunel-127', 'bilim', 2, 'Teleskopla bulunan dünyalar', [
+			['Titan’ın keşfi', 1655],
+			['Charon’un keşfi', 1978],
+		], [
+			['Mars’ın uydularının keşfi', 1877],
+			['Pulsarların keşfi', 1967],
+			['Shoemaker-Levy’nin çarpması', 1994],
+		]),
+		TN('yn-tunel-128', 'bilim', 3, 'Bilimde hareketli yıllar', [
+			['Ay’a ilk yumuşak iniş', 1966],
+			['İlk tüp bebeğin doğumu', 1978],
+		], [
+			['İlk bilgisayarlı tomografi', 1971],
+			['TÜBİTAK’ın kuruluşu', 1963],
+			['Curie’nin ikinci Nobel’i', 1911],
+		]),
+		TN('yn-tunel-129', 'bilim', 2, 'Bilim insanlarının hayatından', [
+			['Galileo’nun mahkûmiyeti', 1633],
+			['Nobel’in doğumu', 1833],
+		], [
+			['Lavoisier’nin idamı', 1794],
+			['Darwin’in doğumu', 1809],
+			['Tesla’nın doğumu', 1856],
+		]),
+		TN('yn-tunel-130', 'bilim', 1, 'Kuantumdan uzaya', [
+			['Zamanın Kısa Tarihi', 1988],
+			['Columbia faciası', 2003],
+		], [
+			['Hubble’ın ilk onarımı', 1993],
+			['Planck’ın kuantum hipotezi', 1900],
+			['Chandrayaan-3’ün Ay’a inişi', 2023],
+		]),
+		// ---- sanat ve edebiyat
+		TN('yn-tunel-131', 'sanat', 1, 'Roman ve resmin başyapıtları', [
+			['Uğultulu Tepeler', 1847],
+			['Gazap Üzümleri', 1939],
+		], [
+			['Babalar ve Oğullar', 1862],
+			['Velázquez’in Nedimeler’i', 1656],
+			['Çavdar Tarlasında Çocuklar', 1951],
+		]),
+		TN('yn-tunel-132', 'sanat', 2, 'Opera ve müzikal sahneleri', [
+			['Don Giovanni sahnede', 1787],
+			['La Bohème sahnede', 1896],
+		], [
+			['Nabucco sahnede', 1842],
+			['Pagliacci sahnede', 1892],
+			['Operadaki Hayalet sahnede', 1986],
+		]),
+		TN('yn-tunel-133', 'sanat', 2, 'Tiyatronun unutulmaz oyunları', [
+			['Bebek Evi sahnede', 1879],
+			['Arzu Tramvayı sahnede', 1947],
+		], [
+			['Çehov’un Martı’sı sahnede', 1896],
+			['Vişne Bahçesi sahnede', 1904],
+			['Cats müzikali sahnede', 1981],
+		]),
+		TN('yn-tunel-134', 'sanat', 1, 'Sergiler, saraylar, besteler', [
+			['Kristal Saray’ın açılışı', 1851],
+			['Duchamp’ın Çeşme’si', 1917],
+		], [
+			['Çimenlerde Öğle Yemeği', 1863],
+			['Händel’in Su Müziği', 1717],
+			['Pompidou Merkezi’nin açılışı', 1977],
+		]),
+		TN('yn-tunel-135', 'sanat', 2, 'Edebiyatımızdan kitaplar', [
+			['Fatih-Harbiye', 1931],
+			['Ölmeye Yatmak', 1973],
+		], [
+			['Semaver', 1936],
+			['Bereketli Topraklar Üzerinde', 1954],
+			['Masumiyet Müzesi', 2008],
+		]),
+		TN('yn-tunel-136', 'sanat', 2, 'Türk sinemasından filmler', [
+			['Muhsin Bey', 1987],
+			['Vizontele', 2001],
+		], [
+			['Masumiyet', 1997],
+			['G.O.R.A.', 2004],
+			['Kelebeğin Rüyası', 2013],
+		]),
+		TN('yn-tunel-137', 'sanat', 1, 'Beyaz perdeden yıllar', [
+			['Spielberg’in E.T.’si', 1982],
+			['Bir Zamanlar Anadolu’da', 2011],
+		], [
+			['Hokkabaz', 2006],
+			['Spielberg’in Jaws’ı', 1975],
+			['Ahlat Ağacı', 2018],
+		]),
+		TN('yn-tunel-138', 'sanat', 3, 'Yeşilçam’ın sevilen yüzleri', [
+			['Sadri Alışık’ın doğumu', 1925],
+			['Fatma Girik’in doğumu', 1942],
+		], [
+			['Fikret Hakan’ın doğumu', 1934],
+			['Ayhan Işık’ın doğumu', 1929],
+			['Türkan Şoray’ın doğumu', 1945],
+		]),
+		TN('yn-tunel-139', 'sanat', 2, 'Müzeler ve sergiler', [
+			['Prado Müzesi’nin açılışı', 1819],
+			['Tate Modern’in açılışı', 2000],
+		], [
+			['MoMA’nın açılışı', 1929],
+			['İlk İstanbul Bienali', 1987],
+			['Pera Müzesi’nin açılışı', 2005],
+		]),
+		TN('yn-tunel-140', 'sanat', 1, 'Edebiyat ve sanatın vedaları', [
+			['Puşkin’in ölümü', 1837],
+			['Kafka’nın ölümü', 1924],
+		], [
+			['Dostoyevski’nin ölümü', 1881],
+			['Goethe’nin ölümü', 1832],
+			['Picasso’nun ölümü', 1973],
+		]),
+		TN('yn-tunel-141', 'sanat', 3, 'Ressam ve yazarların son yılları', [
+			['Frida Kahlo’nun ölümü', 1954],
+			['Warhol’un ölümü', 1987],
+		], [
+			['Victor Hugo’nun ölümü', 1885],
+			['Tolstoy’un ölümü', 1910],
+			['Dalí’nin ölümü', 1989],
+		]),
+		// ---- genel kültür
+		TN('yn-tunel-142', 'eglence', 1, 'Ekranın efsane dizileri', [
+			['Star Trek’in ilk bölümü', 1966],
+			['Friends’in ilk bölümü', 1994],
+		], [
+			['Dallas’ın ilk bölümü', 1978],
+			['Taş Devri’nin ilk bölümü', 1960],
+			['Game of Thrones’un ilk bölümü', 2011],
+		]),
+		TN('yn-tunel-143', 'eglence', 2, 'Ekranın unutulmaz yapımları', [
+			['Susam Sokağı yayında', 1969],
+			['Seinfeld’in ilk bölümü', 1989],
+		], [
+			['Muppet Show yayında', 1976],
+			['X-Files’ın ilk bölümü', 1993],
+			['Kurtlar Vadisi’nin ilk bölümü', 2003],
+		]),
+		TN('yn-tunel-144', 'eglence', 2, 'Kalemden roketlere şirketler', [
+			['Faber-Castell’in kuruluşu', 1761],
+			['Adidas’ın kuruluşu', 1949],
+		], [
+			['Siemens’in kuruluşu', 1847],
+			['Airbnb’nin kuruluşu', 2008],
+			['SpaceX’in kuruluşu', 2002],
+		]),
+		TN('yn-tunel-145', 'eglence', 1, 'Plaktan akıllı cebe', [
+			['Uzunçalar plağın doğuşu', 1948],
+			['iPod’un tanıtılışı', 2001],
+		], [
+			['Kompakt kasetin tanıtılışı', 1963],
+			['Kodak Brownie makinesi', 1900],
+			['Spotify’ın açılışı', 2008],
+		]),
+		TN('yn-tunel-146', 'eglence', 2, 'Oyun dünyasından', [
+			['Twister oyunu', 1966],
+			['Xbox’ın çıkışı', 2001],
+		], [
+			['İlk FIFA oyunu', 1993],
+			['Furby’nin çıkışı', 1998],
+			['Wii’nin çıkışı', 2006],
+		]),
+		TN('yn-tunel-147', 'eglence', 2, 'Raflara ve cüzdanlara girenler', [
+			['Fanta’nın doğuşu', 1940],
+			['Starbucks’ın kuruluşu', 1971],
+		], [
+			['Diners Club kartının doğuşu', 1950],
+			['Hazır eriştenin icadı', 1958],
+			['Red Bull’un doğuşu', 1987],
+		]),
+		TN('yn-tunel-148', 'eglence', 2, 'Hayatımıza girenler', [
+			['M&M’s şekerlerinin doğuşu', 1941],
+			['Tokyo Disneyland’in açılışı', 1983],
+		], [
+			['Polaroid anlık kamera', 1948],
+			['Guinness Rekorlar Kitabı', 1955],
+			['Disneyland Paris’in açılışı', 1992],
+		]),
+		TN('yn-tunel-149', 'eglence', 3, 'Dijital hayatın uygulamaları', [
+			['Skype’ın çıkışı', 2003],
+			['Kindle’ın çıkışı', 2007],
+		], [
+			['Google Haritalar’ın açılışı', 2005],
+			['The Sims’in çıkışı', 2000],
+			['iPad’in tanıtılışı', 2010],
+		]),
+		TN('yn-tunel-150', 'eglence', 3, 'Ekranların yeni yüzyılı', [
+			['Avrupa Yakası’nın ilk bölümü', 2004],
+			['Squid Game’in ilk sezonu', 2021],
+		], [
+			['Muhteşem Yüzyıl’ın ilk bölümü', 2011],
+			['Çocuklar Duymasın başladı', 2002],
+			['Avengers: Endgame', 2019],
+		]),
 	],
 	kelimeavi: [
 		// kolay (7×7; → ↓ ↘): Osmanlı’nın ilk şehirleri
@@ -1368,6 +1776,264 @@ export const SAMPLES = {
 			['DİBEK', 'Taş havanda dövülen eski usul kahve'],
 			['MENENGİÇ', 'Gaziantep’in kahveye benzeyen içeceği'],
 			['MIRRA', 'Urfa’nın acı, koyu kahvesi'],
+		]),
+		// v1.2 (101–150): kelimeler bankanın adam asmaca, Harf Al, anagram ve çengel cevaplarıyla çakışmaz; 4–9 harf,
+		// tersten okununca kendisi olan ya da tersinde kaba parça taşıyan kelime yok
+		// ---- tarih
+		KA('yn-kelimeavi-101', 'tarih', 1, 'Millî Mücadele’nin halk kahramanları', [
+			['ŞERİFE', 'Kastamonulu kadın kahraman … Bacı'],
+			['MAKBULE', 'Gördesli kadın kahraman … Hanım'],
+			['FATMA', 'Seher Erden’in bilinen adı: Kara …'],
+		]),
+		KA('yn-kelimeavi-102', 'tarih', 1, 'Tarihimizin simge yerleri', [
+			['KOCATEPE', 'Ankara’daki ünlü caminin adı olan tepe'],
+			['ÇANKAYA', 'Kızılay’ı da içine alan Ankara ilçesi'],
+			['ANAFARTA', 'Eceabat’ın Büyük ve Küçük … köyleri'],
+		]),
+		KA('yn-kelimeavi-103', 'tarih', 2, 'Bozkırın hükümdarları', [
+			['BÖGÜ', 'Maniheizmi kabul eden Uygur kağanı'],
+			['ATTİLA', 'Bleda’nın kardeşi Hun hükümdarı'],
+			['KUTLUK', 'Bilge Kağan’ın babası … Kağan'],
+		]),
+		KA('yn-kelimeavi-104', 'tarih', 2, 'Lakabıyla anılan sultanlar', [
+			['FATİH', 'Bir köprüye ve ilçeye adını veren lakap'],
+			['AVCI', 'Ava düşkün IV. Mehmed’in lakabı'],
+			['DELİ', 'Sultan İbrahim’e yakıştırılan lakap'],
+		]),
+		KA('yn-kelimeavi-105', 'tarih', 2, 'Yenileşen Osmanlı avı', [
+			['ISLAHAT', 'Paris barışından hemen önceki ferman'],
+			['NİZAM', 'Levent Çiftliği’ndeki ordu: …-ı Cedid'],
+			['SENED', 'Alemdar’ın girişimiyle: …-i İttifak'],
+		]),
+		KA('yn-kelimeavi-106', 'tarih', 2, 'Osmanlı’da unvanlar ve görevler', [
+			['KETHÜDA', 'Sadrazamın yardımcısı: Sadaret …'],
+			['KADI', 'Osmanlı’da bir kazanın başındaki yargıç'],
+			['AKINCI', 'Bir yerli insansız hava aracının da adı'],
+		]),
+		KA('yn-kelimeavi-107', 'tarih', 3, 'Beylikler döneminden adlar', [
+			['GERMİYAN', 'Şeyhî’nin yetiştiği beylik: …oğulları'],
+			['MENTEŞE', 'Muğla iline eskiden adını veren beylik'],
+			['KARESİ', 'Balıkesir’de bir ilçenin adı olan beylik'],
+		]),
+		KA('yn-kelimeavi-108', 'tarih', 3, 'Malazgirt’in ardından', [
+			['SALTUK', 'Tepsi Minare’yi yaptıran …lular'],
+			['MENGÜCEK', 'Erzincan ve Kemah’ı yöneten …liler'],
+			['ARTUK', 'Diyarbakır ve Mardin’i yöneten …lular'],
+		]),
+		// ---- coğrafya
+		KA('yn-kelimeavi-109', 'cografya', 1, 'İllerimizin izinde', [
+			['ESKİŞEHİR', 'Porsuk Çayı’nda gondol gezilen kent'],
+			['KAYSERİ', 'Talas ve Melikgazi’nin bağlı olduğu il'],
+			['MERSİN', 'Kızkalesi’nin bulunduğu il'],
+		]),
+		KA('yn-kelimeavi-110', 'cografya', 2, 'Türkiye’nin dağları', [
+			['ILGAZ', 'Kastamonu ile Çankırı arasındaki dağ'],
+			['BOLKAR', 'Niğde ile Mersin arasındaki Toros kolu'],
+			['ALADAĞLAR', 'Niğde’deki dağcılık cenneti sıradağlar'],
+		]),
+		KA('yn-kelimeavi-111', 'cografya', 2, 'Verimli ovalar avı', [
+			['SURUÇ', 'Şanlıurfa’nın Suriye sınırındaki ovası'],
+			['AMİK', 'Asi’nin suladığı Hatay ovası'],
+			['BAFRA', 'Kızılırmak’ın deltasındaki ova'],
+		]),
+		KA('yn-kelimeavi-112', 'cografya', 2, 'Balkan başkentleri avı', [
+			['ZAGREB', 'Hırvatistan’ın başkenti'],
+			['TİRAN', 'Skanderbeg Meydanı’nın bulunduğu başkent'],
+			['BELGRAD', 'Kalemegdan Kalesi’nin bulunduğu başkent'],
+		]),
+		KA('yn-kelimeavi-113', 'cografya', 2, 'Kıtaların büyük ırmakları', [
+			['GANJ', 'Hindistan’ın kutsal sayılan nehri'],
+			['ZAMBEZİ', 'Victoria Şelalesi’ni oluşturan nehir'],
+			['MEKONG', 'Laos–Tayland sınırını çizen nehir'],
+		]),
+		KA('yn-kelimeavi-114', 'cografya', 2, 'Yarımadalar avı', [
+			['DATÇA', 'Knidos antik kentinin yarımadası'],
+			['KAPIDAĞ', 'Antik Kyzikos kentinin yarımadası'],
+			['GELİBOLU', 'Eceabat’ın bulunduğu yarımada'],
+		]),
+		KA('yn-kelimeavi-115', 'cografya', 3, 'Mağaraların derinliğinde', [
+			['KARAİN', 'Antalya’daki tarih öncesi mağara'],
+			['KARACA', 'Gümüşhane’nin sarkıtlı mağarası'],
+			['İNSUYU', 'Burdur’un içinde göl olan mağarası'],
+		]),
+		KA('yn-kelimeavi-116', 'cografya', 3, 'Akdeniz ve Ege kıyıları', [
+			['ÖLÜDENİZ', 'Fethiye’nin ünlü lagünü'],
+			['İZTUZU', 'Dalyan Çayı’nın denize kavuştuğu kumsal'],
+			['PATARA', 'Kaş yakınında, uzun kumsallı antik kent'],
+		]),
+		// ---- spor
+		KA('yn-kelimeavi-117', 'spor', 1, 'Saha kenarından sözcükler', [
+			['FAUL', 'Kural dışı hareket'],
+			['BLOK', 'Voleybolda filede kurulan duvar'],
+			['DEFANS', 'Takımın savunma hattının adı'],
+		]),
+		KA('yn-kelimeavi-118', 'spor', 1, 'Sporun dili', [
+			['KANAT', 'Futbolda sahanın yan koridorunda oynayan'],
+			['DEPAR', 'Koşucunun startta yaptığı ani çıkış'],
+			['PODYUM', 'Mankenlerin yürüdüğü yükseltilmiş alan'],
+		]),
+		KA('yn-kelimeavi-119', 'spor', 2, 'Kadın sporcularımız', [
+			['TATAR', 'Taekwondocu Nur …'],
+			['SÜRMENELİ', 'Boksta ilk altınımızı alan Busenaz …'],
+			['ÇAMBEL', 'Karatepe kazılarını yöneten Halet …'],
+		]),
+		KA('yn-kelimeavi-120', 'spor', 2, 'Pistin efsane pilotları', [
+			['SENNA', 'Monako’da altı kez kazanan Ayrton …'],
+			['PROST', 'Dört kez dünya şampiyonu Fransız Alain …'],
+			['CLARK', 'Lotus’la şampiyon olan İskoç Jim …'],
+		]),
+		KA('yn-kelimeavi-121', 'spor', 2, 'Efsane stadyumlar', [
+			['MARACANA', 'Rio 2016’nın açılış töreninin stadı'],
+			['WEMBLEY', '1996 Avrupa Şampiyonası finalinin stadı'],
+			['AZTECA', 'Pelé’nin üçüncü kupayı aldığı stat'],
+		]),
+		KA('yn-kelimeavi-122', 'spor', 2, 'Potanın Türk yıldızları', [
+			['OKUR', 'Yalovalı NBA pivotu Mehmet …'],
+			['TÜRKCAN', 'Knicks forması giyen Mirsad …'],
+			['KUTLUAY', '12 Dev Adam’ın şutörü İbrahim …'],
+		]),
+		KA('yn-kelimeavi-123', 'spor', 3, 'Olimpiyatın unutulmazları', [
+			['SPİTZ', 'Bıyıklı efsane yüzücü Mark …'],
+			['BİKİLA', 'Etiyopyalı efsane maratoncu Abebe …'],
+			['LEWİS', 'Uzun atlamada dört altınlı Carl …'],
+		]),
+		// ---- bilim
+		KA('yn-kelimeavi-124', 'bilim', 1, 'Vücudumuzun parçaları', [
+			['PANKREAS', 'Hem sindirim hem hormon salgılayan bez'],
+			['RETİNA', 'Çubuk ve koni hücrelerinin tabakası'],
+			['TİROİT', 'Boyundaki kelebek biçimli bez'],
+		]),
+		KA('yn-kelimeavi-125', 'bilim', 1, 'Gökte ve çölde olaylar', [
+			['SERAP', 'Çölde görülen yanıltıcı su görüntüsü'],
+			['MUSON', 'Mevsime göre yön değiştiren Asya rüzgârı'],
+			['TİPİ', 'Yolları kapatan rüzgârlı kar'],
+		]),
+		KA('yn-kelimeavi-126', 'bilim', 2, 'Biyolojinin öncüleri', [
+			['LAMARCK', 'Zürafanın boynunu örnek veren kuramcı'],
+			['MENDEL', 'Brno manastırında deney yapan rahip'],
+			['LİNNAEUS', 'İkili adlandırmayı getiren İsveçli'],
+		]),
+		KA('yn-kelimeavi-127', 'bilim', 2, 'Fiziğin birimleri', [
+			['COULOMB', 'Elektrik yükünün SI birimi'],
+			['HERTZ', 'Saniyedeki titreşim sayısının birimi'],
+			['KANDELA', 'Latincede “mum” anlamına gelen birim'],
+		]),
+		KA('yn-kelimeavi-128', 'bilim', 2, 'Uzayın derinlikleri', [
+			['NEBULA', 'Latince “sis” anlamına gelen gök cismi'],
+			['SÜPERNOVA', 'Bazen bir galaksi kadar parlayan patlama'],
+			['ANDROMEDA', 'Samanyolu’yla çarpışacak komşu gökada'],
+		]),
+		KA('yn-kelimeavi-129', 'bilim', 2, 'Laboratuvarda bir gün', [
+			['DAMITMA', 'Kaynatıp buharı yoğunlaştırarak ayırma'],
+			['ÇÖKELTİ', 'Tepkimede oluşup dibe inen katı'],
+			['İNDİKATÖR', 'Turnusol gibi renk değiştiren belirteç'],
+		]),
+		KA('yn-kelimeavi-130', 'bilim', 2, 'Matematiğin dili', [
+			['TÜREV', 'Bir fonksiyonun anlık değişim hızı'],
+			['İNTEGRAL', 'Eğri altındaki alanı veren işlem'],
+			['MATRİS', 'Sayıların satır ve sütunla dizilişi'],
+		]),
+		KA('yn-kelimeavi-131', 'bilim', 3, 'Orta Çağ’ın büyük bilginleri', [
+			['BATTANİ', 'Harranlı ünlü astronom el-…'],
+			['HEYSEM', 'Kitab’ül-Menazır’ın yazarı İbnü’l-…'],
+			['CABİR', 'Simyacı … bin Hayyan'],
+		]),
+		KA('yn-kelimeavi-132', 'bilim', 2, 'Salgınlar ve virüsler', [
+			['VEBA', 'Yersinia pestis’in yol açtığı salgın'],
+			['TİFÜS', 'Bitlerin taşıdığı salgın hastalık'],
+			['KUDUZ', 'Su korkusuyla bilinen hastalık'],
+		]),
+		// ---- sanat ve edebiyat
+		KA('yn-kelimeavi-133', 'sanat', 1, 'Aşk hikâyelerinin âşıkları', [
+			['FERHAT', 'Şirin’e âşık olan nakkaş'],
+			['KEREM', 'Aslı’nın peşinden yanan âşık'],
+			['MECNUN', 'Leylâ’nın aşkıyla çöllere düşen'],
+		]),
+		KA('yn-kelimeavi-134', 'sanat', 1, 'Mitolojinin kahramanları', [
+			['PANDORA', 'Hephaistos’un kilden yarattığı kadın'],
+			['HERAKLES', 'Zeus ile Alkmene’nin oğlu'],
+			['İKAROS', 'Daidalos’un oğlu'],
+		]),
+		KA('yn-kelimeavi-135', 'sanat', 2, 'Çalgılarımız avı', [
+			['SANTUR', 'Tokmaklarla çalınan telli çalgı'],
+			['ÇÖĞÜR', 'Bağlama ailesinden telli bir halk sazı'],
+			['REBAP', 'Mevlevi musikisinin yaylı sazı'],
+		]),
+		KA('yn-kelimeavi-136', 'sanat', 2, 'Roman kahramanları avı', [
+			['RAİF', 'Ankara’da tercümanlık yapan … Efendi'],
+			['HAYRİ', 'Muvakkithane çırağı … İrdal'],
+			['FELATUN', 'Rakım Efendi’nin müsrif karşıtı … Bey'],
+		]),
+		KA('yn-kelimeavi-137', 'sanat', 2, 'Opera sahnesinin adları', [
+			['AİDA', 'Radamès’e âşık Etiyopyalı prenses'],
+			['TOSCA', 'Puccini’nin şarkıcı kahramanı'],
+			['RİGOLETTO', 'Verdi’nin kambur soytarı kahramanı'],
+		]),
+		KA('yn-kelimeavi-138', 'sanat', 2, 'Musikimizin ustaları', [
+			['TANBURİ', 'Plak kayıtlarıyla ünlü … Cemil Bey'],
+			['DEDE', 'Hammamizade İsmail … Efendi'],
+			['MANÇO', '“Adam Olacak Çocuk”un sunucusu Barış …'],
+		]),
+		KA('yn-kelimeavi-139', 'sanat', 2, 'Sinemamızın yönetmenleri', [
+			['AKAD', 'Hudutların Kanunu’nun yönetmeni Lütfi …'],
+			['ATIF', '“Ah Belinda”nın yönetmeni … Yılmaz'],
+			['TURGUL', '“Gölge Oyunu”nun yönetmeni Yavuz …'],
+		]),
+		KA('yn-kelimeavi-140', 'sanat', 3, 'Halk şiirinin ozanları', [
+			['EMRAH', 'Erzurumlu ünlü halk şairi'],
+			['SEYRANİ', 'Kayserili hicivci halk ozanı'],
+			['DERTLİ', 'Geredeli ünlü saz şairi'],
+		]),
+		KA('yn-kelimeavi-141', 'sanat', 3, 'Mimarların imzası', [
+			['HADİD', 'Haydar Aliyev Merkezi’nin mimarı Zaha …'],
+			['DAVUT', 'Yeni Cami’yi başlatan mimar … Ağa'],
+			['NİEMEYER', 'BM binasının tasarımına katılan Oscar …'],
+		]),
+		// ---- genel kültür
+		KA('yn-kelimeavi-142', 'eglence', 1, 'Anadolu sofrasından', [
+			['TANTUNİ', 'Mersin’in sac sıcağı dürümü'],
+			['KUYMAK', 'Mıhlamanın öbür adı'],
+			['TESTİ', 'Kırılan çömlekte gelen Kapadokya kebabı'],
+		]),
+		KA('yn-kelimeavi-143', 'eglence', 1, 'Gelenekler avı', [
+			['HIDRELLEZ', 'Gül dibine dilek bağlanan bahar şenliği'],
+			['HARÇLIK', 'Bayramda büyüklerin verdiği para'],
+			['KİRVE', 'Sünnet çocuğunu kucağında tutan kişi'],
+		]),
+		KA('yn-kelimeavi-144', 'eglence', 1, 'Hayvan yavruları avı', [
+			['OĞLAK', 'Keçinin yavrusu'],
+			['BUZAĞI', 'İneğin yavrusu'],
+			['SIPA', 'Eşeğin yavrusu'],
+		]),
+		KA('yn-kelimeavi-145', 'eglence', 1, 'Ekranın sevimli kahramanları', [
+			['JERRY', 'Tom’un peşinden koştuğu fare'],
+			['HEİDİ', 'Peter’la keçi otlatan Alp kızı'],
+			['SNOOPY', 'Uçan As kılığına giren beagle'],
+		]),
+		KA('yn-kelimeavi-146', 'eglence', 2, 'Kahve fincanının başında', [
+			['SADE', 'Şekersiz Türk kahvesi'],
+			['TİRYAKİ', 'Çaya ya da kahveye düşkün kimse'],
+			['KÖPÜK', 'İyi pişmiş Türk kahvesinin kaymağı'],
+		]),
+		KA('yn-kelimeavi-147', 'eglence', 2, 'Dünya sofraları', [
+			['TACO', 'Meksika’nın katlanmış mısır ekmeği'],
+			['FONDÜ', 'İsviçre’nin eritilmiş peynirli sofrası'],
+			['GULAŞ', 'Macaristan’ın paprikalı et yemeği'],
+		]),
+		KA('yn-kelimeavi-148', 'eglence', 2, 'Kâğıt ve torba oyunları', [
+			['PİŞTİ', 'Vale ile yerdeki kartları toplayan oyun'],
+			['BATAK', 'Eşli ya da tekli oynanan ihaleli oyun'],
+			['TOMBALA', 'Torbadan çekilen sayılarla oynanan oyun'],
+		]),
+		KA('yn-kelimeavi-149', 'eglence', 3, 'Eski zaman meslekleri', [
+			['TULUMBACI', 'Mahallelerin gönüllü eski itfaiyecisi'],
+			['ARZUHALCİ', 'Parayla dilekçe yazan kişi'],
+			['SEMERCİ', 'Eşek ve katıra eyer yapan usta'],
+		]),
+		KA('yn-kelimeavi-150', 'eglence', 3, 'Eski İstanbul’dan adlar', [
+			['PERA', 'Beyoğlu’nun eski adı'],
+			['DERSAADET', '“Mutluluk kapısı” anlamlı İstanbul adı'],
+			['ASİTANE', '“Eşik” anlamına gelen İstanbul adı'],
 		]),
 	],
 };
