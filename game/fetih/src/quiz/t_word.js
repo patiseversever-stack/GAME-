@@ -17,7 +17,7 @@ const CSS = /* css */ `
    beyaz zeminde koyu harf (her zaman okunur), sıradaki boş kutu altın çerçeveyle nabız atar; kullanılan kart çekilir, yerinde
    boş yuva kalır. Bütün canlandırmalar transform / opacity. */
 .an{display:flex;flex-direction:column;align-items:center;gap:16px;margin:4px 0 10px;user-select:none;-webkit-user-select:none}
-.an .an-word{display:flex;flex-wrap:nowrap;justify-content:center;gap:6px;max-width:100%}
+.an .an-word{display:flex;flex-wrap:nowrap;justify-content:center;gap:var(--sg,6px);max-width:100%}
 .an .an-word s{flex:none;width:10px}
 .an .an-word b{position:relative;flex:none;width:var(--sw,34px);height:min(calc(var(--sw,34px) * 1.28),48px);display:grid;place-items:center;overflow:hidden;cursor:pointer;
   transform:skewX(-8deg);border:0;border-radius:0;font:italic 800 min(calc(var(--sw,34px) * .84),32px)/1 ${FONT};color:#0e1430;
@@ -175,11 +175,17 @@ export const anagram = {
 		const W = Math.min(Math.max(240, (el.closest('.fl-ui')?.clientWidth || innerWidth) - 40), 420);
 		const gaps = chars.length - 1;
 		const sp = chars.filter((c) => c === ' ').length;
-		const sw = clamp(Math.floor((W - gaps * 6 - sp * 4) / Math.max(1, chars.length - sp)), 22, 40);
+		// uzun kelimede (11+ harf) aralık daralır, kutu 16 px'e dek küçülür: KONSERVATUVAR 320 genişlikte de tek sırada sığar
+		const nL = Math.max(1, chars.length - sp);
+		let sg = 6;
+		let sw = Math.floor((W - gaps * sg - sp * 4) / nL);
+		if (sw < 24) (sg = 3), (sw = Math.floor((W - gaps * sg - sp * 4) / nL));
+		sw = clamp(sw, 16, 40);
 		const per = need <= 7 ? need : Math.ceil(need / 2);
 		const tw = clamp(Math.floor((W - (per - 1) * 9) / per), 34, 58);
 		const th = clamp(Math.round(tw * 1.16), 44, 62);
 		root.style.setProperty('--sw', sw + 'px');
+		root.style.setProperty('--sg', sg + 'px');
 		root.style.setProperty('--tw', tw + 'px');
 		root.style.setProperty('--th', th + 'px');
 		let placed = -1; // son yerleşen kutu (yalnız o çarpma canlandırmasıyla gelir)
