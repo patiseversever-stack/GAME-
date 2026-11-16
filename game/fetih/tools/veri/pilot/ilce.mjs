@@ -99,6 +99,8 @@ const CELDIRICI_YASAK = {
 	Kadıköy: ['Yalova'], // Yalova'da Kadıköy beldesi (Wikidata Q6345862)
 	Karapınar: ['Nevşehir', 'Afyonkarahisar', 'Zonguldak'], // bu illerde Karapınar beldesi (Q10777291, Q6368599, Q10777313)
 	Gediz: ['İzmir', 'Manisa'], // Gediz Nehri, Gediz Ovası ve Deltası bu illerde
+	Susurluk: ['Bursa'], // Susurluk Çayı Bursa'dan (Karacabey) denize dökülür
+	Keban: ['Erzincan', 'Tunceli', 'Malatya'], // Keban Baraj Gölü bu illere de uzanır
 };
 // Oyun haritasındaki il çokgenleri (src/data/turkiye.json; dünya birimi: x = (lon - lon0)·cos(lat0)·K, y = (lat - lat0)·K).
 // Haritada bul noktası kendi ilinin çokgeninde olmalı: başka ilin içine düşen nokta (kaba sınır) cevabı yanlış ilde gösterir.

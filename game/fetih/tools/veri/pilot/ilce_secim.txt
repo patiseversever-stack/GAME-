@@ -8,7 +8,9 @@
 # - Zorluk: büyük şehrin herkesçe bilinen ilçeleri 1'e alındı (Bakırköy, Beykoz, Büyükçekmece, Eyüpsultan, Sarıyer,
 #   Silivri, Çatalca, Etimesgut, Sincan, Polatlı, Konyaaltı, Meram, Gölcük, Of).
 # - Bankadaki kolay ilçeler çıkınca kolay payı %25'in altına düştü; en az tanınan 3'lükler çıkarıldı (yalnız yöresinin
-#   bileceği): Akseki, Arhavi, Bolvadin, Bor, Boyabat, Boğazlıyan, Bucak, Ceylanpınar, Elmalı, Gerze, Ilgın, Kaman, Kağızman, Kırıkhan, Mut, Nallıhan, Patnos, Pülümür, Silvan, Suşehri, Tirebolu, Ulukışla, İskilip, İspir, Şavşat, Şebinkarahisar.
+#   bileceği): Akseki, Arhavi, Bolvadin, Bor, Boyabat, Boğazlıyan, Bucak, Ceylanpınar, Elmalı, Gerze, Ilgın, Kaman,
+#   Kağızman, Kırıkhan, Mut, Nallıhan, Patnos, Pülümür, Silvan, Suşehri, Tirebolu, Ulukışla, İskilip, İspir, Şavşat,
+#   Şebinkarahisar.
 # İl ve koordinat Wikidata'dan doğrulanır (tools/veri/ham/ilceler.json); uyuşmayan ya da başka ilde aynı adı taşıyan
 # ilçe üretici tarafından atlanır ve raporlanır. Merkez ilçesi ilin adını taşıyanlar (Kars, Bolu…) alınmaz.
 # --- Marmara

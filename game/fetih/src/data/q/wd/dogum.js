@@ -738,7 +738,7 @@ export default [
 		"cat": "tarih",
 		"diff": 1,
 		"type": "num",
-		"q": "Galler Prensesi Diana Spencer hangi yıl doğdu?",
+		"q": "Galler Prensesi Diana hangi yıl doğdu?",
 		"ans": 1961,
 		"unit": "",
 		"min": 1910,

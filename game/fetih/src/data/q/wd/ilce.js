@@ -331,7 +331,7 @@ export default [
 		"q": "Susurluk ilçesi hangi ildedir?",
 		"a": [
 			"Balıkesir",
-			"Bursa",
+			"Kütahya",
 			"Kırklareli",
 			"Edirne"
 		],
@@ -1549,7 +1549,7 @@ export default [
 		"q": "Keban hangi ilin ilçesidir?",
 		"a": [
 			"Elazığ",
-			"Erzincan",
+			"Bingöl",
 			"Iğdır",
 			"Van"
 		],

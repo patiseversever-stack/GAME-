@@ -84,7 +84,7 @@ Nikita Kruşçev | tarih | Sovyet lideri | 3
 II. Katerina | tarih | Rus çariçesi | 2
 Florence Nightingale | tarih | Modern hemşireliğin öncüsü | 2
 Anne Frank | tarih | Günlük yazarı | 2
-Diana Spencer | tarih | Galler Prensesi | 1
+Diana Spencer | tarih | Galler Prensesi | 1 | Diana
 Hirohito | tarih | Japon imparatoru | 3
 Thomas Jefferson | tarih | ABD Başkanı | 3
 Dwight Eisenhower | tarih | ABD Başkanı | 3
