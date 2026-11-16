@@ -1,5 +1,6 @@
 // ÇAKIŞMA DENETİMİ v2 (soru galerisi, bütün ekran):
 //   node tools/denetim/cakisma.cjs <dist/SoruGalerisi.html> <tip,tip|cover> <GxY,GxY|hepsi> <çıktı_klasörü> [evre: soru,joker,cevap] [paralel: 3]
+//   <tip,tip> yerine sahte soru dosyası (.json) verilebilir: stres denetimi (tools/denetim/sinir_stres.mjs). TEK=1 hızlı kip.
 // Her tip ve ekran boyunda soruyu galeride açar; "soru" evresinde (kart oturunca) ve "cevap" evresinde (cevaplanıp
 // cevap filmi ve damga oturunca, animasyonlar sonuna sarılarak) bütün belgeyi ölçer:
 //   örtülme : görünür her yazı satırının üstünde (boyama sırasıyla, elementsFromPoint) başka bir öğe var mı:
@@ -17,7 +18,11 @@ const BOYLAR = ['320x568', '360x640', '375x667', '390x844', '412x915', '430x932'
 const COVER = ['ikidogru', 'yanlis', 'gozkarari', 'halat', 'mancinik'];
 const argv = process.argv.slice(2);
 const [html, typesA = 'cover', sizesA = 'hepsi', out = '.', evreA = 'soru,cevap', parA = '3'] = argv;
-const types = typesA === 'cover' ? COVER : typesA.split(',');
+// <tipler> bir .json dosyasıysa: sahte soru listesi (stres denetimi: tools/denetim/sinir_stres.mjs üretir); her biri
+// tip@kimlik olarak gezilir ve galerinin sınama kancasıyla açılır
+const SAHTE = {};
+if (/\.json$/.test(typesA)) for (const q of JSON.parse(fs.readFileSync(typesA, 'utf8'))) SAHTE[q.id] = q;
+const types = /\.json$/.test(typesA) ? Object.values(SAHTE).map((q) => q.type + '@' + q.id) : typesA === 'cover' ? COVER : typesA.split(',');
 const sizes = sizesA === 'hepsi' ? BOYLAR : sizesA.split(',');
 const evreler = evreA.split(',');
 fs.mkdirSync(out, { recursive: true });
@@ -274,23 +279,62 @@ const measure = () => {
 			break;
 		}
 	}
+	// 6) kırpılan kutu (yazısı olmasa da): soru gövdesindeki görünür kutu (zemin, kenarlık ya da gölge taşıyan: boş harf
+	// kutusu, yuva, kart) atadaki taşma kırpmasıyla ya da ekran kenarıyla kesiliyor mu. Yazı denetimleri boş kutuyu görmez:
+	// anagramın 13 boş kutusu 320 genişlikte kenardan kesiliyordu ve hiçbir kural yakalamadı. Kayan listeler (bilinçli,
+	// altı solar) ve transformla canlandırılan geçişler sayılmaz.
+	// yana kesilme hiçbir zaman bilinçli değil (soru gövdesi dikey kayar, yatay kaymaz): kayan atada da sayılır; yalnız
+	// bilinçli yatay şerit (scroll-snap) hariç
+	const kayan = (e, yon) => {
+		for (let a = e.parentElement; a && a !== document.body; a = a.parentElement) {
+			const cs = getComputedStyle(a);
+			if (yon === 'y' && /auto|scroll/.test(cs.overflowY)) return true;
+			if (yon === 'x' && /auto|scroll/.test(cs.overflowX) && cs.scrollSnapType !== 'none') return true;
+		}
+		return false;
+	};
+	const kirpik = new Set();
+	for (const e of document.querySelectorAll('.fl-q.on .fl-qbody *')) {
+		if (e instanceof SVGElement && e.tagName !== 'svg') continue;
+		if (!vis(e) || opq(e) < 0.12) continue;
+		const r = e.getBoundingClientRect();
+		if (r.width < 8 || r.height < 8) continue;
+		const cs = getComputedStyle(e);
+		const kutu = cs.backgroundColor !== 'rgba(0, 0, 0, 0)' || cs.backgroundImage !== 'none' || parseFloat(cs.borderTopWidth) > 0 || cs.boxShadow !== 'none';
+		if (!kutu) continue;
+		const c = clipOf(e);
+		const yana = Math.max(0, c.left - r.left) + Math.max(0, r.right - c.right);
+		if (yana > 2 && !kayan(e, 'x')) kirpik.add(`yana kırpılan kutu: ${ad(e)} (${Math.round(yana)} px)`);
+		else if (!kayan(e, 'y')) {
+			const a = area(r);
+			const g = area(isect(r, c));
+			if (a - g > 60 && g < a * 0.9) kirpik.add(`kırpılan kutu: ${ad(e)} (%${Math.round((100 * g) / a)} görünüyor)`);
+		}
+	}
+	for (const m of kirpik) say(m);
 	return { bad: [...new Set(bad)], info };
 };
 
 const hashOf = (spec) => '#' + encodeURIComponent(spec).replace(/%40/g, '@').replace(/%3A/g, ':');
 
-/** spec'i aç: yeni sayfada (goto) ya da TEK kipinde açık sayfada adresi değiştirerek (harita yeniden kurulmaz). */
+/** spec'i aç: yeni sayfada (goto) ya da TEK kipinde açık sayfada adresi değiştirerek (harita yeniden kurulmaz). Sahte soru
+ *  (SAHTE[id], stres denetimi) galerinin sınama kancasıyla (window.__galSoru) açılır. */
 async function openSpec(p, spec, reuse) {
 	const t = spec.split(/[:@]/)[0];
 	const id = spec.includes('@') ? spec.split('@')[1] : '';
+	const sx = SAHTE[id];
 	if (!reuse) {
-		await p.goto('file://' + path.resolve(html) + hashOf(spec), { timeout: 180000 });
+		await p.goto('file://' + path.resolve(html) + hashOf(sx ? t : spec), { timeout: 180000 });
 		await p.waitForFunction(() => document.querySelector('.fl-q.on .fl-qbody > *'), null, { timeout: 400000, polling: 250 });
 		if (t !== 'halat') await p.evaluate(() => document.getElementById('g-time')?.click());
 		await p.waitForTimeout(1500);
-	} else {
+	}
+	if (reuse || sx) {
 		const prev = await p.evaluate(() => document.querySelector('.fl-q')?.dataset.qid || '');
-		await p.evaluate((h) => (location.hash = h), hashOf(spec));
+		if (sx) {
+			const k = await p.evaluate((q) => window.__galSoru?.(q), sx);
+			if (!k) throw new Error('galeride sınama kancası yok ya da tip bilinmiyor: ' + spec);
+		} else await p.evaluate((h) => (location.hash = h), hashOf(spec));
 		await p.waitForFunction(
 			([t, id, prev]) => {
 				const q = document.querySelector('.fl-q.on');

@@ -302,6 +302,17 @@ export async function galeri() {
 		drawer(false);
 		play();
 	};
+	// sınama kancası (stres denetimi, SORU-100K.md Aşama 0.2): bankada olmayan sahte soruyu (uzunluk sınırında, en kötü
+	// durum) vitrine ekleyip açar; tools/denetim/cakisma.cjs <sahte.json> kipi kullanır
+	window.__galSoru = (q) => {
+		const L = ex[q?.type];
+		if (!L) return false;
+		let i = L.findIndex((x) => x.id === q.id);
+		if (i < 0) i = L.push(q) - 1;
+		else L[i] = q;
+		go(q.type, i);
+		return true;
+	};
 	// adres değişince (#tip, #tip:sıra, #tip@kimlik) sayfa yenilenmeden o soru açılır: denetim araçları haritayı bir kez kurup
 	// soruları sırayla gezer
 	addEventListener('hashchange', () => {

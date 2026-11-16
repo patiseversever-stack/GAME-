@@ -40,8 +40,9 @@ const CSS = /* css */ `
 .an .fl-tile.an-t:active{transform:translateY(3px) scale(.95);color:#1a1200;text-shadow:none;background:linear-gradient(180deg,#ffe066,#ffbb1f)}
 .an .fl-tile.an-t.used{opacity:0;transform:scale(.35);pointer-events:none}
 .an .fl-tile.an-t.pop{animation:anPop .32s cubic-bezier(.2,.9,.3,1.3) both}
-.an-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.an-b{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 15px;border:0;cursor:pointer;color:#fff;background:#0a0b14;
+/* eğik (skewX -8°) düğmenin köşeleri kutudan ~3 px taşar: sıra iç boşlukla içeride tutulur (320–360 px'te kart kenarı kesmesin) */
+.an-acts{display:flex;gap:10px 8px;justify-content:center;flex-wrap:wrap;padding-inline:4px}
+.an-b{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 13px;border:0;cursor:pointer;color:#fff;background:#0a0b14;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.92),0 4px 14px rgba(0,0,0,.55);transform:skewX(-8deg);transition:transform .12s,opacity .2s;
   font:italic 800 16px/1 ${FONT};letter-spacing:.05em;text-transform:uppercase}
 .an-b>*{transform:skewX(8deg)}
