@@ -12,7 +12,7 @@ Bu dosyada bir bilgi yarışması oyunu için 200 görsel komutu var. Görevin:
 **Her görselde geçerli kurallar:**
 - Kare 1:1 (1024×1024).
 - Dış zemin SAF BEYAZ (#FFFFFF), düz; zemin, gökyüzü, manzara, insan, araç, gölge YOK. Yapı tek başına, bütünüyle ve ortada; dört kenarda boşluk kalsın.
-- Beyaz ya da açık renkli yapılar (mermer, badana) fildişi/açık taş tonunda ve gölgeli çizilsin ki beyaz zeminden ayrılsın.
+- Beyaz ya da çok açık renkli yüzeyler (mermer, badana) hafif gölgeli çizilsin ki beyaz zeminden ayrılsın; yapının öteki renkleri (bakır yeşili kubbe, kırmızı tuğla, yaldız, renkli çini) gerçekteki gibi kalsın.
 - Görselde hiçbir yazı, harf, rakam, tabela, yazıt, imza, filigran ya da logo olmayacak.
 - Yapı gerçeğine sadık olsun: kule, kubbe, minare, kemer sayısı ve biçimi komutta nasılsa öyle.
 - Bütün görseller aynı üslupta: komutun sonundaki 3D mimari maket üslubu.

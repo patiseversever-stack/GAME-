@@ -1,7 +1,7 @@
 # 1100 YENİ GÖRSEL · özet (1000 + 100 ünlü kişi portresi)
 
 Bu dosya senin için: her görselin numarası, oyunda hangi soru tipine gideceği, sorusu ve doğru cevabı.
-ChatGPT'ye bu dosyayı DEĞİL, aşağıdaki parça dosyalarını ver (her biri kendi içinde talimatlı; soru ve cevap yazmaz ki görsele yazı sızmasın).
+**ChatGPT'ye bu dosyayı DEĞİL, `GORSEL-1000-TEK.md` dosyasını ver**: 1100 komutun hepsi tek dosyada, en başta tek talimat; ChatGPT görselleri sırayla üretir ve her grup bitince o grubun ZIP'ini verir (6 ZIP). Talimatlı dosyada soru ve cevap yoktur (görsele yazı sızmasın). Aşağıdaki parça dosyaları aynı komutların gruplara bölünmüş hâlidir; istersen onları da kullanabilirsin.
 
 ## Parçalar
 
@@ -10,11 +10,11 @@ ChatGPT'ye bu dosyayı DEĞİL, aşağıdaki parça dosyalarını ver (her biri 
 | `GORSEL-1000-K1.md` | GK-511 – GK-710 | 200 | Göz Kararı | `Gorsel-1000-K1.zip` |
 | `GORSEL-1000-K2.md` | GK-711 – GK-910 | 200 | Göz Kararı | `Gorsel-1000-K2.zip` |
 | `GORSEL-1000-K3.md` | GK-911 – GK-1110 | 200 | Göz Kararı | `Gorsel-1000-K3.zip` |
-| `GORSEL-1000-K4.md` | GK-1111 – GK-1310 | 200 | Göz Kararı | hazırlanıyor |
+| `GORSEL-1000-K4.md` | GK-1111 – GK-1310 | 200 | Göz Kararı | `Gorsel-1000-K4.zip` |
 | `GORSEL-1000-K5.md` | YP-101 – YP-300 | 200 | Kazı Kazan + Gölge Oyunu | `Gorsel-1000-K5.zip` |
 | `GORSEL-1000-K6.md` | GK-1311 – GK-1410 | 100 | Göz Kararı (ünlü kişi portreleri) | `Gorsel-1000-K6.zip` |
 
-**Kullanım:** her parça için ChatGPT'de yeni bir sohbet aç, parça dosyasını ekle ve "Talimatı uygula, başla" yaz. Durursa "devam" yaz. Bitince verdiği ZIP'i bana gönder.
+**Kullanım:** ChatGPT'de yeni bir sohbet aç, `GORSEL-1000-TEK.md` dosyasını ekle ve "Talimatı uygula, başla" yaz. Durursa "devam" yaz. Sohbet dolarsa yeni sohbet aç, aynı dosyayı ver ve kaldığın numarayı yaz ("GK-731'den başla"). Gelen her ZIP'i bana gönder.
 
 Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görseli gelmeyen numara maçta çıkmaz.
 
@@ -120,7 +120,7 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-582 | 2 · yakın çekim | Öne ve aşağıya kıvrık kulakları başına yapışık duran, baykuşa benzetilen kedi ırkının adı ne? | **Scottish Fold** |
 | GK-583 | 2 · siluet | İçbükey yüz profili ve havaya kalkık kuyruğuyla tanınan, çöl kökenli at ırkı hangisidir? | **Arap atı** |
 | GK-584 | 2 · bulanık | Hollanda kökenli, simsiyah parlak tüyleri, dalgalı yelesi ve püsküllü bacaklarıyla tanınan at hangisidir? | **Frizyen** |
-| GK-585 | 3 · yakın çekim | Tüyleri kendiliğinden ip gibi örgülere dönüşen bu çoban köpeği hangi ülkenin yerli ırkıdır? | **Macaristan** |
+| GK-585 | 3 · yakın çekim | Tüyleri kendiliğinden ip gibi örgülere dönüşen bu siyah Macar çoban köpeği hangisi? | **Puli** |
 | GK-586 | 3 · bulanık | Orta Afrika kökenli, havlayamayan, şarkıya benzer sesler çıkaran bu köpeğin ırkı nedir? | **Basenji** |
 | GK-587 | 3 · yakın çekim | Burnu ortadan ikiye yarılmış gibi görünen, Tarsus yöresinde yetiştirilen av köpeği hangisi? | **Çatalburun** |
 | GK-588 | 3 · bulanık | Altın gibi metalik parlayan tüyleriyle ünlü bu at, devlet armasında yer aldığı hangi ülkenin simgesidir? | **Türkmenistan** |
@@ -164,7 +164,7 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-616 | 1 · siluet | Kalın gövdesinde su depolayan, yaprakları dikene dönüşmüş çöl bitkisinin adı nedir? | **Kaktüs** |
 | GK-617 | 1 · bulanık | Yaprakları tek tek koparılıp "seviyor, sevmiyor" diye fal bakılan, ortası sarı çiçeğin adı nedir? | **Papatya** |
 | GK-618 | 3 · bulanık | Yapraklarına su ve kir tutunmadığı için "kendi kendini temizleme" etkisine adını veren bitki hangisidir? | **Lotus** |
-| GK-619 | 2 · bulanık | Japonya'da baharda bu çiçekleri seyretmek için ağaç altında toplanma geleneğine ne denir? | **Hanami** |
+| GK-619 | 2 · bulanık | Japonya'nın simgesi sayılan bu çiçek açmış ağacın çiçeğine Japonca ne ad verilir? | **Sakura** |
 | GK-620 | 2 · bulanık | Duvarları ve çardakları sarıp üzüm salkımı gibi sarkan mor çiçekler açan sarılıcı hangisidir? | **Mor salkım** |
 | GK-621 | 2 · siluet | Toroslar'da da yetişen, dalları kat kat yayılan bu ağaç hangi ülkenin bayrağında yer alır? | **Lübnan** |
 | GK-622 | 2 · yakın çekim | Kabuğu ağaca zarar vermeden dokuz yılda bir soyulan bu meşenin kabuğundan ne yapılır? | **Şişe tıpası** |
@@ -293,7 +293,7 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-720 | 3 · bulanık | Avustralya, Yeni Zelanda ve Brezilya bayraklarında da yer alan, güney göğündeki takımyıldız hangisi? | **Güney Haçı** |
 | GK-721 | 3 · yakın çekim | Kesilip asitle dağlanınca kesitinde birbirini kesen kristal bantlar beliren bu demir-nikel kütlesi nedir? | **Demir meteorit** |
 | GK-722 | 2 · bulanık | Apollo 8 astronotlarının 1968'de Ay yörüngesinden çektiği bu ünlü manzara hangi adla bilinir? | **Dünya Doğuşu** |
-| GK-723 | 2 · siluet | 1990'dan beri Dünya çevresinde dolanan görseldeki uzay teleskobu, adını hangi gökbilimciden alır? | **Edwin Hubble** |
+| GK-723 | 2 · siluet | 1990'dan beri Dünya çevresinde dolanan görseldeki uzay teleskobunun adı ne? | **Hubble** |
 | GK-724 | 3 · siluet | 18 parçalı altın kaplı aynası ve beş katlı güneş kalkanıyla 2021'de fırlatılan teleskobun adı ne? | **James Webb** |
 | GK-725 | 1 · siluet | 4 Ekim 1957'de yörüngeye oturarak uzay çağını başlatan, dört antenli ilk yapay uydu hangisi? | **Sputnik 1** |
 | GK-726 | 3 · bulanık | Dünya'nın seslerini ve görüntülerini taşıyan bir altın plakla 1977'de yola çıkan sondanın adı ne? | **Voyager** |
@@ -322,7 +322,7 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-744 | 2 · bulanık | Yolu, iki kule arasında sarkan kalın ana kablolara dikey askılarla bağlanan köprü türü hangisi? | **Asma köprü** |
 | GK-745 | 2 · yakın çekim | Dönen dev kesici başıyla kayayı oyarak ilerleyen, metro tünellerini açan makinenin adı ne? | **Tünel açma makinesi** |
 | GK-746 | 1 · siluet | İnşaatlarda yükleri yüksek katlara taşıyan, karşı ağırlıklı uzun yatay kollu makine hangisi? | **Kule vinç** |
-| GK-747 | 2 · bulanık | 1891'de icat edilen, tepesindeki halkadan havaya mor kıvılcımlar saçan yüksek gerilim düzeneğinin adı ne? | **Tesla bobini** |
+| GK-747 | 2 · bulanık | Santralden gelen yüksek gerilimi evlerde kullanılacak düzeye indiren, direklerdeki bu cihazın adı ne? | **Transformatör** |
 | GK-748 | 2 · siluet | Eğik bir gövdenin içinde dönen sarmal bıçakla suyu aşağıdan yukarıya taşıyan antik düzenek hangisi? | **Arşimet vidası** |
 | GK-749 | 2 · bulanık | Araba ve uçak modellerinin çevresindeki hava akışının duman çizgileriyle incelendiği düzenek hangisi? | **Rüzgâr tüneli** |
 | GK-750 | 1 · bulanık | Türkiye'de pek çok damda görülen, güneşin ısısıyla suyu ısıtıp tankında biriktiren düzeneğe ne ad verilir? | **Güneş kolektörü** |
@@ -657,7 +657,7 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | No | Zorluk · gösterim | Soru | Cevap |
 |---|---|---|---|
 | GK-1011 | 1 · bulanık | Venedikli Marco Polo'nun 13. yüzyılda kervanlarla Çin'e ulaştığı ünlü ticaret yolu hangisi? | **İpek Yolu** |
-| GK-1012 | 1 · bulanık | 1903'te Kitty Hawk kumullarında ilk kontrollü motorlu uçuşu gerçekleştiren kardeşler kimdir? | **Wright kardeşler** |
+| GK-1012 | 1 · bulanık | Kitty Hawk kumullarında ilk kontrollü motorlu uçuş hangi yıl gerçekleştirildi? | **1903** |
 | GK-1013 | 1 · bulanık | Evliya Çelebi'ye göre Galata Kulesi'nden kanat takıp uçarak Üsküdar'a inen kişi kimdir? | **Hezarfen Ahmed Çelebi** |
 | GK-1014 | 1 · bulanık | "Bana bir dayanak noktası verin, Dünya'yı yerinden oynatayım" sözü hangi basit makineyle ilgilidir? | **Kaldıraç** |
 | GK-1015 | 1 · bulanık | Rivayete göre ağaçtan düşen bir elma, Newton'a hangi yasayı düşündürmüştür? | **Kütle çekim yasası** |
@@ -665,8 +665,8 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-1017 | 1 · bulanık | Roald Amundsen ve ekibinin 1911'de köpek kızaklarıyla ilk kez ulaştığı yer neresidir? | **Güney Kutbu** |
 | GK-1018 | 2 · bulanık | İlk yolcuları bir koyun, bir ördek ve bir horoz olan 1783 balon gösterisini hangi kardeşler düzenledi? | **Montgolfier kardeşler** |
 | GK-1019 | 2 · bulanık | Afrika'nın güney ucunu dolaşıp 1498'de deniz yoluyla Hindistan'a ulaşan Portekizli kâşifin adı ne? | **Vasco da Gama** |
-| GK-1020 | 2 · yakın çekim | 1610'da kendi yaptığı teleskopla Jüpiter'in dört büyük uydusunu keşfeden bilgin kimdir? | **Galileo Galilei** |
-| GK-1021 | 2 · yakın çekim | Manastır bahçesindeki bezelyelerle kalıtımın yasalarını bulan bilim insanı kimdir? | **Gregor Mendel** |
+| GK-1020 | 2 · yakın çekim | Galileo 1610'da böyle bir teleskopla hangi gezegenin dört büyük uydusunu keşfetti? | **Jüpiter** |
+| GK-1021 | 2 · yakın çekim | Mendel'in kalıtım yasalarını bulmak için manastır bahçesinde çaprazladığı bitki hangisi? | **Bezelye** |
 | GK-1022 | 2 · yakın çekim | Wilhelm Röntgen'in 1895'te eşinin elinin kemiklerini görüntülediği ışınlara ne ad verilir? | **X ışınları** |
 | GK-1023 | 2 · bulanık | Fırtınada uçurtma uçurarak yıldırımın elektrik olduğunu gösteren Franklin'in icadı hangisi? | **Paratoner** |
 | GK-1024 | 2 · bulanık | Jenner'in 1796'da çiçek aşısını geliştirirken yararlandığı hafif hastalık hangi hayvandan bulaşıyordu? | **İnek** |
@@ -776,6 +776,256 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-1108 | 3 · bulanık | Hangi 19. yüzyıl aygıtı, iki benzer fotoğrafı ayrı merceklerle göstererek derinlik duygusu yaratır? | **Stereoskop** |
 | GK-1109 | 3 · bulanık | Eski telefon görüşmelerinin, görevlilerin kabloları elle takmasıyla bağlandığı merkeze ne ad verilir? | **Santral** |
 | GK-1110 | 3 · yakın çekim | Gümüş kaplı bakır levhaya alınan, ayna gibi parlayan ilk yaygın fotoğraf türü hangisi? | **Dagerreyotip** |
+
+### Tablolar III
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1111 | 1 · ayrıntı | Rüzgârlı tepedeki şemsiyeli kadını hızlı fırça darbeleriyle yakalayan bu tablo hangi akımın ürünüdür? | **İzlenimcilik** |
+| GK-1112 | 1 · ayrıntı | Bale dansçılarını sahnede, kulislerde ve prova salonlarında yüzlerce kez çizen Fransız ressam kim? | **Edgar Degas** |
+| GK-1113 | 2 · ayrıntı | Hollandalı ressam, mavi göğe uzanan çiçekli badem dallarını hangi aile olayı üzerine çizdi? | **Yeğeninin doğumu** |
+| GK-1114 | 2 · ayrıntı | Bir samanlıkta, sökülmüş bir kapı kanadıyla yemek taşınan bu kalabalık köy şöleninin adı ne? | **Köylü Düğünü** |
+| GK-1115 | 3 · ayrıntı | Gülmediği hâlde 'Gülen Süvari' diye anılan, işlemeli kollu bu portrenin Hollandalı ressamı kimdir? | **Frans Hals** |
+| GK-1116 | 2 · ayrıntı | Provence'taki Sainte-Victoire Dağı'nı onlarca kez çizip kübizmin yolunu açan ressam hangisi? | **Paul Cézanne** |
+| GK-1117 | 1 · ayrıntı | Bretanyalı kadınları kırmızı zeminde çizen bu tablo, Tahiti'ye yerleşen hangi ressamın elinden çıktı? | **Paul Gauguin** |
+| GK-1118 | 1 · ayrıntı | Bir odanın duvarını ve masa örtüsünü tek bir kırmızıda eriten, fovizmin önderi olan ressam kim? | **Henri Matisse** |
+| GK-1119 | 1 · ayrıntı | Kahkahalarla alaycı bir mektup yazan bu Kazaklar, efsaneye göre mektubu kime gönderiyor? | **Osmanlı padişahına** |
+| GK-1120 | 3 · ayrıntı | Rahmaninov'a aynı adlı senfonik şiiri yazdıran, kayalık adaya beyaz örtülü yolcu taşıyan tablo hangisi? | **Ölüler Adası** |
+| GK-1121 | 3 · ayrıntı | Kâğıt fenerleri yakan iki kızı, alacakaranlığın birkaç dakikasında her akşam çalışarak çizen ressam kim? | **John Singer Sargent** |
+| GK-1122 | 3 · ayrıntı | Atları yakından incelemek için polisten pantolon izni alan, bu at pazarını çizen kadın ressam kimdir? | **Rosa Bonheur** |
+| GK-1123 | 3 · ayrıntı | Kandinski ile 'Mavi Süvari' grubunu kuran, hayvanları mavi, sarı ve kırmızıyla çizen Alman ressam kim? | **Franz Marc** |
+| GK-1124 | 3 · ayrıntı | Bauhaus'ta ders veren, geometrik parçalardan çocuksu bir yüz kuran bu tablonun ressamı kimdir? | **Paul Klee** |
+| GK-1125 | 3 · ayrıntı | İlk izlenimci sergiye katılan, kız kardeşini bebeğinin beşiği başında çizen kadın ressamın adı ne? | **Berthe Morisot** |
+| GK-1126 | 2 · ayrıntı | Grand Tour'a çıkan İngiliz soylulara Venedik manzaralarını kartpostal netliğinde satan ressam kimdir? | **Canaletto** |
+| GK-1127 | 2 · ayrıntı | Ön plandaki yamuk lekenin yandan bakınca kafatasına dönüştüğü bu Holbein tablosunun adı ne? | **Elçiler** |
+| GK-1128 | 2 · ayrıntı | Velázquez'in 'Mızraklar' diye de anılan, kent anahtarının teslim edildiği tablosu hangi yüzyıldan? | **17. yüzyıl** |
+| GK-1129 | 2 · ayrıntı | Vermeer'in en küçük tablolarından, dantel işleyen genç kadını gösteren bu eser bugün hangi müzede? | **Louvre Müzesi** |
+| GK-1130 | 1 · ayrıntı | Montmartre'nin kabarelerini ve dansçılarını afişlere taşıyan, kısa boylu soylu ressam kim? | **Toulouse-Lautrec** |
+
+### Tablolar IV
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1131 | 1 · ayrıntı | Topkapı'nın ikinci avlusunda elçi geçerken bakır kazanlardaki pilava koşan bu askerler kimdir? | **Yeniçeriler** |
+| GK-1132 | 2 · ayrıntı | Azgın bir fili sürüp tekneli köprüde başka bir filin peşine düşen bu Babürlü imparator kimdir? | **Ekber Şah** |
+| GK-1133 | 2 · ayrıntı | Bu zarif dansçıyı tek figürlü bir albüm resminde çizen Levni, hangi padişahın saray nakkaşıydı? | **III. Ahmed** |
+| GK-1134 | 1 · ayrıntı | Ayvazovski'nin ay ışığında çizdiği, kıyıları kubbe ve minarelerle dolu bu boğaz hangi kentte? | **İstanbul** |
+| GK-1135 | 3 · ayrıntı | Gérôme'un ipek başlıklı portresindeki, Osmanlı ordusunda düzensiz savaşan gönüllü askere ne denirdi? | **Başıbozuk** |
+| GK-1136 | 2 · ayrıntı | Venedik elçilerinin Memlûk valisine sunulduğu, Emevi Camii'nin göründüğü bu tablo hangi kentte geçer? | **Şam** |
+| GK-1137 | 2 · ayrıntı | Osmanlı hanedanının son halifesi olan, "Haremde Beethoven" tablosunu çizen ressam kim? | **Abdülmecid Efendi** |
+| GK-1138 | 3 · ayrıntı | Memling'in çiçekli testisinin altına serilen desenli halı, Avrupa'ya hangi topraklardan gelirdi? | **Anadolu** |
+| GK-1139 | 1 · ayrıntı | Babür imparatoru Cihangir'e Goa'dan getirilen bu Amerika kökenli kuşu saray ressamı çizdi; kuş hangisi? | **Hindi** |
+| GK-1140 | 3 · ayrıntı | Herat'ta yaşayan, iskelede tuğla taşıyan işçilerle bu yapım sahnesini çizen minyatür ustası kimdir? | **Behzad** |
+| GK-1141 | 1 · ayrıntı | Leopar postlu ilk efsanevi hükümdarı gösteren bu minyatür, Firdevsi'nin hangi destanını süsler? | **Şehname** |
+| GK-1142 | 1 · ayrıntı | Eşinin anısına Agra'da beyaz mermer bir türbe yaptıran, atlı portredeki Babürlü imparator kim? | **Şah Cihan** |
+| GK-1143 | 2 · ayrıntı | Gérôme'un halı pazarı tablosu, Memlûk camileri ve çarşılarıyla ünlü hangi Doğu kentinde geçer? | **Kahire** |
+| GK-1144 | 2 · ayrıntı | Vanmour'un Osmanlı giysisiyle çizdiği İngiliz elçi eşi, İstanbul'dan ülkesine hangi uygulamayı taşıdı? | **Çiçek aşısı** |
+| GK-1145 | 3 · ayrıntı | Sargent'ın beyazlara bürünmüş kadını, buhurdandan yükselen hangi değerli kokunun dumanını içine çekiyor? | **Amber** |
+| GK-1146 | 2 · ayrıntı | Kabil yöresinde bu bahçeyi düzenleten, Hindistan'da büyük bir imparatorluk kuran Türk hükümdar kim? | **Babür Şah** |
+| GK-1147 | 3 · ayrıntı | Timur'un saray kapısını bekleyen muhafızları çizen, Orta Asya'yı Rus ordusuyla dolaşan ressam kim? | **Vasili Vereşçagin** |
+| GK-1148 | 3 · ayrıntı | David Roberts'ın, kilit taşı aşağı kaymış dev kapısını çizdiği Lübnan'daki antik kent hangisi? | **Baalbek** |
+| GK-1149 | 3 · ayrıntı | Bellini'nin Fatih'in sarayındayken çizdiği bu genç kâtip resmi bugün hangi ABD kentindedir? | **Boston** |
+| GK-1150 | 1 · ayrıntı | Matrakçı Nasuh'un çizdiği, yüksek bir tepedeki kalesiyle ünlü bu Suriye kenti hangisi? | **Halep** |
+
+### Ünlü heykeller
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1151 | 1 · siluet | Kurdun emzirdiği ikizlerin efsanesini anlatan bu bronz heykel, hangi kentin kuruluşunu simgeler? | **Roma** |
+| GK-1152 | 2 · yakın çekim | Genç firavunun mumyasını örten bu altın maskeyi 1925'te gün ışığına çıkaran İngiliz arkeolog kimdir? | **Howard Carter** |
+| GK-1153 | 2 · bulanık | Her birinin yüzü farklı olan bu binlerce pişmiş toprak asker, hangi Çin imparatorunun mezarını korur? | **Qin Shi Huang** |
+| GK-1154 | 1 · bulanık | Michelangelo'nun yalnızca 24 yaşında bitirdiği, Vatikan'daki anne ve oğul heykeli hangisi? | **Pietà** |
+| GK-1155 | 2 · bulanık | Venedik'teki bu dört bronz at, Haçlıların 1204'te hangi kentten yağmalayıp getirdiği eserlerdendir? | **Konstantinopolis** |
+| GK-1156 | 3 · bulanık | Bir araba yarışı zaferini anmak için dikilen, uzun giysili ve dizgin tutan ünlü Yunan bronzu hangisi? | **Delfi Arabacısı** |
+| GK-1157 | 1 · bulanık | Teslim olmaya giden altı kentliyi anlatan bu bronz grubu, Düşünen Adam'ı da yapan hangi usta yaptı? | **Auguste Rodin** |
+| GK-1158 | 2 · bulanık | Meksika Körfezi kıyısında bulunan, miğfer benzeri başlıklı dev bazalt başlar ne diye bilinir? | **Olmek başları** |
+| GK-1159 | 2 · yakın çekim | Ortasında dilini çıkarmış bir yüz bulunan, Mexico City'deki dev bazalt disk ne diye bilinir? | **Güneş Taşı** |
+| GK-1160 | 3 · siluet | Sırtında Mısır dikilitaşı taşıyan, Roma'daki bu küçük fil heykelini tasarlayan Barok ustası kimdir? | **Gian Lorenzo Bernini** |
+| GK-1161 | 3 · bulanık | İsviçreli muhafızları anmak için kayaya oyulan, ölmek üzere yatan bu aslan anıtı hangisi? | **Luzern Aslanı** |
+| GK-1162 | 2 · bulanık | Sırtüstü yarı uzanıp başını yana çevirmiş, karnında bir kap tutan bu Orta Amerika figürüne ne denir? | **Chac Mool** |
+| GK-1163 | 3 · yakın çekim | Ur kral mezarlarında bulunan, altın bir ağaca dayanmış bu keçi heykelciği hangi uygarlığa ait? | **Sümerler** |
+| GK-1164 | 3 · siluet | Bir toynağını uçan kırlangıcın sırtına basarak dörtnala koşan bu Çin bronzu hangi hanedan döneminden? | **Han Hanedanı** |
+| GK-1165 | 1 · yakın çekim | İstanbul'daki bir yeraltı yapısında sütun kaidesi olarak ters ve yan konmuş bu taş başlar kimi gösterir? | **Medusa** |
+| GK-1166 | 1 · bulanık | Burnu kırık, aslan gövdeli ve insan başlı, piramitlerin önünde yatan dev kireçtaşı heykel hangisi? | **Büyük Sfenks** |
+| GK-1167 | 2 · bulanık | Atina'daki Erekhteion'un çatısını başlarında taşıyan kadın heykeli sütunlara ne ad verilir? | **Karyatid** |
+| GK-1168 | 3 · bulanık | Japonya'da eski hükümdar mezarlarının çevresine dizilen, delik gözlü pişmiş toprak figürlere ne denir? | **Haniwa** |
+| GK-1169 | 1 · bulanık | Londra'da Nelson Sütunu'nun dibini bekleyen dört bronz aslan hangi meydandadır? | **Trafalgar Meydanı** |
+| GK-1170 | 2 · siluet | Efsaneye göre sahibinin mezarı başında 14 yıl bekleyen, Edinburgh'da heykeli olan köpeğin adı ne? | **Greyfriars Bobby** |
+
+### Mitoloji ve efsane yaratıkları
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1171 | 1 · siluet | Medusa'nın kanından doğduğu anlatılan, Zeus'un yıldırımlarını taşıyan kanatlı atın adı ne? | **Pegasus** |
+| GK-1172 | 1 · bulanık | Labirente kapatılan bu boğa başlı yaratığın efsanesi, Kral Minos'un sarayıyla hangi adada geçer? | **Girit** |
+| GK-1173 | 1 · siluet | Yeraltı dünyasının kapısında bekleyip ölülerin kaçmasını engelleyen üç başlı köpek hangisi? | **Kerberos** |
+| GK-1174 | 1 · bulanık | Mardin ve Tarsus yöresinde anlatılan, belden yukarısı kadın, aşağısı yılan olan yılanlar şahı kimdir? | **Şahmeran** |
+| GK-1175 | 1 · bulanık | Boynuzunun zehri yok ettiğine inanılan, İskoçya'nın ulusal hayvanı sayılan efsanevi yaratık hangisi? | **Tek boynuzlu at** |
+| GK-1176 | 2 · bulanık | Dede Korkut hikâyelerinde Oğuzlara kâbus olan Tepegöz'ün tek gözünü kör edip onu yenen yiğit kimdir? | **Basat** |
+| GK-1177 | 1 · siluet | Dolunay gecelerinde insandan kurda dönüştüğüne inanılan, gümüşten korkan yaratığa ne ad verilir? | **Kurt adam** |
+| GK-1178 | 1 · bulanık | Batıdakinin aksine kanatsız olan, yağmur ve bereket getirdiğine inanılan Doğu Asya yaratığı nedir? | **Çin ejderhası** |
+| GK-1179 | 2 · bulanık | Bir başı kesilince yerine iki baş çıkan Lerna canavarı Hydra'yı alt eden kahraman kimdir? | **Herakles** |
+| GK-1180 | 2 · siluet | Kartal başlı ve kanatlı, aslan gövdeli; efsaneye göre altın hazinelerini bekleyen yaratık hangisi? | **Grifon** |
+| GK-1181 | 2 · bulanık | Akhilleus'u ve Asklepios'u yetiştiren bilge Khiron, belden aşağısı at olan hangi yaratık türündendir? | **Kentaur** |
+| GK-1182 | 2 · yakın çekim | Norveç denizcilerinin anlattığı, gemileri kollarıyla sarıp batıran dev deniz canavarının adı nedir? | **Kraken** |
+| GK-1183 | 2 · bulanık | Masallarda kahramanları sırtında taşıyan dev kuş Zümrüdüanka'nın yaşadığı efsanevi dağ hangisi? | **Kaf Dağı** |
+| GK-1184 | 2 · bulanık | Başının tepesindeki çukurdan su dökülünce gücünü yitiren, salatalığa bayılan Japon su yaratığına ne denir? | **Kappa** |
+| GK-1185 | 3 · bulanık | Zemheri gecelerinde dışarıda dolaşıp insanları adlarıyla çağırdığına inanılan Anadolu yaratığı hangisi? | **Karakoncolos** |
+| GK-1186 | 3 · bulanık | Aslan, keçi ve yılandan oluşan ateş soluyan Kimera'yı kanatlı atına binerek yenen kahraman kimdir? | **Bellerophon** |
+| GK-1187 | 3 · yakın çekim | Gölgesinin düştüğü ya da başına konduğu kişinin hükümdar olacağına inanılan cennet kuşuna ne ad verilir? | **Hüma** |
+| GK-1188 | 3 · bulanık | Yaşlandıkça kuyruk sayısı artıp dokuza ulaşan, kılık değiştirebilen Japon efsane tilkisi hangisi? | **Kitsune** |
+| GK-1189 | 3 · bulanık | Sinbad'ın yolculuklarında pençesinde fil taşıyacak kadar büyük olduğu anlatılan kuşun adı ne? | **Rok kuşu** |
+| GK-1190 | 3 · yakın çekim | Orta Çağ bestiyerlerinde bakışıyla öldürdüğü yazılan, horoz başlı ve taçlı yılana ne denir? | **Basilisk** |
+
+### Edebiyat ve masal sahneleri
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1191 | 1 · siluet | Yel değirmenlerini dev sanıp mızrağıyla üzerlerine saldıran şövalyeyi yaratan İspanyol yazar kimdir? | **Miguel de Cervantes** |
+| GK-1192 | 1 · yakın çekim | Issız adada kumda bir insan ayak izi görüp şaşkına dönen kazazede hangi romanın kahramanıdır? | **Robinson Crusoe** |
+| GK-1193 | 1 · bulanık | Kıyıda uyandığında parmak boyundaki insanların onu iplerle yere bağladığını gören gezginin romanı hangisi? | **Gulliver'in Gezileri** |
+| GK-1194 | 2 · bulanık | Kaptan Ahab'ın intikam için peşine düştüğü beyaz balinayı anlatan romanın yazarı kimdir? | **Herman Melville** |
+| GK-1195 | 3 · siluet | Yalan söyledikçe burnu uzayan tahta kuklanın 1883'te yayımlanan öyküsünü yazan İtalyan kimdir? | **Carlo Collodi** |
+| GK-1196 | 1 · bulanık | Kel başı ve kurnazlığıyla devleri, padişahları bile alt eden Türk masal kahramanı hangisi? | **Keloğlan** |
+| GK-1197 | 1 · bulanık | Kopuzuyla Oğuz boylarının destanlarını anlatan bilge ozanın adını taşıyan kitap hangisi? | **Dede Korkut Kitabı** |
+| GK-1198 | 1 · bulanık | Kavalıyla önce fareleri, ücreti ödenmeyince de kasabanın çocuklarını peşine takan masal hangisi? | **Fareli Köyün Kavalcısı** |
+| GK-1199 | 2 · yakın çekim | Mezarcının çıkardığı kafatasına "Zavallı Yorick!" diye seslenen prens hangi oyunun kahramanı? | **Hamlet** |
+| GK-1200 | 1 · bulanık | "Açıl susam açıl!" sözüyle açılan hazine mağarasını bulan oduncu, Binbir Gece'nin hangi masalındadır? | **Ali Baba ve Kırk Haramiler** |
+| GK-1201 | 2 · yakın çekim | Kardeşinin üstüne attığı kaşağı yalanı yüzünden ömür boyu vicdan azabı çeken çocuğun öyküsünü kim yazdı? | **Ömer Seyfettin** |
+| GK-1202 | 2 · bulanık | Çöllere düşüp hayvanlarla dost olan bu âşığın hikâyesini 16. yüzyılda mesneviye döken şair kimdir? | **Fuzuli** |
+| GK-1203 | 3 · bulanık | Aslanın sarayındaki iki kurnaz çakalın hikâyeleriyle ders veren, Hint kökenli ünlü fabl kitabı hangisi? | **Kelile ve Dimne** |
+| GK-1204 | 2 · bulanık | Yetimhanede boş kâsesini uzatıp "Biraz daha alabilir miyim?" diyen çocuk hangi romanın kahramanıdır? | **Oliver Twist** |
+| GK-1205 | 2 · bulanık | Çit boyama cezasını arkadaşlarına ayrıcalık gibi sunup onlara yaptıran çocuk hangi romanın kahramanı? | **Tom Sawyer'ın Maceraları** |
+| GK-1206 | 3 · siluet | Bir top güllesine binip düşman kalesine uçtuğunu anlatan, abartılı maceraların yalancı baronu kimdir? | **Baron Münchhausen** |
+| GK-1207 | 3 · yakın çekim | Omzundaki papağanı ve tahta bacağıyla tanınan aşçı korsan Uzun John Silver hangi romandadır? | **Define Adası** |
+| GK-1208 | 3 · bulanık | Han sahiplerinin hizmetçi gibi çalıştırdığı, boyundan büyük süpürgeyle görülen Cosette hangi romandadır? | **Sefiller** |
+| GK-1209 | 3 · bulanık | Kurtardığı kaplumbağanın sırtında deniz altındaki saraya giden balıkçının Japon masalı hangisi? | **Urashima Taro** |
+| GK-1210 | 2 · bulanık | Sevdiğine kavuşmak için dağı delip su getirmeye çalışan âşığın anlatıldığı halk hikâyesinin adı ne? | **Ferhat ile Şirin** |
+
+### Dans, tiyatro ve sahne sanatları
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1211 | 1 · siluet | Sağ avucu göğe, sol avucu yere dönük, beyaz tennuresiyle kendi çevresinde dönen kişiye ne denir? | **Semazen** |
+| GK-1212 | 1 · bulanık | Başta mendil sallayan biriyle omuz omuza, parmak parmağa kenetlenip oynanan Anadolu oyunu hangisi? | **Halay** |
+| GK-1213 | 1 · siluet | Buenos Aires'in liman mahallelerinde doğan, sıkı sarılarak yapılan tutkulu çift dansının adı ne? | **Tango** |
+| GK-1214 | 2 · yakın çekim | Balede "plié", "pirouette" ve "arabesque" gibi hareket adlarının tümü hangi dildendir? | **Fransızca** |
+| GK-1215 | 2 · bulanık | Japonların Kabuki tiyatrosunda 17. yüzyıldan bu yana kadın rollerini de kimler oynar? | **Erkek oyuncular** |
+| GK-1216 | 3 · yakın çekim | Açısına göre gülüyor ya da ağlıyor gibi görünen bu ahşap maskeler hangi Japon tiyatrosunda kullanılır? | **Noh** |
+| GK-1217 | 2 · bulanık | Karagöz perdesine renkli gölgesi düşen tasvirler geleneksel olarak hangi deriden yapılır? | **Deve derisi** |
+| GK-1218 | 1 · siluet | Hiç konuşmadan yalnız yüz ifadesi ve beden hareketleriyle öykü anlatılan sahne sanatı hangisi? | **Pandomim** |
+| GK-1219 | 3 · bulanık | Pişekâr ile Kavuklu'nun seyircinin ortasında, açık meydanda oynadığı geleneksel tiyatroya ne denir? | **Orta oyunu** |
+| GK-1220 | 3 · yakın çekim | Yeşile boyanmış yüzü, beyaz çene çerçevesi ve dev başlığıyla tanınan Güney Hindistan dans-tiyatrosu nedir? | **Kathakali** |
+| GK-1221 | 2 · bulanık | Arlecchino ve Pantalone gibi maskeli tip karakterleriyle doğaçlama oynanan İtalyan halk tiyatrosu hangisi? | **Commedia dell'arte** |
+| GK-1222 | 3 · yakın çekim | Endonezya'nın Cava adasında, delik delik işlenmiş deri kuklalarla oynanan gölge tiyatrosuna ne denir? | **Wayang kulit** |
+| GK-1223 | 1 · bulanık | 1964 yapımı "Zorba" filmi için yaratılıp Yunanistan'ın simgesi olan omuz omuza dans hangisi? | **Sirtaki** |
+| GK-1224 | 2 · bulanık | Kollar gövdeye yapışık, bütün hareketin ayaklarla yapıldığı bu sert ayakkabılı halk dansı hangi ülkenin? | **İrlanda** |
+| GK-1225 | 3 · bulanık | Yüz boyalarının renkleri karakteri anlatan, sülün tüylü başlıklarla oynanan Çin sahne sanatı hangisi? | **Pekin Operası** |
+| GK-1226 | 1 · bulanık | Üç zamanlı müzikle çiftlerin dönerek süzüldüğü, Strauss'un bestelerine adını veren dansın adı nedir? | **Vals** |
+| GK-1227 | 2 · bulanık | Kölelerin dövüşü dansla gizlediği anlatılan, berimbau eşliğindeki Brezilya dans-dövüşüne ne ad verilir? | **Capoeira** |
+| GK-1228 | 1 · bulanık | Kemençe eşliğinde omuzları titreterek, hızlı ve sık adımlarla oynanan Karadeniz oyunu hangisi? | **Horon** |
+| GK-1229 | 2 · bulanık | Ellerindeki tahta kaşıkları vurarak ritim tutan, Konya ve Silifke'yle anılan halk oyununun adı ne? | **Kaşık oyunu** |
+| GK-1230 | 3 · bulanık | Her büyük kuklayı üç kişinin oynattığı, yardımcıların siyahlar giydiği Japon kukla tiyatrosu nedir? | **Bunraku** |
+
+### Dünya el sanatları
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1231 | 1 · siluet | Tek bir kare kâğıdı kesmeden yalnız katlayarak turna gibi biçimlere dönüştüren Japon sanatı hangisi? | **Origami** |
+| GK-1232 | 1 · bulanık | Karnavalda kimliği gizlemek için takılan, kâğıt hamurundan yapılıp yaldızlanan bu maskeye ne ad verilir? | **Venedik maskesi** |
+| GK-1233 | 1 · siluet | İçi şekerle doldurulup gözü bağlı çocukların sopayla kırdığı, Meksika'yla özdeşleşen süs hangisi? | **Piñata** |
+| GK-1234 | 1 · siluet | Kötü rüyaları ağında yakaladığına inanılan, Kuzey Amerika yerlilerinden kalma bu eşya hangisi? | **Düş kapanı** |
+| GK-1235 | 1 · bulanık | Renkli camların kurşun şeritlerle birleştirildiği, Gotik katedrallerle ünlü pencere sanatının adı ne? | **Vitray** |
+| GK-1236 | 1 · yakın çekim | Farklı kumaş artıklarının küçük parçalar hâlinde dikilip birleştirildiği yorgan ve örtü sanatına ne denir? | **Kırkyama** |
+| GK-1237 | 2 · bulanık | Millefiori denen çiçekli desenleriyle ünlü, Venedik yakınındaki bir adada üretilen renkli cam hangisi? | **Murano camı** |
+| GK-1238 | 2 · bulanık | Çin porselenini taklit edip beyaz zemine mavi yel değirmenleri çizen Hollanda seramiğinin adı nedir? | **Delft çinisi** |
+| GK-1239 | 2 · yakın çekim | Kumaşa erimiş mumla desen çizip boyayarak yapılan, Endonezya'yla özdeşleşen tekstil sanatı nedir? | **Batik** |
+| GK-1240 | 2 · bulanık | Hiç iğne ya da tığ kullanmadan, ipleri yalnız düğümleyerek süs örme sanatına ne denir? | **Makrome** |
+| GK-1241 | 2 · bulanık | Portekiz'de bina cephelerini baştan aşağı kaplayan, çoğu mavi-beyaz boyalı sırlı çinilere ne denir? | **Azulejo** |
+| GK-1242 | 2 · bulanık | Günlerce emekle renkli kumdan yapılıp bitince hemen bozulan bu mandala hangi dinin keşişlerine özgüdür? | **Budizm** |
+| GK-1243 | 3 · yakın çekim | Kırık seramiğin çatlaklarını gizlemek yerine altın tozlu vernikle öne çıkaran Japon sanatı hangisi? | **Kintsugi** |
+| GK-1244 | 3 · yakın çekim | ABD'nin güneybatısında dikey tezgâhta dokunan, basamaklı elmas desenli bu halılar hangi yerli halkının? | **Navajo** |
+| GK-1245 | 3 · yakın çekim | Dar şeritlerin yan yana dikildiği, rengârenk desenli kente kumaşı hangi Batı Afrika ülkesinindir? | **Gana** |
+| GK-1246 | 3 · yakın çekim | Siyah zemine kırmızı yemişler ve altın sarısı yapraklar boyanan Rus tahta eşya süslemesine ne denir? | **Hohloma** |
+| GK-1247 | 3 · yakın çekim | Renkli taşları kesip mermere gömerek çiçek desenleri yapan, Rönesans Floransa'sında gelişen sanat hangisi? | **Pietra dura** |
+| GK-1248 | 2 · bulanık | Su kaynaklarını ve hayvan izlerini renkli noktalarla anlatan bu resimler hangi kıtanın yerlilerine özgü? | **Avustralya** |
+| GK-1249 | 3 · bulanık | Derin kesim desenleri ışıkta gökkuşağı gibi parlayan Bohem kristali hangi ülkenin geleneksel camcılığıdır? | **Çekya** |
+| GK-1250 | 2 · bulanık | Adına rağmen Panama şapkası aslında hangi ülkede, toquilla palmiyesinin liflerinden dokunur? | **Ekvador** |
+
+### Müzik aletleri II
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1251 | 1 · bulanık | Torbasındaki havayı sürekli ses veren üç borudan salan, İskoç alaylarıyla özdeşleşen çalgının adı ne? | **Gayda** |
+| GK-1252 | 1 · siluet | Gövdesi davul gibi deri kaplı, ABD'nin country ve bluegrass müziğiyle özdeşleşen beş telli çalgı nedir? | **Banjo** |
+| GK-1253 | 1 · siluet | Portekizli göçmenlerin getirdiği bir çalgıdan doğan, Hawaii'yle özdeşleşen dört telli küçük çalgı hangisi? | **Ukulele** |
+| GK-1254 | 1 · bulanık | Kucağa alınıp parmaklarla çalınan, kadeh biçimli ve tek yüzü deri kaplı vurmalı çalgıya ne denir? | **Darbuka** |
+| GK-1255 | 1 · siluet | İçi tohum dolu su kabaklarının sallanınca hışırdadığı, Latin Amerika müziğinin vazgeçilmez çalgısı nedir? | **Marakas** |
+| GK-1256 | 1 · yakın çekim | Parmaklara bağlanıp birbirine vurulan, flamenko dansçılarının elindeki istiridye biçimli çalgı nedir? | **Kastanyet** |
+| GK-1257 | 2 · bulanık | Boyları farklı kamış boruların yan yana bağlandığı, adını bir Yunan çoban tanrısından alan çalgı hangisi? | **Pan flütü** |
+| GK-1258 | 2 · bulanık | Ginkgo yaprağı biçimli mızrapla çalınan, kare deri gövdeli üç telli Japon çalgısına ne ad verilir? | **Şamisen** |
+| GK-1259 | 3 · yakın çekim | Deri yüzlerinin ortasında kara bir ayar macunu dairesi bulunan, Hint müziğinin ikili el davulu hangisi? | **Tabla** |
+| GK-1260 | 2 · yakın çekim | Petrol varillerinin dövülüp akort edilmesiyle doğan bu çalgı hangi Karayip ülkesinin ulusal çalgısıdır? | **Trinidad ve Tobago** |
+| GK-1261 | 2 · yakın çekim | Tahta kutu üstündeki ince metal dilleri başparmakla çekerek çalınan, Afrika kökenli çalgıya ne denir? | **Kalimba** |
+| GK-1262 | 3 · bulanık | Su kabağı gövdeli, 21 telli; Batı Afrika'nın griot denen ozanlarının çaldığı çalgı hangisi? | **Kora** |
+| GK-1263 | 2 · siluet | Yayının kılları iki telinin arasından geçen, dik tutularak çalınan Çin çalgısının adı ne? | **Erhu** |
+| GK-1264 | 2 · bulanık | Boyu üç metreyi aşabilen, üflenince dağlarda yankılanan bu ahşap boru hangi ülkenin simgesidir? | **İsviçre** |
+| GK-1265 | 3 · bulanık | Sapının ucu at başı biçiminde oyulmuş, iki telli bu yaylı çalgı hangi ülkenin ulusal simgesidir? | **Moğolistan** |
+| GK-1266 | 3 · yakın çekim | Telleri iki ince tokmakla vurularak çalınan, yamuk gövdeli İran ve Osmanlı çalgısı hangisi? | **Santur** |
+| GK-1267 | 3 · bulanık | Almanya'da kilise müziği için yapılıp tangonun ruhu hâline gelen, düğmeli körüklü çalgı hangisi? | **Bandoneon** |
+| GK-1268 | 3 · bulanık | Zen keşişlerinin meditasyon için çaldığı, bambu kökünden yapılan dikine Japon flütüne ne ad verilir? | **Shakuhachi** |
+| GK-1269 | 3 · bulanık | Eskiden gövdesi armadillo kabuğundan yapılan, on telli bu küçük çalgı hangi dağların halklarına özgüdür? | **And Dağları** |
+| GK-1270 | 1 · bulanık | Ortası kabarık bronz diskin tokmakla vurulmasıyla uzun yankılı ses veren Doğu Asya çalgısı nedir? | **Gong** |
+
+### Olimpiyat branşları ve ekipmanları
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1271 | 2 · bulanık | Sporcuların koşup sıçrama tahtasından aldıkları güçle üstünden atladığı bu jimnastik aleti hangisi? | **Atlama masası** |
+| GK-1272 | 1 · siluet | Erkek jimnastiğinde kayışlarla asılı iki tutamakta "haç" duruşu yapılan alet hangisi? | **Halka** |
+| GK-1273 | 1 · bulanık | Yalnızca 10 santimetre genişliğinde, yerden yüksek bir kirişte yapılan kadın jimnastik aletinin adı ne? | **Denge aleti** |
+| GK-1274 | 3 · bulanık | Kadın jimnastiğinde farklı yükseklikteki iki bar arasında geçişlerle yapılan alet hangisi? | **Asimetrik paralel** |
+| GK-1275 | 1 · yakın çekim | Kurdele, çember ve lobutla müzik eşliğinde yapılan, olimpiyatlarda yalnız kadınların yarıştığı dal nedir? | **Ritmik jimnastik** |
+| GK-1276 | 1 · bulanık | Antik olimpiyatlarda da bulunan, erkeklerde 2 kilogramlık yassı bir aleti fırlatma yarışının adı ne? | **Disk atma** |
+| GK-1277 | 2 · bulanık | Erkekler 110 metre engelli koşusunda bir atlet bitişe dek kaç engelin üstünden geçer? | **10** |
+| GK-1278 | 3 · bulanık | Yüksek atlamada sırtüstü geçme tekniğine adını veren, 1968 olimpiyatlarında altın alan atlet kimdir? | **Dick Fosbury** |
+| GK-1279 | 1 · yakın çekim | Dört koşucunun sırayla elden ele aktardığı bu kısa sopa hangi atletizm yarışında kullanılır? | **Bayrak yarışı** |
+| GK-1280 | 3 · yakın çekim | Olimpiyatlarda klasik yay okçuları, 122 santimetre çaplı bu hedefe kaç metreden atış yapar? | **70 metre** |
+| GK-1281 | 3 · yakın çekim | Eskrimde bütün vücudun geçerli hedef sayıldığı, büyük çanaklı ve en ağır silah hangisi? | **Epe** |
+| GK-1282 | 2 · bulanık | Puanların elektronik göğüs koruyucuyla ölçüldüğü, yüksek tekmeleriyle ünlü Kore dövüş sporu nedir? | **Tekvando** |
+| GK-1283 | 1 · bulanık | Rüzgârın gücüyle teknelerin şamandıralar arasındaki parkurda yarıştığı olimpik su sporu hangisi? | **Yelken** |
+| GK-1284 | 2 · bulanık | Pist bisikleti yarışlarının yapıldığı, virajları çok dik eğimli ahşap parkurlu salona ne denir? | **Velodrom** |
+| GK-1285 | 2 · siluet | Sırtüstü yatıp ayaklar önde, buz kanalında saatte 140 kilometreyi aşan hızlara ulaşılan dal hangisi? | **Kızak** |
+| GK-1286 | 3 · bulanık | Sporcunun yüzüstü yatıp baş önde aşağı indiği, en yalın kızaklı olimpik dala ne ad verilir? | **Skeleton** |
+| GK-1287 | 1 · bulanık | Tek tahta üzerine iki ayak yan yana bağlanarak karlı yamaçtan kayılan kış sporunun adı nedir? | **Snowboard** |
+| GK-1288 | 3 · bulanık | Atın binicinin neredeyse görünmez işaretleriyle zarif figürler yaptığı, "at balesi" denen dala ne denir? | **Dresaj** |
+| GK-1289 | 2 · bulanık | Renkli tutamaklarla kaplı yapay duvarlarda yapılan, ilk kez Tokyo'da olimpik olan dalın adı ne? | **Spor tırmanışı** |
+| GK-1290 | 2 · bulanık | Her olimpiyat öncesinde meşale ateşi, güneş ışınlarını toplayan bir aynayla hangi antik kentte yakılır? | **Olimpia** |
+
+### Dünya sporları ve oyun alanları
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1291 | 1 · bulanık | Kafesli kask ve sivri uçlu oval topla oynanan, ABD'de en çok izlenen takım sporu hangisi? | **Amerikan futbolu** |
+| GK-1292 | 1 · yakın çekim | Duvardaki yuvarlak tahtaya üç ok atılarak puan toplanan, İngiliz barlarında doğmuş oyunun adı ne? | **Dart** |
+| GK-1293 | 2 · bulanık | Sumo güreşçilerinin karşılaştığı, kil zeminli ve hasır balya çemberli yükseltiye ne ad verilir? | **Dohyo** |
+| GK-1294 | 2 · yakın çekim | Krikette topu atanın devirmeye çalıştığı, üç kazık ve iki küçük çubuktan oluşan hedefe ne denir? | **Wicket** |
+| GK-1295 | 3 · yakın çekim | Olimpik curling taşlarının çoğunun granitinin çıkarıldığı, İskoçya açıklarındaki ada hangisi? | **Ailsa Craig** |
+| GK-1296 | 3 · bulanık | Akıncının tek nefeste rakip yarı sahaya dalıp oyuncuya dokunup döndüğü Güney Asya takım sporu nedir? | **Kabaddi** |
+| GK-1297 | 3 · bulanık | Dişbudak ağacından yassı sopa ve küçük deri topla oynanan, en hızlı çim sporlarından hangisidir? | **Hurling** |
+| GK-1298 | 3 · yakın çekim | Bileğe takılan uzun hasır sepetle topun duvara fırlatıldığı jai alai hangi halkın geleneksel oyunudur? | **Basklar** |
+| GK-1299 | 3 · yakın çekim | Topa elle değmeden ayakla oynanan sepak takravın geleneksel topu hangi bitkiden örülür? | **Rattan** |
+| GK-1300 | 2 · bulanık | Bambu kılıç ve ızgaralı kaskla oynanan, samuray kılıç sanatından doğan Japon sporuna ne denir? | **Kendo** |
+| GK-1301 | 3 · bulanık | Potası panyasız olan, topu tutan oyuncunun adım atamadığı ve basketbolu andıran spor hangisi? | **Netbol** |
+| GK-1302 | 2 · bulanık | Uzun saplı tokmakla tahta topların çime gömülü küçük kemerlerden geçirildiği bahçe oyununun adı nedir? | **Kroket** |
+| GK-1303 | 1 · bulanık | Camla çevrili küçük kortta delikli, telsiz raketlerle oynanan, duvarların da kullanıldığı spor hangisi? | **Padel** |
+| GK-1304 | 2 · bulanık | Dövüş öncesi kutsal mongkhon başlığının takıldığı, "sekiz uzuv sanatı" denen Tay dövüş sporu nedir? | **Muay Thai** |
+| GK-1305 | 3 · bulanık | Atlı oyuncuların altı tutamaklı bir topu kapıştığı "pato" oyunu hangi ülkenin ulusal sporudur? | **Arjantin** |
+| GK-1306 | 2 · bulanık | İskoç Highland oyunlarında uzun bir ağaç gövdesini havada ters döndürerek fırlatma yarışının adı ne? | **Kütük atma** |
+| GK-1307 | 1 · siluet | Rampalı parklarda "ollie" gibi sıçrayışlarla sürülen, altında dört küçük tekerlek olan tahta hangisi? | **Kaykay** |
+| GK-1308 | 1 · siluet | Pek çok Formula 1 pilotunun başladığı, küçük motorlu açık tekerlekli araçların sporuna ne ad verilir? | **Go-kart** |
+| GK-1309 | 1 · bulanık | Şişme botla, kürek çekerek coşkulu akarsuların azgın akıntılarını aşma sporu hangisi? | **Rafting** |
+| GK-1310 | 1 · bulanık | Buz baltası, krampon ve ipin temel donanımı olduğu, yüksek zirvelere tırmanma sporunun adı ne? | **Dağcılık** |
 
 ### Bilim insanları
 

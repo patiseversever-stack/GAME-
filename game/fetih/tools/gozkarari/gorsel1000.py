@@ -65,7 +65,7 @@ KURAL_PORTRE = '''**Ünlü kişi portreleri ({ilk} – {son}):** Bu maddelerde g
 KURAL_YP = '''**Her görselde geçerli kurallar:**
 - Kare 1:1 (1024×1024).
 - Dış zemin SAF BEYAZ (#FFFFFF), düz; zemin, gökyüzü, manzara, insan, araç, gölge YOK. Yapı tek başına, bütünüyle ve ortada; dört kenarda boşluk kalsın.
-- Beyaz ya da açık renkli yapılar (mermer, badana) fildişi/açık taş tonunda ve gölgeli çizilsin ki beyaz zeminden ayrılsın.
+- Beyaz ya da çok açık renkli yüzeyler (mermer, badana) hafif gölgeli çizilsin ki beyaz zeminden ayrılsın; yapının öteki renkleri (bakır yeşili kubbe, kırmızı tuğla, yaldız, renkli çini) gerçekteki gibi kalsın.
 - Görselde hiçbir yazı, harf, rakam, tabela, yazıt, imza, filigran ya da logo olmayacak.
 - Yapı gerçeğine sadık olsun: kule, kubbe, minare, kemer sayısı ve biçimi komutta nasılsa öyle.
 - Bütün görseller aynı üslupta: komutun sonundaki 3D mimari maket üslubu.'''
@@ -152,7 +152,9 @@ else:
 # özet (kullanıcı için)
 o = ['# 1100 YENİ GÖRSEL · özet (1000 + 100 ünlü kişi portresi)', '',
      'Bu dosya senin için: her görselin numarası, oyunda hangi soru tipine gideceği, sorusu ve doğru cevabı.',
-     'ChatGPT\'ye bu dosyayı DEĞİL, aşağıdaki parça dosyalarını ver (her biri kendi içinde talimatlı; soru ve cevap yazmaz ki görsele yazı sızmasın).', '',
+     '**ChatGPT\'ye bu dosyayı DEĞİL, `GORSEL-1000-TEK.md` dosyasını ver**: 1100 komutun hepsi tek dosyada, en başta tek talimat; '
+     'ChatGPT görselleri sırayla üretir ve her grup bitince o grubun ZIP\'ini verir (6 ZIP). Talimatlı dosyada soru ve cevap yoktur '
+     '(görsele yazı sızmasın). Aşağıdaki parça dosyaları aynı komutların gruplara bölünmüş hâlidir; istersen onları da kullanabilirsin.', '',
      '## Parçalar', '', '| Parça | Numaralar | Görsel | Soru tipi | ZIP adı |', '|---|---|---|---|---|']
 satir = {}
 for md, zipad, ilk, son in parcalar:
@@ -162,8 +164,8 @@ for k in range(1, 7):
     ara = f'GK-{511 + 200 * (k - 1)} – GK-{710 + 200 * (k - 1)}' if k < 5 else 'YP-101 – YP-300' if k == 5 else 'GK-1311 – GK-1410'
     tip = 'Göz Kararı' if k < 5 else 'Kazı Kazan + Gölge Oyunu' if k == 5 else 'Göz Kararı (ünlü kişi portreleri)'
     o.append(satir.get(k, f"| `GORSEL-1000-K{k}.md` | {ara} | {100 if k == 6 else 200} | {tip} | hazırlanıyor |"))
-o += ['', '**Kullanım:** her parça için ChatGPT\'de yeni bir sohbet aç, parça dosyasını ekle ve "Talimatı uygula, başla" yaz. Durursa "devam" yaz. '
-      'Bitince verdiği ZIP\'i bana gönder.', '',
+o += ['', '**Kullanım:** ChatGPT\'de yeni bir sohbet aç, `GORSEL-1000-TEK.md` dosyasını ekle ve "Talimatı uygula, başla" yaz. Durursa '
+      '"devam" yaz. Sohbet dolarsa yeni sohbet aç, aynı dosyayı ver ve kaldığın numarayı yaz ("GK-731\'den başla"). Gelen her ZIP\'i bana gönder.', '',
       'Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görseli gelmeyen numara maçta çıkmaz.', '',
       '## Görsel nereye gidiyor', '',
       '- **Göz Kararı:** görsel bulanıktan netleşir, yakından uzaklaşır, siluetten renge geçer ya da bir tablonun parçasından bütününe açılır; 4 şıktan biri seçilir.',
