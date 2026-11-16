@@ -103,6 +103,39 @@ for k in range(4):
 if len(yp) == 200:
     parcalar.append(parca(5, 'YAPI GÖRSELLERİ (Kazı Kazan + Gölge Oyunu)', yp, 'yp'))
 
+# TEK DOSYA (kullanıcı isteği: "tek md"): 1000 komutun hepsi, tek talimatla. Yalnız 1000'in hepsi hazırsa yazılır.
+# ChatGPT'ye tek dosya verilir; görseller 200'lük gruplar hâlinde üretilip her grup kendi ZIP'inde verilir (bir sohbette
+# 1000 görsel sınıra takılır: "devam" ile sürer, yeni sohbette dosya yeniden verilip kalınan numaradan başlanır).
+if len(gk) == 800 and len(yp) == 200:
+    t = ['# 1000 GÖRSEL · TEK DOSYA (GK-511 – GK-1310 ve YP-101 – YP-300)', '', '## ChatGPT için talimat (önce bunu oku, sonra hemen başla)', '',
+         'Bu dosyada bir bilgi yarışması oyunu için 1000 görsel komutu var: 800 tanesi yatay 4:3 sahne görseli (GK-…), 200 tanesi '
+         'beyaz zeminde kare yapı görseli (YP-…). Görevin:', '',
+         '1. Komutların HEPSİNİ, dosyadaki sırayla, her komut için ayrı bir görsel olarak üret.',
+         '2. Bana hiçbir soru sorma, onay bekleme, ara özet yazma. Bir görsel bitince hemen sıradakine geç. Sınıra takılıp durursan, '
+         'ben "devam" yazınca kaldığın numaradan sürdür. Ben "GK-731\'den başla" gibi bir numara yazarsam o numaradan devam et.',
+         '3. Her görselin altına yalnızca numarasını yaz ve görseli o adla sakla (GK-511.png, YP-101.png).',
+         '4. Her 200 görsel bitince o grubu TEK bir ZIP dosyasında ver (aşağıdaki tabloda grubun ZIP adı yazıyor). Üretemediğin numara '
+         'olursa ZIP\'ten sonra listesini yaz, sonra sıradaki gruba geç.', '',
+         '| Grup | Numaralar | ZIP adı |', '|---|---|---|']
+    gruplar = [(f'GK-{511 + 200 * k}', f'GK-{710 + 200 * k}', f'Gorsel-1000-K{k + 1}.zip') for k in range(4)] + [('YP-101', 'YP-300', 'Gorsel-1000-K5.zip')]
+    for i, (a, b, z) in enumerate(gruplar):
+        t.append(f'| {i + 1} | {a} – {b} | **{z}** |')
+    t += ['', '### GK görsellerinde (GK-511 – GK-1310) geçerli kurallar', '', KURAL_GK.split('\n', 1)[1]]
+    tab = [x for x in gk if x['us'].startswith('Tablo')]
+    if tab:
+        t += ['', KURAL_TABLO.format(ilk=tab[0]['id'], son=tab[-1]['id']) + ' Tablo maddeleri başlıklarında "Tablo (aslına sadık)" yazar.']
+    t += ['', '### YP görsellerinde (YP-101 – YP-300) geçerli kurallar', '', KURAL_YP.split('\n', 1)[1], '', '## Komutlar', '']
+    for k, (a, b, z) in enumerate(gruplar):
+        liste = gk[200 * k:200 * (k + 1)] if k < 4 else yp
+        t += [f'### Grup {k + 1}: {a} – {b} (bitince {z})', '']
+        for x in liste:
+            us = x['us'] if k < 4 else '3D yapı · kare · beyaz zemin'
+            t += [f"**{x['id']}** · {us}  ", x['cmd'], '']
+    open(os.path.join(ROOT, 'GORSEL-1000-TEK.md'), 'w').write('\n'.join(t).rstrip() + '\n')
+    print('yazıldı: GORSEL-1000-TEK.md (1000 komut)')
+else:
+    print(f'tek dosya bekliyor: Göz Kararı {len(gk)}/800, yapı {len(yp)}/200')
+
 # özet (kullanıcı için)
 o = ['# 1000 YENİ GÖRSEL · özet', '',
      'Bu dosya senin için: her görselin numarası, oyunda hangi soru tipine gideceği, sorusu ve doğru cevabı.',
