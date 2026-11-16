@@ -7,6 +7,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 process.chdir(new URL('../../..', import.meta.url).pathname);
 await import('../../../test/kanca.mjs');
 const { ihlaller } = await import('../../../src/quiz/sinirlar.js');
+const { ek } = await import('../../../src/quiz/ek.js');
 
 const ILCE = JSON.parse(readFileSync('tools/veri/ham/ilceler.json', 'utf8'));
 const TR = JSON.parse(readFileSync('src/data/turkiye.json', 'utf8')).provinces;
@@ -189,11 +190,54 @@ const secim = readFileSync('tools/veri/pilot/ilce_secim.txt', 'utf8')
 	.filter((l) => l && !l.startsWith('#'))
 	.map((l) => {
 		// 4. alan (isteğe bağlı): soruda görünen ad, Wikidata etiketi TDK/resmî yazımdan ayrıysa (Kahta → Kâhta)
-		const [ad, il, z, goster] = l.split('|').map((x) => x.trim());
-		return { ad, il, diff: Number(z), goster: goster || ad };
+		// 5. alan (isteğe bağlı): ilçeye özgü kesin ipucu, sıfat öbeği ("Cunda Adası'nın bağlı olduğu")
+		const [ad, il, z, goster, ipucu] = l.split('|').map((x) => x.trim());
+		return { ad, il, diff: Number(z), goster: goster || ad, ipucu: ipucu || '' };
 	});
 
-const KALIP = [(a) => `${a} hangi ilin ilçesidir?`, (a) => `${a} ilçesi hangi ildedir?`, (a) => `${a} hangi ile bağlı bir ilçedir?`];
+// Soru kalıpları (kullanıcı, 16 Kasım 2026: "Türkçe soru yapısı hep aynı, şurası hangi ildedir hep aynı"). İpucu olan ilçe
+// ipuçlu kalıpla sorulur; kalıplar sırayla dağıtılır (her kalıba eşit pay), sıra kimliğin özetine göre (yeniden üretimde
+// aynı soru aynı kalıbı alır). Sınırı aşan kalıp atlanır, sıradaki denenir. Ekler ek.js'ten (ilçe adları Türkçe).
+const KALIP = [
+	(a) => `${a} hangi ilin ilçesidir?`,
+	(a) => `${a} ilçesi hangi ilimizde yer alır?`,
+	(a) => `${a} hangi ile bağlı bir ilçedir?`,
+	(a) => `Haritada ${a} ilçesini hangi ilin sınırları içinde bulursun?`,
+	(a) => `${ek(a, 'e')} giden bir gezgin hangi ilimize varmış olur?`,
+	(a) => `${ek(a, 'in')} bağlı olduğu il hangisi?`,
+];
+const KALIP_IP = [
+	(a, h) => `${h} ${a} hangi ilimizdedir?`,
+	// "bağlı olduğu" ipucuyla "hangi ile bağlıdır?" yan yana gelmesin diye ipuçlu kalıplarda "bağlı" yok
+	(a, h) => `${h} ${a} ilçesi hangi ilimizde yer alır?`,
+	(a, h) => `${h} ${a} hangi ilin ilçesidir?`,
+];
+// Haritada bul: "X nerede?" gibi çıplak kalıp yok (test/harita.test.mjs: en az 4 kelime); nokta ilçe merkezidir.
+const PIN = [
+	(a) => `${a} ilçe merkezi nerede?`,
+	(a) => `${a} ilçesinin merkezi haritanın neresinde?`,
+	(a) => `${ek(a, 'in')} ilçe merkezini haritada bulabilir misin?`,
+];
+const PIN_IP = [(a, h) => `${h} ${a} ilçesinin merkezi nerede?`, (a, h) => `${h} ${ek(a, 'in')} ilçe merkezi nerede?`];
+const dagit = (liste, kaliplar, ipKaliplar) => {
+	const sira = (q) => h32(q.kaynak + 'k');
+	for (const ip of [true, false]) {
+		const grup = liste.filter((q) => !!secimOf.get(q).ipucu === ip).sort((a, b) => sira(a) - sira(b));
+		const k = ip ? ipKaliplar : kaliplar;
+		grup.forEach((q, i) => {
+			const s = secimOf.get(q);
+			const adaylar = [...k.map((f) => f(s.goster, s.ipucu)), ...(ip ? kaliplar.map((f) => f(s.goster)) : [])];
+			for (let j = 0; j < adaylar.length; j++) {
+				const metin = adaylar[j < k.length ? (i + j) % k.length : j];
+				if (!ihlaller({ ...q, q: metin }).length) {
+					q.q = metin;
+					break;
+				}
+			}
+		});
+	}
+};
+const secimOf = new Map(); // soru → seçim satırı
 const rapor = { secilen: secim.length, atlanan: [], test: 0, harita: 0, zorluk: { 1: 0, 2: 0, 3: 0 }, haritaZorluk: { 1: 0, 2: 0, 3: 0 }, haritaIcBolge: [], bankada: [], bankadaHarita: [] };
 const test = [];
 const harita = [];
@@ -243,7 +287,7 @@ for (const s of secim) {
 		cat: 'cografya',
 		diff: s.diff,
 		type: 'choice',
-		q: KALIP[seed % KALIP.length](s.goster),
+		q: KALIP[0](s.goster), // kalıp aşağıda, bütün aile seçildikten sonra dengeli dağıtılır
 		a: [s.il, ...yanlis.slice(0, 3)],
 		kaynak: k.qid,
 	};
@@ -252,6 +296,7 @@ for (const s of secim) {
 		rapor.atlanan.push(`${s.ad}: ${ih.length ? 'uzunluk ' + ih.map((v) => v.alan).join(',') : 'çeldirici yetmedi'}`);
 		continue;
 	}
+	secimOf.set(q, s);
 	if (!bankaIl) test.push(q), rapor.zorluk[s.diff]++;
 	// haritada bul: yalnız bilinen (1–2) ilçe; il çokgeni dışında kalan koordinat ve adalar alınmaz
 	const mz = MERKEZ.get(s.il);
@@ -278,9 +323,18 @@ for (const s of secim) {
 			r: 12,
 			kaynak: k.qid,
 		};
+		secimOf.set(pq, s);
 		if (!ihlaller(pq).length) harita.push(pq), rapor.haritaZorluk[pq.diff]++;
 	}
 }
+dagit(test, KALIP, KALIP_IP);
+dagit(harita, PIN, PIN_IP);
+rapor.kalip = {};
+for (const q of [...test, ...harita]) {
+	const k = q.q.replace(/^.* (\S+ \S+\?)$/, '$1');
+	rapor.kalip[k] = (rapor.kalip[k] || 0) + 1;
+}
+rapor.ipuclu = [...test, ...harita].filter((q) => secimOf.get(q).ipucu && q.q.startsWith(secimOf.get(q).ipucu)).length;
 rapor.test = test.length;
 rapor.harita = harita.length;
 

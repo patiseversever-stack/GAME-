@@ -93,6 +93,10 @@ console.log('1) Birim: yaş, kardeş, gidiş-dönüş, doygunluk, sıra kaydı')
 	ok(h.yas(A) === 1 && h.yas(B) === 0 && h.yas(C) === Infinity && h.yas('kayitta-yok') === Infinity, 'yaş');
 	ok(kardes({ type: 'hang', w: 'SELANİK' }) === kardes({ type: 'choice', a: ['Selanik'] }), 'kardeş: aynı cevap aynı anahtar');
 	ok(kardes({ type: 'mancinik', src: 'n1', id: 'dn-mc1' }) === kardes({ type: 'num', id: 'n1' }), 'kardeş: Mancınık ↔ kaynak tahmin sorusu');
+	// açık kardeş: kökü başka sorunun cevabını açan tahmin sorusu o cevabın anahtarını taşır; Mancınık ikizi de (kaynaktan kopya)
+	const dg = { type: 'num', id: 'san-wd-dogum-Q7243', kardes: 'a:tolstoy' };
+	ok(kardes(dg) === kardes({ type: 'choice', a: ['Tolstoy'] }), 'kardeş: açık anahtar cevap anahtarıyla aynı');
+	ok(kardes({ ...dg, id: 'dn-mc-' + dg.id, src: dg.id, type: 'mancinik' }) === kardes(dg), 'kardeş: açık anahtarlı kaynağın Mancınık ikizi aynı anahtar');
 	const j = JSON.parse(JSON.stringify(h));
 	ok(j.v === 3 && typeof j.k === 'string' && (typeof j.s === 'string') !== (typeof j.y === 'string'), 'v3 kaydı: base64 alanlar');
 	const h2 = new Hafiza(j);

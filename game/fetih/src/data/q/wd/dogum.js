@@ -6,48 +6,52 @@ export default [
 		"cat": "bilim",
 		"diff": 1,
 		"type": "num",
-		"q": "Fizikçi Albert Einstein hangi yıl doğdu?",
+		"q": "Görelilik kuramını geliştiren fizikçi Albert Einstein hangi yıl dünyaya geldi?",
 		"ans": 1879,
 		"unit": "",
 		"min": 1800,
 		"max": 2000,
-		"kaynak": "Q937"
+		"kaynak": "Q937",
+		"kardes": "a:alberteinstein"
 	},
 	{
 		"id": "bil-wd-dogum-Q1035",
 		"cat": "bilim",
 		"diff": 1,
 		"type": "num",
-		"q": "Doğa bilimci Charles Darwin hangi yıl doğdu?",
+		"q": "Doğal seçilim kuramının sahibi Charles Darwin kaç yılında doğdu?",
 		"ans": 1809,
 		"unit": "",
 		"min": 1700,
 		"max": 1900,
-		"kaynak": "Q1035"
+		"kaynak": "Q1035",
+		"kardes": "a:darwin"
 	},
 	{
 		"id": "bil-wd-dogum-Q307",
 		"cat": "bilim",
 		"diff": 2,
 		"type": "num",
-		"q": "Gökbilimci Galileo Galilei hangi yıl doğdu?",
+		"q": "Jüpiter'in dört büyük uydusunu keşfeden Galileo Galilei kaç yılında doğdu?",
 		"ans": 1564,
 		"unit": "",
 		"min": 1310,
 		"max": 1710,
-		"kaynak": "Q307"
+		"kaynak": "Q307",
+		"kardes": "a:galileogalilei"
 	},
 	{
 		"id": "bil-wd-dogum-Q8743",
 		"cat": "bilim",
 		"diff": 1,
 		"type": "num",
-		"q": "Mucit Thomas Edison hangi yıl doğdu?",
+		"q": "Fonografı icat eden Thomas Edison hangi yıl dünyaya geldi?",
 		"ans": 1847,
 		"unit": "",
 		"min": 1780,
 		"max": 1980,
-		"kaynak": "Q8743"
+		"kaynak": "Q8743",
+		"kardes": "a:thomasedison"
 	},
 	{
 		"id": "bil-wd-dogum-Q9215",
@@ -59,367 +63,398 @@ export default [
 		"unit": "",
 		"min": 1730,
 		"max": 1930,
-		"kaynak": "Q9215"
+		"kaynak": "Q9215",
+		"kardes": "a:sigmundfreud"
 	},
 	{
 		"id": "bil-wd-dogum-Q7186",
 		"cat": "bilim",
 		"diff": 1,
 		"type": "num",
-		"q": "Bilim insanı Marie Curie hangi yıl doğdu?",
+		"q": "İki Nobel kazanan ilk bilim insanı Marie Curie hangi yıl dünyaya geldi?",
 		"ans": 1867,
 		"unit": "",
 		"min": 1740,
 		"max": 1940,
-		"kaynak": "Q7186"
+		"kaynak": "Q7186",
+		"kardes": "a:mariecurie"
 	},
 	{
 		"id": "bil-wd-dogum-Q9036",
 		"cat": "bilim",
 		"diff": 1,
 		"type": "num",
-		"q": "Mucit Nikola Tesla hangi yıl doğdu?",
+		"q": "Alternatif akımın öncüsü mucit Nikola Tesla hangi yılda doğmuştur?",
 		"ans": 1856,
 		"unit": "",
 		"min": 1790,
 		"max": 1990,
-		"kaynak": "Q9036"
+		"kaynak": "Q9036",
+		"kardes": "a:nikolatesla"
 	},
 	{
 		"id": "bil-wd-dogum-Q529",
 		"cat": "bilim",
 		"diff": 2,
 		"type": "num",
-		"q": "Bilim insanı Louis Pasteur hangi yıl doğdu?",
+		"q": "Kuduz aşısını geliştiren Louis Pasteur hangi yıl dünyaya geldi?",
 		"ans": 1822,
 		"unit": "",
 		"min": 1690,
 		"max": 1890,
-		"kaynak": "Q529"
+		"kaynak": "Q529",
+		"kardes": "a:louispasteur"
 	},
 	{
 		"id": "bil-wd-dogum-Q619",
 		"cat": "bilim",
 		"diff": 2,
 		"type": "num",
-		"q": "Gökbilimci Nicolaus Copernicus hangi yıl doğdu?",
+		"q": "Güneş merkezli evreni savunan Nicolaus Copernicus hangi yılda doğmuştur?",
 		"ans": 1473,
 		"unit": "",
 		"min": 1280,
 		"max": 1680,
-		"kaynak": "Q619"
+		"kaynak": "Q619",
+		"kardes": "a:nicolauscopernicus"
 	},
 	{
 		"id": "bil-wd-dogum-Q17714",
 		"cat": "bilim",
 		"diff": 1,
 		"type": "num",
-		"q": "Fizikçi Stephen Hawking hangi yıl doğdu?",
+		"q": "Kara delikleri inceleyen fizikçi Stephen Hawking hangi yıl dünyaya geldi?",
 		"ans": 1942,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q17714"
+		"kaynak": "Q17714",
+		"kardes": "a:stephenhawking"
 	},
 	{
 		"id": "bil-wd-dogum-Q6722",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Matematikçi Carl Friedrich Gauss hangi yıl doğdu?",
+		"q": "\"Matematiğin prensi\" denen Carl Friedrich Gauss kaç yılında doğdu?",
 		"ans": 1777,
 		"unit": "",
 		"min": 1640,
 		"max": 1840,
-		"kaynak": "Q6722"
+		"kaynak": "Q6722",
+		"kardes": "a:carlfriedrichgauss"
 	},
 	{
 		"id": "bil-wd-dogum-Q1290",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Matematikçi Blaise Pascal hangi yıl doğdu?",
+		"q": "Mekanik hesap makinesi yapan Blaise Pascal kaç yılında doğdu?",
 		"ans": 1623,
 		"unit": "",
 		"min": 1430,
 		"max": 1830,
-		"kaynak": "Q1290"
+		"kaynak": "Q1290",
+		"kardes": "a:blaisepascal"
 	},
 	{
 		"id": "bil-wd-dogum-Q7251",
 		"cat": "bilim",
 		"diff": 2,
 		"type": "num",
-		"q": "Bilgisayar bilimci Alan Turing hangi yıl doğdu?",
+		"q": "Bilgisayar biliminin öncüsü Alan Turing kaç yılında doğdu?",
 		"ans": 1912,
 		"unit": "",
 		"min": 1850,
 		"max": 1950,
-		"kaynak": "Q7251"
+		"kaynak": "Q7251",
+		"kardes": "a:alanturing"
 	},
 	{
 		"id": "bil-wd-dogum-Q7604",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Matematikçi Leonhard Euler hangi yıl doğdu?",
+		"q": "Graf kuramını başlatan matematikçi Leonhard Euler kaç yılında doğdu?",
 		"ans": 1707,
 		"unit": "",
 		"min": 1630,
 		"max": 1830,
-		"kaynak": "Q7604"
+		"kaynak": "Q7604",
+		"kardes": "a:euler"
 	},
 	{
 		"id": "bil-wd-dogum-Q7085",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Fizikçi Niels Bohr hangi yıl doğdu?",
+		"q": "Atom modeliyle bilinen fizikçi Niels Bohr hangi yıl doğdu?",
 		"ans": 1885,
 		"unit": "",
 		"min": 1770,
 		"max": 1970,
-		"kaynak": "Q7085"
+		"kaynak": "Q7085",
+		"kardes": "a:nielsbohr"
 	},
 	{
 		"id": "bil-wd-dogum-Q9021",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Fizikçi Max Planck hangi yıl doğdu?",
+		"q": "Kuantum kuramının kurucusu Max Planck hangi yılda doğmuştur?",
 		"ans": 1858,
 		"unit": "",
 		"min": 1760,
 		"max": 1960,
-		"kaynak": "Q9021"
+		"kaynak": "Q9021",
+		"kardes": "a:maxplanck"
 	},
 	{
 		"id": "bil-wd-dogum-Q8750",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Fizikçi Michael Faraday hangi yıl doğdu?",
+		"q": "Elektromanyetik indüksiyonu bulan Michael Faraday hangi yıl dünyaya geldi?",
 		"ans": 1791,
 		"unit": "",
 		"min": 1680,
 		"max": 1880,
-		"kaynak": "Q8750"
+		"kaynak": "Q8750",
+		"kardes": "a:michaelfaraday"
 	},
 	{
 		"id": "bil-wd-dogum-Q9106",
 		"cat": "bilim",
 		"diff": 2,
 		"type": "num",
-		"q": "Kimyager Dimitri Mendeleyev hangi yıl doğdu?",
+		"q": "Periyodik tabloyu düzenleyen Dimitri Mendeleyev hangi yıl dünyaya geldi?",
 		"ans": 1834,
 		"unit": "",
 		"min": 1710,
 		"max": 1910,
-		"kaynak": "Q9106"
+		"kaynak": "Q9106",
+		"kardes": "a:mendeleyev"
 	},
 	{
 		"id": "bil-wd-dogum-Q9123",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Fizikçi Ernest Rutherford hangi yıl doğdu?",
+		"q": "Atom çekirdeğini keşfeden Ernest Rutherford hangi yıl dünyaya geldi?",
 		"ans": 1871,
 		"unit": "",
 		"min": 1750,
 		"max": 1950,
-		"kaynak": "Q9123"
+		"kaynak": "Q9123",
+		"kardes": "a:ernestrutherford"
 	},
 	{
 		"id": "bil-wd-dogum-Q9130",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Fizikçi Erwin Schrödinger hangi yıl doğdu?",
+		"q": "Kedi düşünce deneyiyle ünlü Erwin Schrödinger hangi yıl doğdu?",
 		"ans": 1887,
 		"unit": "",
 		"min": 1820,
 		"max": 2020,
-		"kaynak": "Q9130"
+		"kaynak": "Q9130",
+		"kardes": "a:erwinschrödinger"
 	},
 	{
 		"id": "bil-wd-dogum-Q80",
 		"cat": "bilim",
 		"diff": 2,
 		"type": "num",
-		"q": "Web'in mucidi Tim Berners-Lee hangi yıl doğdu?",
+		"q": "World Wide Web'in mucidi Tim Berners-Lee kaç yılında doğdu?",
 		"ans": 1955,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q80"
+		"kaynak": "Q80",
+		"kardes": "a:timbernerslee"
 	},
 	{
 		"id": "bil-wd-dogum-Q34286",
 		"cat": "bilim",
 		"diff": 2,
 		"type": "num",
-		"q": "Mucit Alexander Graham Bell hangi yıl doğdu?",
+		"q": "Telefonun patentini alan Alexander Graham Bell kaç yılında doğdu?",
 		"ans": 1847,
 		"unit": "",
 		"min": 1770,
 		"max": 1970,
-		"kaynak": "Q34286"
+		"kaynak": "Q34286",
+		"kardes": "a:grahambell"
 	},
 	{
 		"id": "bil-wd-dogum-Q9041",
 		"cat": "bilim",
 		"diff": 2,
 		"type": "num",
-		"q": "Mühendis James Watt hangi yıl doğdu?",
+		"q": "Buhar makinesini geliştiren James Watt kaç yılında doğdu?",
 		"ans": 1736,
 		"unit": "",
 		"min": 1660,
 		"max": 1860,
-		"kaynak": "Q9041"
+		"kaynak": "Q9041",
+		"kardes": "a:jameswatt"
 	},
 	{
 		"id": "bil-wd-dogum-Q35149",
 		"cat": "bilim",
 		"diff": 2,
 		"type": "num",
-		"q": "Fizikçi Wilhelm Conrad Röntgen hangi yıl doğdu?",
+		"q": "X ışınlarını keşfeden Wilhelm Conrad Röntgen kaç yılında doğdu?",
 		"ans": 1845,
 		"unit": "",
 		"min": 1710,
 		"max": 1910,
-		"kaynak": "Q35149"
+		"kaynak": "Q35149",
+		"kardes": "a:röntgen"
 	},
 	{
 		"id": "bil-wd-dogum-Q41532",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Psikiyatr Carl Gustav Jung hangi yıl doğdu?",
+		"q": "Analitik psikolojinin kurucusu Carl Gustav Jung kaç yılında doğdu?",
 		"ans": 1875,
 		"unit": "",
 		"min": 1790,
 		"max": 1990,
-		"kaynak": "Q41532"
+		"kaynak": "Q41532",
+		"kardes": "a:carlgustavjung"
 	},
 	{
 		"id": "bil-wd-dogum-Q8011",
 		"cat": "bilim",
 		"diff": 2,
 		"type": "num",
-		"q": "Hekim ve düşünür İbn-i Sina hangi yıl doğdu?",
+		"q": "Batı'da Avicenna diye bilinen hekim İbn-i Sina hangi yıl doğdu?",
 		"ans": 980,
 		"unit": "",
 		"min": 590,
 		"max": 1190,
-		"kaynak": "Q8011"
+		"kaynak": "Q8011",
+		"kardes": "a:sina"
 	},
 	{
 		"id": "bil-wd-dogum-Q1615",
 		"cat": "bilim",
 		"diff": 1,
 		"type": "num",
-		"q": "Astronot Neil Armstrong hangi yıl doğdu?",
+		"q": "Ay'a ilk ayak basan Neil Armstrong kaç yılında doğdu?",
 		"ans": 1930,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q1615"
+		"kaynak": "Q1615",
+		"kardes": "a:neilarmstrong"
 	},
 	{
 		"id": "bil-wd-dogum-Q7327",
 		"cat": "bilim",
 		"diff": 1,
 		"type": "num",
-		"q": "Kozmonot Yuri Gagarin hangi yıl doğdu?",
+		"q": "Uzaya çıkan ilk insan Yuri Gagarin hangi yılda doğmuştur?",
 		"ans": 1934,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q7327"
+		"kaynak": "Q7327",
+		"kardes": "a:yurigagarin"
 	},
 	{
 		"id": "bil-wd-dogum-Q8753",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Fizikçi Enrico Fermi hangi yıl doğdu?",
+		"q": "İlk nükleer reaktörü kuran Enrico Fermi hangi yıl dünyaya geldi?",
 		"ans": 1901,
 		"unit": "",
 		"min": 1860,
 		"max": 1960,
-		"kaynak": "Q8753"
+		"kaynak": "Q8753",
+		"kardes": "a:enricofermi"
 	},
 	{
 		"id": "bil-wd-dogum-Q34253",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Linux'un yaratıcısı Linus Torvalds hangi yıl doğdu?",
+		"q": "Linux çekirdeğinin yaratıcısı Linus Torvalds hangi yıl doğdu?",
 		"ans": 1969,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q34253"
+		"kaynak": "Q34253",
+		"kardes": "a:linustorvalds"
 	},
 	{
 		"id": "tar-wd-dogum-Q91",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "ABD Başkanı Abraham Lincoln hangi yıl doğdu?",
+		"q": "Köleliği kaldıran ABD Başkanı Abraham Lincoln hangi yıl doğdu?",
 		"ans": 1809,
 		"unit": "",
 		"min": 1700,
 		"max": 1900,
-		"kaynak": "Q91"
+		"kaynak": "Q91",
+		"kardes": "a:abrahamlincoln"
 	},
 	{
 		"id": "tar-wd-dogum-Q1394",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Devrimci Vladimir Lenin hangi yıl doğdu?",
+		"q": "Ekim Devrimi'nin önderi Vladimir Lenin hangi yılda doğmuştur?",
 		"ans": 1870,
 		"unit": "",
 		"min": 1790,
 		"max": 1990,
-		"kaynak": "Q1394"
+		"kaynak": "Q1394",
+		"kardes": "a:lenin"
 	},
 	{
 		"id": "tar-wd-dogum-Q8023",
 		"cat": "tarih",
 		"diff": 1,
 		"type": "num",
-		"q": "Güney Afrika lideri Nelson Mandela hangi yıl doğdu?",
+		"q": "Güney Afrika'nın ilk siyahi devlet başkanı Nelson Mandela hangi yıl doğdu?",
 		"ans": 1918,
 		"unit": "",
 		"min": 1850,
 		"max": 1950,
-		"kaynak": "Q8023"
+		"kaynak": "Q8023",
+		"kardes": "a:nelsonmandela"
 	},
 	{
 		"id": "tar-wd-dogum-Q517",
 		"cat": "tarih",
 		"diff": 1,
 		"type": "num",
-		"q": "Fransız imparatoru Napolyon Bonapart hangi yıl doğdu?",
+		"q": "Waterloo'da yenilen imparator Napolyon Bonapart hangi yıl dünyaya geldi?",
 		"ans": 1769,
 		"unit": "",
 		"min": 1650,
 		"max": 1850,
-		"kaynak": "Q517"
+		"kaynak": "Q517",
+		"kardes": "a:napolyonbonapart"
 	},
 	{
 		"id": "tar-wd-dogum-Q1001",
 		"cat": "tarih",
 		"diff": 1,
 		"type": "num",
-		"q": "Hindistan bağımsızlık önderi Mahatma Gandi hangi yıl doğdu?",
+		"q": "Tuz Yürüyüşü'nün önderi Mahatma Gandi kaç yılında doğdu?",
 		"ans": 1869,
 		"unit": "",
 		"min": 1790,
 		"max": 1990,
-		"kaynak": "Q1001"
+		"kaynak": "Q1001",
+		"kardes": "a:mahatmagandi"
 	},
 	{
 		"id": "tar-wd-dogum-Q23",
@@ -431,991 +466,1074 @@ export default [
 		"unit": "",
 		"min": 1600,
 		"max": 1800,
-		"kaynak": "Q23"
+		"kaynak": "Q23",
+		"kardes": "a:georgewashington"
 	},
 	{
 		"id": "tar-wd-dogum-Q8016",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "İngiltere Başbakanı Winston Churchill hangi yıl doğdu?",
+		"q": "II. Dünya Savaşı'nın İngiliz başbakanı Winston Churchill hangi yılda doğmuştur?",
 		"ans": 1874,
 		"unit": "",
 		"min": 1750,
 		"max": 1950,
-		"kaynak": "Q8016"
+		"kaynak": "Q8016",
+		"kardes": "a:winstonchurchill"
 	},
 	{
 		"id": "tar-wd-dogum-Q9682",
 		"cat": "tarih",
 		"diff": 1,
 		"type": "num",
-		"q": "İngiltere Kraliçesi II. Elizabeth hangi yıl doğdu?",
+		"q": "70 yıl tahtta kalan İngiltere Kraliçesi II. Elizabeth hangi yılda doğmuştur?",
 		"ans": 1926,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q9682"
+		"kaynak": "Q9682",
+		"kardes": "a:ııelizabeth"
 	},
 	{
 		"id": "tar-wd-dogum-Q8027",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Sivil haklar önderi Martin Luther King hangi yıl doğdu?",
+		"q": "\"Bir hayalim var\" konuşmasının sahibi Martin Luther King hangi yıl doğdu?",
 		"ans": 1929,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q8027"
+		"kaynak": "Q8027",
+		"kardes": "a:martinlutherking"
 	},
 	{
 		"id": "tar-wd-dogum-Q9696",
 		"cat": "tarih",
 		"diff": 1,
 		"type": "num",
-		"q": "ABD Başkanı John F. Kennedy hangi yıl doğdu?",
+		"q": "Küba Füze Krizi dönemindeki ABD Başkanı John F. Kennedy kaç yılında doğdu?",
 		"ans": 1917,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q9696"
+		"kaynak": "Q9696",
+		"kardes": "a:johnfkennedy"
 	},
 	{
 		"id": "tar-wd-dogum-Q8007",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "ABD Başkanı Franklin D. Roosevelt hangi yıl doğdu?",
+		"q": "Dört kez seçilen ABD Başkanı Franklin D. Roosevelt hangi yılda doğmuştur?",
 		"ans": 1882,
 		"unit": "",
 		"min": 1750,
 		"max": 1950,
-		"kaynak": "Q8007"
+		"kaynak": "Q8007",
+		"kardes": "a:franklindroosevelt"
 	},
 	{
 		"id": "tar-wd-dogum-Q2042",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Fransa Cumhurbaşkanı Charles de Gaulle hangi yıl doğdu?",
+		"q": "Fransa'da Beşinci Cumhuriyet'in kurucusu Charles de Gaulle hangi yıl doğdu?",
 		"ans": 1890,
 		"unit": "",
 		"min": 1770,
 		"max": 1970,
-		"kaynak": "Q2042"
+		"kaynak": "Q2042",
+		"kardes": "a:charlesdegaulle"
 	},
 	{
 		"id": "tar-wd-dogum-Q8442",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Alman şansölyesi Otto von Bismarck hangi yıl doğdu?",
+		"q": "Almanya'yı birleştiren \"Demir Şansölye\" Otto von Bismarck hangi yıl doğdu?",
 		"ans": 1815,
 		"unit": "",
 		"min": 1740,
 		"max": 1940,
-		"kaynak": "Q8442"
+		"kaynak": "Q8442",
+		"kardes": "a:ottovonbismarck"
 	},
 	{
 		"id": "tar-wd-dogum-Q34969",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "ABD'nin kurucularından Benjamin Franklin hangi yıl doğdu?",
+		"q": "Paratoneri icat eden devlet adamı Benjamin Franklin hangi yılda doğmuştur?",
 		"ans": 1706,
 		"unit": "",
 		"min": 1630,
 		"max": 1830,
-		"kaynak": "Q34969"
+		"kaynak": "Q34969",
+		"kardes": "a:benjaminfranklin"
 	},
 	{
 		"id": "tar-wd-dogum-Q6101",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Gezgin Marco Polo hangi yıl doğdu?",
+		"q": "Çin'e uzanan yolculuğuyla ünlü Venedikli Marco Polo kaç yılında doğdu?",
 		"ans": 1254,
 		"unit": "",
 		"min": 940,
 		"max": 1540,
-		"kaynak": "Q6101"
+		"kaynak": "Q6101",
+		"kardes": "a:polo"
 	},
 	{
 		"id": "tar-wd-dogum-Q7416",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "İngiltere Başbakanı Margaret Thatcher hangi yıl doğdu?",
+		"q": "İngiltere'nin ilk kadın başbakanı Margaret Thatcher hangi yıl doğdu?",
 		"ans": 1925,
 		"unit": "",
 		"min": 1860,
 		"max": 1960,
-		"kaynak": "Q7416"
+		"kaynak": "Q7416",
+		"kardes": "a:margaretthatcher"
 	},
 	{
 		"id": "tar-wd-dogum-Q30487",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Sovyet lideri Mihail Gorbaçov hangi yıl doğdu?",
+		"q": "Sovyetler Birliği'nin son lideri Mihail Gorbaçov hangi yılda doğmuştur?",
 		"ans": 1931,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q30487"
+		"kaynak": "Q30487",
+		"kardes": "a:mihailgorbaçov"
 	},
 	{
 		"id": "tar-wd-dogum-Q11613",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "ABD Başkanı Harry S. Truman hangi yıl doğdu?",
+		"q": "Truman Doktrini'ne adını veren ABD Başkanı Harry S. Truman kaç yılında doğdu?",
 		"ans": 1884,
 		"unit": "",
 		"min": 1750,
 		"max": 1950,
-		"kaynak": "Q11613"
+		"kaynak": "Q11613",
+		"kardes": "a:harrystruman"
 	},
 	{
 		"id": "tar-wd-dogum-Q9588",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "ABD Başkanı Richard Nixon hangi yıl doğdu?",
+		"q": "Watergate skandalıyla istifa eden Richard Nixon hangi yıl dünyaya geldi?",
 		"ans": 1913,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q9588"
+		"kaynak": "Q9588",
+		"kardes": "a:richardnixon"
 	},
 	{
 		"id": "tar-wd-dogum-Q34296",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "ABD Başkanı Woodrow Wilson hangi yıl doğdu?",
+		"q": "On Dört İlke'yi açıklayan ABD Başkanı Woodrow Wilson hangi yılda doğmuştur?",
 		"ans": 1856,
 		"unit": "",
 		"min": 1750,
 		"max": 1950,
-		"kaynak": "Q34296"
+		"kaynak": "Q34296",
+		"kardes": "a:woodrowwilson"
 	},
 	{
 		"id": "tar-wd-dogum-Q7742",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Fransa Kralı XIV. Louis hangi yıl doğdu?",
+		"q": "\"Güneş Kral\" diye anılan Fransa kralı XIV. Louis hangi yıl dünyaya geldi?",
 		"ans": 1638,
 		"unit": "",
 		"min": 1470,
 		"max": 1870,
-		"kaynak": "Q7742"
+		"kaynak": "Q7742",
+		"kardes": "a:xıvlouis"
 	},
 	{
 		"id": "tar-wd-dogum-Q8479",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Rus çarı I. Petro hangi yıl doğdu?",
+		"q": "\"Deli Petro\" diye bilinen Rus çarı I. Petro hangi yıl dünyaya geldi?",
 		"ans": 1672,
 		"unit": "",
 		"min": 1400,
 		"max": 1800,
-		"kaynak": "Q8479"
+		"kaynak": "Q8479",
+		"kardes": "a:ıpetro"
 	},
 	{
 		"id": "tar-wd-dogum-Q1430",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Roma imparatoru Marcus Aurelius hangi yıl doğdu?",
+		"q": "Filozof imparator diye anılan Marcus Aurelius hangi yıl dünyaya geldi?",
 		"ans": 121,
 		"unit": "",
 		"min": 0,
 		"max": 600,
-		"kaynak": "Q1430"
+		"kaynak": "Q1430",
+		"kardes": "a:marcusaurelius"
 	},
 	{
 		"id": "tar-wd-dogum-Q9439",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "İngiltere Kraliçesi Victoria hangi yıl doğdu?",
+		"q": "Adını bir çağa veren İngiltere Kraliçesi Victoria hangi yıl doğdu?",
 		"ans": 1819,
 		"unit": "",
 		"min": 1690,
 		"max": 1890,
-		"kaynak": "Q9439"
+		"kaynak": "Q9439",
+		"kardes": "a:victoria"
 	},
 	{
 		"id": "tar-wd-dogum-Q1149",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Hindistan Başbakanı İndira Gandi hangi yıl doğdu?",
+		"q": "Hindistan'ın ilk kadın başbakanı İndira Gandi hangi yıl doğdu?",
 		"ans": 1917,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q1149"
+		"kaynak": "Q1149",
+		"kardes": "a:indiragandi"
 	},
 	{
 		"id": "tar-wd-dogum-Q35314",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Sovyet lideri Nikita Kruşçev hangi yıl doğdu?",
+		"q": "Küba Füze Krizi dönemindeki Sovyet lideri Nikita Kruşçev kaç yılında doğdu?",
 		"ans": 1894,
 		"unit": "",
 		"min": 1825,
 		"max": 2025,
-		"kaynak": "Q35314"
+		"kaynak": "Q35314",
+		"kardes": "a:nikitakruşçev"
 	},
 	{
 		"id": "tar-wd-dogum-Q9294",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Tarihçi İbn Haldun hangi yıl doğdu?",
+		"q": "\"Mukaddime\"nin yazarı tarihçi İbn Haldun hangi yıl doğdu?",
 		"ans": 1332,
 		"unit": "",
 		"min": 1070,
 		"max": 1470,
-		"kaynak": "Q9294"
+		"kaynak": "Q9294",
+		"kardes": "a:ibnhaldun"
 	},
 	{
 		"id": "tar-wd-dogum-Q7331",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Gezgin İbn Battuta hangi yıl doğdu?",
+		"q": "Faslı ünlü gezgin İbn Battuta kaç yılında doğdu?",
 		"ans": 1304,
 		"unit": "",
 		"min": 1050,
 		"max": 1450,
-		"kaynak": "Q7331"
+		"kaynak": "Q7331",
+		"kardes": "a:ibnbattuta"
 	},
 	{
 		"id": "tar-wd-dogum-Q36450",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Rus çariçesi II. Katerina hangi yıl doğdu?",
+		"q": "\"Büyük Katerina\" diye bilinen çariçe II. Katerina hangi yıl doğdu?",
 		"ans": 1729,
 		"unit": "",
 		"min": 1600,
 		"max": 1800,
-		"kaynak": "Q36450"
+		"kaynak": "Q36450",
+		"kardes": "a:ııkaterina"
 	},
 	{
 		"id": "tar-wd-dogum-Q37103",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Modern hemşireliğin öncüsü Florence Nightingale hangi yıl doğdu?",
+		"q": "Üsküdar'da yaralılara bakan hemşire Florence Nightingale hangi yılda doğmuştur?",
 		"ans": 1820,
 		"unit": "",
 		"min": 1760,
 		"max": 1960,
-		"kaynak": "Q37103"
+		"kaynak": "Q37103",
+		"kardes": "a:florencenightingale"
 	},
 	{
 		"id": "tar-wd-dogum-Q4583",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Günlük yazarı Anne Frank hangi yıl doğdu?",
+		"q": "Savaşta tuttuğu günlükle tanınan Anne Frank hangi yıl doğdu?",
 		"ans": 1929,
 		"unit": "",
 		"min": 1860,
 		"max": 1960,
-		"kaynak": "Q4583"
+		"kaynak": "Q4583",
+		"kardes": "a:annefrank"
 	},
 	{
 		"id": "tar-wd-dogum-Q9685",
 		"cat": "tarih",
 		"diff": 1,
 		"type": "num",
-		"q": "Galler Prensesi Diana hangi yıl doğdu?",
+		"q": "\"Halkın prensesi\" denen Galler Prensesi Diana hangi yılda doğmuştur?",
 		"ans": 1961,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q9685"
+		"kaynak": "Q9685",
+		"kardes": "a:diana"
 	},
 	{
 		"id": "tar-wd-dogum-Q34479",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Japon imparatoru Hirohito hangi yıl doğdu?",
+		"q": "II. Dünya Savaşı'ndaki Japon imparatoru Hirohito hangi yıl doğdu?",
 		"ans": 1901,
 		"unit": "",
 		"min": 1840,
 		"max": 1940,
-		"kaynak": "Q34479"
+		"kaynak": "Q34479",
+		"kardes": "a:hirohito"
 	},
 	{
 		"id": "tar-wd-dogum-Q11812",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "ABD Başkanı Thomas Jefferson hangi yıl doğdu?",
+		"q": "Bağımsızlık Bildirgesi'nin yazarı Thomas Jefferson hangi yılda doğmuştur?",
 		"ans": 1743,
 		"unit": "",
 		"min": 1650,
 		"max": 1850,
-		"kaynak": "Q11812"
+		"kaynak": "Q11812",
+		"kardes": "a:thomasjefferson"
 	},
 	{
 		"id": "tar-wd-dogum-Q9916",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "ABD Başkanı Dwight Eisenhower hangi yıl doğdu?",
+		"q": "Normandiya çıkarmasının komutanı Dwight Eisenhower hangi yıl doğdu?",
 		"ans": 1890,
 		"unit": "",
 		"min": 1810,
 		"max": 2010,
-		"kaynak": "Q9916"
+		"kaynak": "Q9916",
+		"kardes": "a:dwighteisenhower"
 	},
 	{
 		"id": "tar-wd-dogum-Q7207",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "İngiltere Kraliçesi I. Elizabeth hangi yıl doğdu?",
+		"q": "İspanyol Armadası'nı yenen kraliçe I. Elizabeth hangi yıl dünyaya geldi?",
 		"ans": 1533,
 		"unit": "",
 		"min": 1280,
 		"max": 1680,
-		"kaynak": "Q7207"
+		"kaynak": "Q7207",
+		"kardes": "a:ıelizabeth"
 	},
 	{
 		"id": "tar-wd-dogum-Q33391",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Devrimci Lev Troçki hangi yıl doğdu?",
+		"q": "Kızıl Ordu'nun kurucusu Lev Troçki kaç yılında doğdu?",
 		"ans": 1879,
 		"unit": "",
 		"min": 1790,
 		"max": 1990,
-		"kaynak": "Q33391"
+		"kaynak": "Q33391",
+		"kardes": "a:levtroçki"
 	},
 	{
 		"id": "tar-wd-dogum-Q1254",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "BM Genel Sekreteri Kofi Annan hangi yıl doğdu?",
+		"q": "Nobel Barış Ödüllü BM Genel Sekreteri Kofi Annan hangi yıl doğdu?",
 		"ans": 1938,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q1254"
+		"kaynak": "Q1254",
+		"kardes": "a:kofiannan"
 	},
 	{
 		"id": "tar-wd-dogum-Q8605",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Güney Amerika bağımsızlık önderi Simón Bolívar hangi yıl doğdu?",
+		"q": "Bolivya'ya adını veren önder Simón Bolívar hangi yıl doğdu?",
 		"ans": 1783,
 		"unit": "",
 		"min": 1680,
 		"max": 1880,
-		"kaynak": "Q8605"
+		"kaynak": "Q8605",
+		"kardes": "a:simnbolvar"
 	},
 	{
 		"id": "egl-wd-dogum-Q2831",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı Michael Jackson hangi yıl doğdu?",
+		"q": "\"Pop'un kralı\" diye anılan Michael Jackson hangi yıl doğdu?",
 		"ans": 1958,
 		"unit": "",
 		"min": 1900,
 		"max": 2000,
-		"kaynak": "Q2831"
+		"kaynak": "Q2831",
+		"kardes": "a:michaeljackson"
 	},
 	{
 		"id": "san-wd-dogum-Q762",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Ressam Leonardo da Vinci hangi yıl doğdu?",
+		"q": "Mona Lisa'nın ressamı Leonardo da Vinci kaç yılında doğdu?",
 		"ans": 1452,
 		"unit": "",
 		"min": 1290,
 		"max": 1690,
-		"kaynak": "Q762"
+		"kaynak": "Q762",
+		"kardes": "a:leonardodavinci"
 	},
 	{
 		"id": "san-wd-dogum-Q7243",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Yazar Lev Tolstoy hangi yıl doğdu?",
+		"q": "\"Savaş ve Barış\"ın yazarı Lev Tolstoy hangi yılda doğmuştur?",
 		"ans": 1828,
 		"unit": "",
 		"min": 1770,
 		"max": 1970,
-		"kaynak": "Q7243"
+		"kaynak": "Q7243",
+		"kardes": "a:tolstoy"
 	},
 	{
 		"id": "san-wd-dogum-Q5879",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Alman şair Goethe hangi yıl doğdu?",
+		"q": "\"Faust\"un yazarı Alman şair Goethe kaç yılında doğdu?",
 		"ans": 1749,
 		"unit": "",
 		"min": 1650,
 		"max": 1850,
-		"kaynak": "Q5879"
+		"kaynak": "Q5879",
+		"kardes": "a:goethe"
 	},
 	{
 		"id": "san-wd-dogum-Q535",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Yazar Victor Hugo hangi yıl doğdu?",
+		"q": "\"Sefiller\"in yazarı Victor Hugo hangi yıl dünyaya geldi?",
 		"ans": 1802,
 		"unit": "",
 		"min": 1660,
 		"max": 1860,
-		"kaynak": "Q535"
+		"kaynak": "Q535",
+		"kardes": "a:victorhugo"
 	},
 	{
 		"id": "san-wd-dogum-Q5582",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Ressam Vincent van Gogh hangi yıl doğdu?",
+		"q": "\"Yıldızlı Gece\"nin ressamı Vincent van Gogh hangi yıl dünyaya geldi?",
 		"ans": 1853,
 		"unit": "",
 		"min": 1770,
 		"max": 1970,
-		"kaynak": "Q5582"
+		"kaynak": "Q5582",
+		"kardes": "a:vincentvangogh"
 	},
 	{
 		"id": "san-wd-dogum-Q5593",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Ressam Pablo Picasso hangi yıl doğdu?",
+		"q": "\"Guernica\"nın ressamı Pablo Picasso hangi yıl dünyaya geldi?",
 		"ans": 1881,
 		"unit": "",
 		"min": 1810,
 		"max": 2010,
-		"kaynak": "Q5593"
+		"kaynak": "Q5593",
+		"kardes": "a:pablopicasso"
 	},
 	{
 		"id": "egl-wd-dogum-Q882",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Sinema sanatçısı Charlie Chaplin hangi yıl doğdu?",
+		"q": "Şarlo karakterinin yaratıcısı Charlie Chaplin kaç yılında doğdu?",
 		"ans": 1889,
 		"unit": "",
 		"min": 1810,
 		"max": 2010,
-		"kaynak": "Q882"
+		"kaynak": "Q882",
+		"kardes": "a:charliechaplin"
 	},
 	{
 		"id": "san-wd-dogum-Q5592",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Ressam ve heykeltıraş Michelangelo hangi yıl doğdu?",
+		"q": "Sistina Şapeli tavanını boyayan Michelangelo hangi yılda doğmuştur?",
 		"ans": 1475,
 		"unit": "",
 		"min": 1300,
 		"max": 1700,
-		"kaynak": "Q5592"
+		"kaynak": "Q5592",
+		"kardes": "a:michelangelo"
 	},
 	{
 		"id": "san-wd-dogum-Q1339",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Besteci Johann Sebastian Bach hangi yıl doğdu?",
+		"q": "Barok müziğin büyük bestecisi Johann Sebastian Bach hangi yılda doğmuştur?",
 		"ans": 1685,
 		"unit": "",
 		"min": 1490,
 		"max": 1890,
-		"kaynak": "Q1339"
+		"kaynak": "Q1339",
+		"kardes": "a:johannsebastianbach"
 	},
 	{
 		"id": "san-wd-dogum-Q991",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Yazar Fyodor Dostoyevski hangi yıl doğdu?",
+		"q": "\"Suç ve Ceza\"nın yazarı Fyodor Dostoyevski hangi yıl dünyaya geldi?",
 		"ans": 1821,
 		"unit": "",
 		"min": 1730,
 		"max": 1930,
-		"kaynak": "Q991"
+		"kaynak": "Q991",
+		"kardes": "a:dostoyevski"
 	},
 	{
 		"id": "san-wd-dogum-Q7245",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Mark Twain hangi yıl doğdu?",
+		"q": "\"Tom Sawyer\"ın yazarı Mark Twain hangi yıl dünyaya geldi?",
 		"ans": 1835,
 		"unit": "",
 		"min": 1730,
 		"max": 1930,
-		"kaynak": "Q7245"
+		"kaynak": "Q7245",
+		"kardes": "a:marktwain"
 	},
 	{
 		"id": "san-wd-dogum-Q5686",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Charles Dickens hangi yıl doğdu?",
+		"q": "\"Oliver Twist\"in yazarı Charles Dickens kaç yılında doğdu?",
 		"ans": 1812,
 		"unit": "",
 		"min": 1700,
 		"max": 1900,
-		"kaynak": "Q5686"
+		"kaynak": "Q5686",
+		"kardes": "a:charlesdickens"
 	},
 	{
 		"id": "san-wd-dogum-Q5577",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Ressam Salvador Dalí hangi yıl doğdu?",
+		"q": "Eriyen saatleriyle ünlü ressam Salvador Dalí hangi yılda doğmuştur?",
 		"ans": 1904,
 		"unit": "",
 		"min": 1850,
 		"max": 1950,
-		"kaynak": "Q5577"
+		"kaynak": "Q5577",
+		"kardes": "a:salvadordal"
 	},
 	{
 		"id": "san-wd-dogum-Q5673",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Masal yazarı Hans Christian Andersen hangi yıl doğdu?",
+		"q": "\"Çirkin Ördek Yavrusu\"nun yazarı Hans Christian Andersen hangi yıl doğdu?",
 		"ans": 1805,
 		"unit": "",
 		"min": 1740,
 		"max": 1940,
-		"kaynak": "Q5673"
+		"kaynak": "Q5673",
+		"kardes": "a:andersen"
 	},
 	{
 		"id": "san-wd-dogum-Q905",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Yazar Franz Kafka hangi yıl doğdu?",
+		"q": "\"Dönüşüm\"ün yazarı Franz Kafka kaç yılında doğdu?",
 		"ans": 1883,
 		"unit": "",
 		"min": 1800,
 		"max": 2000,
-		"kaynak": "Q905"
+		"kaynak": "Q905",
+		"kardes": "a:franzkafka"
 	},
 	{
 		"id": "san-wd-dogum-Q5685",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Anton Çehov hangi yıl doğdu?",
+		"q": "\"Vişne Bahçesi\"nin yazarı Anton Çehov hangi yıl dünyaya geldi?",
 		"ans": 1860,
 		"unit": "",
 		"min": 1800,
 		"max": 2000,
-		"kaynak": "Q5685"
+		"kaynak": "Q5685",
+		"kardes": "a:çehov"
 	},
 	{
 		"id": "san-wd-dogum-Q687",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Oyun yazarı Molière hangi yıl doğdu?",
+		"q": "\"Cimri\"nin yazarı Fransız oyun yazarı Molière hangi yılda doğmuştur?",
 		"ans": 1622,
 		"unit": "",
 		"min": 1380,
 		"max": 1780,
-		"kaynak": "Q687"
+		"kaynak": "Q687",
+		"kardes": "a:molire"
 	},
 	{
 		"id": "san-wd-dogum-Q16867",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Edgar Allan Poe hangi yıl doğdu?",
+		"q": "\"Kuzgun\" şiirinin yazarı Edgar Allan Poe hangi yıl doğdu?",
 		"ans": 1809,
 		"unit": "",
 		"min": 1710,
 		"max": 1910,
-		"kaynak": "Q16867"
+		"kaynak": "Q16867",
+		"kardes": "a:edgarallanpoe"
 	},
 	{
 		"id": "san-wd-dogum-Q30875",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Oscar Wilde hangi yıl doğdu?",
+		"q": "\"Dorian Gray'in Portresi\"nin yazarı Oscar Wilde hangi yılda doğmuştur?",
 		"ans": 1854,
 		"unit": "",
 		"min": 1740,
 		"max": 1940,
-		"kaynak": "Q30875"
+		"kaynak": "Q30875",
+		"kardes": "a:oscarwilde"
 	},
 	{
 		"id": "egl-wd-dogum-Q8704",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Çizgi film yapımcısı Walt Disney hangi yıl doğdu?",
+		"q": "Miki Fare'nin yaratıcılarından Walt Disney hangi yıl dünyaya geldi?",
 		"ans": 1901,
 		"unit": "",
 		"min": 1850,
 		"max": 1950,
-		"kaynak": "Q8704"
+		"kaynak": "Q8704",
+		"kardes": "a:waltdisney"
 	},
 	{
 		"id": "san-wd-dogum-Q3335",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Yazar George Orwell hangi yıl doğdu?",
+		"q": "\"Hayvan Çiftliği\"nin yazarı George Orwell hangi yılda doğmuştur?",
 		"ans": 1903,
 		"unit": "",
 		"min": 1850,
 		"max": 1950,
-		"kaynak": "Q3335"
+		"kaynak": "Q3335",
+		"kardes": "a:georgeorwell"
 	},
 	{
 		"id": "san-wd-dogum-Q5878",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Gabriel García Márquez hangi yıl doğdu?",
+		"q": "\"Yüzyıllık Yalnızlık\"ın yazarı Gabriel García Márquez hangi yılda doğmuştur?",
 		"ans": 1927,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q5878"
+		"kaynak": "Q5878",
+		"kardes": "a:gabrielgarcamrquez"
 	},
 	{
 		"id": "san-wd-dogum-Q23434",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Ernest Hemingway hangi yıl doğdu?",
+		"q": "\"Yaşlı Adam ve Deniz\"in yazarı Ernest Hemingway hangi yılda doğmuştur?",
 		"ans": 1899,
 		"unit": "",
 		"min": 1790,
 		"max": 1990,
-		"kaynak": "Q23434"
+		"kaynak": "Q23434",
+		"kardes": "a:ernesthemingway"
 	},
 	{
 		"id": "san-wd-dogum-Q1511",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Besteci Richard Wagner hangi yıl doğdu?",
+		"q": "\"Nibelung'un Yüzüğü\"nün bestecisi Richard Wagner hangi yılda doğmuştur?",
 		"ans": 1813,
 		"unit": "",
 		"min": 1730,
 		"max": 1930,
-		"kaynak": "Q1511"
+		"kaynak": "Q1511",
+		"kardes": "a:richardwagner"
 	},
 	{
 		"id": "san-wd-dogum-Q5598",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Ressam Rembrandt hangi yıl doğdu?",
+		"q": "\"Gece Devriyesi\"nin ressamı Rembrandt kaç yılında doğdu?",
 		"ans": 1606,
 		"unit": "",
 		"min": 1480,
 		"max": 1880,
-		"kaynak": "Q5598"
+		"kaynak": "Q5598",
+		"kardes": "a:rembrandt"
 	},
 	{
 		"id": "san-wd-dogum-Q892",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Yazar J. R. R. Tolkien hangi yıl doğdu?",
+		"q": "\"Yüzüklerin Efendisi\"nin yazarı J. R. R. Tolkien hangi yılda doğmuştur?",
 		"ans": 1892,
 		"unit": "",
 		"min": 1800,
 		"max": 2000,
-		"kaynak": "Q892"
+		"kaynak": "Q892",
+		"kardes": "a:jrrtolkien"
 	},
 	{
 		"id": "san-wd-dogum-Q36322",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Jane Austen hangi yıl doğdu?",
+		"q": "\"Gurur ve Önyargı\"nın yazarı Jane Austen hangi yıl dünyaya geldi?",
 		"ans": 1775,
 		"unit": "",
 		"min": 1640,
 		"max": 1840,
-		"kaynak": "Q36322"
+		"kaynak": "Q36322",
+		"kardes": "a:janeausten"
 	},
 	{
 		"id": "san-wd-dogum-Q34670",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Albert Camus hangi yıl doğdu?",
+		"q": "\"Yabancı\"nın yazarı Albert Camus hangi yıl doğdu?",
 		"ans": 1913,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q34670"
+		"kaynak": "Q34670",
+		"kardes": "a:albertcamus"
 	},
 	{
 		"id": "san-wd-dogum-Q5588",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Ressam Frida Kahlo hangi yıl doğdu?",
+		"q": "Otoportreleriyle ünlü Meksikalı ressam Frida Kahlo hangi yıl dünyaya geldi?",
 		"ans": 1907,
 		"unit": "",
 		"min": 1850,
 		"max": 1950,
-		"kaynak": "Q5588"
+		"kaynak": "Q5588",
+		"kardes": "a:fridakahlo"
 	},
 	{
 		"id": "san-wd-dogum-Q7315",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Besteci Pyotr İlyiç Çaykovski hangi yıl doğdu?",
+		"q": "\"Kuğu Gölü\"nün bestecisi Pyotr İlyiç Çaykovski hangi yılda doğmuştur?",
 		"ans": 1840,
 		"unit": "",
 		"min": 1780,
 		"max": 1980,
-		"kaynak": "Q7315"
+		"kaynak": "Q7315",
+		"kardes": "a:çaykovski"
 	},
 	{
 		"id": "san-wd-dogum-Q33977",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Yazar Jules Verne hangi yıl doğdu?",
+		"q": "\"Seksen Günde Devrialem\"in yazarı Jules Verne kaç yılında doğdu?",
 		"ans": 1828,
 		"unit": "",
 		"min": 1700,
 		"max": 1900,
-		"kaynak": "Q33977"
+		"kaynak": "Q33977",
+		"kardes": "a:julesverne"
 	},
 	{
 		"id": "egl-wd-dogum-Q7374",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Yönetmen Alfred Hitchcock hangi yıl doğdu?",
+		"q": "\"Sapık\" filminin yönetmeni Alfred Hitchcock kaç yılında doğdu?",
 		"ans": 1899,
 		"unit": "",
 		"min": 1780,
 		"max": 1980,
-		"kaynak": "Q7374"
+		"kaynak": "Q7374",
+		"kardes": "a:alfredhitchcock"
 	},
 	{
 		"id": "egl-wd-dogum-Q1203",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Müzisyen John Lennon hangi yıl doğdu?",
+		"q": "Beatles'ın kurucularından John Lennon hangi yılda doğmuştur?",
 		"ans": 1940,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q1203"
+		"kaynak": "Q1203",
+		"kardes": "a:johnlennon"
 	},
 	{
 		"id": "egl-wd-dogum-Q392",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Şarkıcı ve söz yazarı Bob Dylan hangi yıl doğdu?",
+		"q": "Nobel Edebiyat Ödüllü şarkıcı Bob Dylan hangi yıl doğdu?",
 		"ans": 1941,
 		"unit": "",
 		"min": 1900,
 		"max": 2000,
-		"kaynak": "Q392"
+		"kaynak": "Q392",
+		"kardes": "a:bobdylan"
 	},
 	{
 		"id": "san-wd-dogum-Q34660",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Yazar J. K. Rowling hangi yıl doğdu?",
+		"q": "Harry Potter'ın yazarı J. K. Rowling kaç yılında doğdu?",
 		"ans": 1965,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q34660"
+		"kaynak": "Q34660",
+		"kardes": "a:jkrowling"
 	},
 	{
 		"id": "san-wd-dogum-Q35610",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Arthur Conan Doyle hangi yıl doğdu?",
+		"q": "Sherlock Holmes'un yaratıcısı Arthur Conan Doyle hangi yıl doğdu?",
 		"ans": 1859,
 		"unit": "",
 		"min": 1750,
 		"max": 1950,
-		"kaynak": "Q35610"
+		"kaynak": "Q35610",
+		"kardes": "a:arthurconandoyle"
 	},
 	{
 		"id": "san-wd-dogum-Q5603",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Ressam Andy Warhol hangi yıl doğdu?",
+		"q": "Pop sanatın öncüsü Andy Warhol hangi yıl dünyaya geldi?",
 		"ans": 1928,
 		"unit": "",
 		"min": 1860,
 		"max": 1960,
-		"kaynak": "Q5603"
+		"kaynak": "Q5603",
+		"kardes": "a:andywarhol"
 	},
 	{
 		"id": "egl-wd-dogum-Q15869",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı Freddie Mercury hangi yıl doğdu?",
+		"q": "Queen'in solisti Freddie Mercury hangi yıl doğdu?",
 		"ans": 1946,
 		"unit": "",
 		"min": 1900,
 		"max": 2000,
-		"kaynak": "Q15869"
+		"kaynak": "Q15869",
+		"kardes": "a:freddiemercury"
 	},
 	{
 		"id": "san-wd-dogum-Q7176",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Yazar Necib Mahfuz hangi yıl doğdu?",
+		"q": "Nobel ödüllü Mısırlı yazar Necib Mahfuz hangi yıl doğdu?",
 		"ans": 1911,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q7176"
+		"kaynak": "Q7176",
+		"kardes": "a:necibmahfuz"
 	},
 	{
 		"id": "san-wd-dogum-Q2908",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Küçük Prens'in yazarı Antoine de Saint-Exupéry hangi yıl doğdu?",
+		"q": "Küçük Prens'in yazarı Antoine de Saint-Exupéry hangi yılda doğmuştur?",
 		"ans": 1900,
 		"unit": "",
 		"min": 1840,
 		"max": 1940,
-		"kaynak": "Q2908"
+		"kaynak": "Q2908",
+		"kardes": "a:antoinedesaintexupry"
 	},
 	{
 		"id": "egl-wd-dogum-Q8877",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Yönetmen Steven Spielberg hangi yıl doğdu?",
+		"q": "\"Jurassic Park\"ın yönetmeni Steven Spielberg hangi yıl doğdu?",
 		"ans": 1946,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q8877"
+		"kaynak": "Q8877",
+		"kardes": "a:stevenspielberg"
 	},
 	{
 		"id": "san-wd-dogum-Q1340",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Besteci Antonio Vivaldi hangi yıl doğdu?",
+		"q": "\"Dört Mevsim\"in bestecisi Antonio Vivaldi hangi yıl dünyaya geldi?",
 		"ans": 1678,
 		"unit": "",
 		"min": 1530,
 		"max": 1930,
-		"kaynak": "Q1340"
+		"kaynak": "Q1340",
+		"kardes": "a:antoniovivaldi"
 	},
 	{
 		"id": "egl-wd-dogum-Q409",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı Bob Marley hangi yıl doğdu?",
+		"q": "Reggae müziğin efsanesi Bob Marley hangi yıl dünyaya geldi?",
 		"ans": 1945,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q409"
+		"kaynak": "Q409",
+		"kardes": "a:bobmarley"
 	},
 	{
 		"id": "san-wd-dogum-Q41166",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Gulliver'in Gezileri'nin yazarı Jonathan Swift hangi yıl doğdu?",
+		"q": "Gulliver'in Gezileri'nin yazarı Jonathan Swift hangi yıl dünyaya geldi?",
 		"ans": 1667,
 		"unit": "",
 		"min": 1510,
 		"max": 1910,
-		"kaynak": "Q41166"
+		"kaynak": "Q41166",
+		"kardes": "a:jonathanswift"
 	},
 	{
 		"id": "egl-wd-dogum-Q2001",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Yönetmen Stanley Kubrick hangi yıl doğdu?",
+		"q": "\"Otomatik Portakal\"ın yönetmeni Stanley Kubrick kaç yılında doğdu?",
 		"ans": 1928,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q2001"
+		"kaynak": "Q2001",
+		"kardes": "a:stanleykubrick"
 	},
 	{
 		"id": "san-wd-dogum-Q43347",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Mutasavvıf şair Mevlânâ Celâleddin-i Rûmî hangi yıl doğdu?",
+		"q": "\"Mesnevi\"nin şairi Mevlânâ Celâleddin-i Rûmî hangi yılda doğmuştur?",
 		"ans": 1207,
 		"unit": "",
 		"min": 1020,
 		"max": 1620,
-		"kaynak": "Q43347"
+		"kaynak": "Q43347",
+		"kardes": "a:mevlânâcelâleddinirûmî"
 	},
 	{
 		"id": "san-wd-dogum-Q296",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Ressam Claude Monet hangi yıl doğdu?",
+		"q": "İzlenimciliğe adını veren ressam Claude Monet hangi yılda doğmuştur?",
 		"ans": 1840,
 		"unit": "",
 		"min": 1700,
 		"max": 1900,
-		"kaynak": "Q296"
+		"kaynak": "Q296",
+		"kardes": "a:claudemonet"
 	},
 	{
 		"id": "egl-wd-dogum-Q34012",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Oyuncu Marlon Brando hangi yıl doğdu?",
+		"q": "\"Baba\" filminin yıldızı Marlon Brando hangi yılda doğmuştur?",
 		"ans": 1924,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q34012"
+		"kaynak": "Q34012",
+		"kardes": "a:marlonbrando"
 	},
 	{
 		"id": "san-wd-dogum-Q38082",
@@ -1427,355 +1545,385 @@ export default [
 		"unit": "",
 		"min": 1740,
 		"max": 1940,
-		"kaynak": "Q38082"
+		"kaynak": "Q38082",
+		"kardes": "a:lewiscarroll"
 	},
 	{
 		"id": "egl-wd-dogum-Q42786",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Oyuncu Audrey Hepburn hangi yıl doğdu?",
+		"q": "\"Tiffany'de Kahvaltı\"nın yıldızı Audrey Hepburn hangi yılda doğmuştur?",
 		"ans": 1929,
 		"unit": "",
 		"min": 1900,
 		"max": 2000,
-		"kaynak": "Q42786"
+		"kaynak": "Q42786",
+		"kardes": "a:audreyhepburn"
 	},
 	{
 		"id": "san-wd-dogum-Q12807",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Umberto Eco hangi yıl doğdu?",
+		"q": "\"Gülün Adı\"nın yazarı Umberto Eco hangi yıl dünyaya geldi?",
 		"ans": 1932,
 		"unit": "",
 		"min": 1900,
 		"max": 2000,
-		"kaynak": "Q12807"
+		"kaynak": "Q12807",
+		"kardes": "a:umbertoeco"
 	},
 	{
 		"id": "egl-wd-dogum-Q303",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı Elvis Presley hangi yıl doğdu?",
+		"q": "\"Kral\" lakaplı rock and roll yıldızı Elvis Presley hangi yıl doğdu?",
 		"ans": 1935,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q303"
+		"kaynak": "Q303",
+		"kardes": "a:elvispresley"
 	},
 	{
 		"id": "egl-wd-dogum-Q4616",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Oyuncu Marilyn Monroe hangi yıl doğdu?",
+		"q": "Hollywood'un sarışın efsanesi Marilyn Monroe hangi yılda doğmuştur?",
 		"ans": 1926,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q4616"
+		"kaynak": "Q4616",
+		"kardes": "a:marilynmonroe"
 	},
 	{
 		"id": "egl-wd-dogum-Q16397",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Oyuncu Bruce Lee hangi yıl doğdu?",
+		"q": "Dövüş filmlerinin efsanesi Bruce Lee hangi yılda doğmuştur?",
 		"ans": 1940,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q16397"
+		"kaynak": "Q16397",
+		"kardes": "a:brucelee"
 	},
 	{
 		"id": "egl-wd-dogum-Q36970",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Oyuncu Jackie Chan hangi yıl doğdu?",
+		"q": "Dublörsüz dövüş sahneleriyle ünlü Jackie Chan hangi yılda doğmuştur?",
 		"ans": 1954,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q36970"
+		"kaynak": "Q36970",
+		"kardes": "a:jackiechan"
 	},
 	{
 		"id": "egl-wd-dogum-Q83338",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Oyuncu Robin Williams hangi yıl doğdu?",
+		"q": "\"Ölü Ozanlar Derneği\"nin öğretmeni Robin Williams kaç yılında doğdu?",
 		"ans": 1951,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q83338"
+		"kaynak": "Q83338",
+		"kardes": "a:robinwilliams"
 	},
 	{
 		"id": "egl-wd-dogum-Q2685",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Oyuncu Arnold Schwarzenegger hangi yıl doğdu?",
+		"q": "\"Terminatör\"ün yıldızı Arnold Schwarzenegger hangi yılda doğmuştur?",
 		"ans": 1947,
 		"unit": "",
 		"min": 1900,
 		"max": 2000,
-		"kaynak": "Q2685"
+		"kaynak": "Q2685",
+		"kardes": "a:arnoldschwarzenegger"
 	},
 	{
 		"id": "egl-wd-dogum-Q38111",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Oyuncu Leonardo DiCaprio hangi yıl doğdu?",
+		"q": "\"Titanik\"in başrol oyuncusu Leonardo DiCaprio hangi yıl doğdu?",
 		"ans": 1974,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q38111"
+		"kaynak": "Q38111",
+		"kardes": "a:leonardodicaprio"
 	},
 	{
 		"id": "egl-wd-dogum-Q1744",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı Madonna hangi yıl doğdu?",
+		"q": "\"Pop'un kraliçesi\" diye anılan Madonna kaç yılında doğdu?",
 		"ans": 1958,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q1744"
+		"kaynak": "Q1744",
+		"kardes": "a:madonna"
 	},
 	{
 		"id": "egl-wd-dogum-Q34424",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı Shakira hangi yıl doğdu?",
+		"q": "Kolombiyalı şarkıcı Shakira hangi yılda doğmuştur?",
 		"ans": 1977,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q34424"
+		"kaynak": "Q34424",
+		"kardes": "a:shakira"
 	},
 	{
 		"id": "egl-wd-dogum-Q5105",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Şarkıcı Céline Dion hangi yıl doğdu?",
+		"q": "Kanadalı şarkıcı Céline Dion hangi yıl doğdu?",
 		"ans": 1968,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q5105"
+		"kaynak": "Q5105",
+		"kardes": "a:celinedion"
 	},
 	{
 		"id": "egl-wd-dogum-Q36153",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı Beyoncé hangi yıl doğdu?",
+		"q": "Destiny's Child'dan çıkan şarkıcı Beyoncé hangi yıl dünyaya geldi?",
 		"ans": 1981,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q36153"
+		"kaynak": "Q36153",
+		"kardes": "a:beyonc"
 	},
 	{
 		"id": "egl-wd-dogum-Q36844",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı Rihanna hangi yıl doğdu?",
+		"q": "Barbadoslu şarkıcı Rihanna kaç yılında doğdu?",
 		"ans": 1988,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q36844"
+		"kaynak": "Q36844",
+		"kardes": "a:rihanna"
 	},
 	{
 		"id": "egl-wd-dogum-Q26876",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı Taylor Swift hangi yıl doğdu?",
+		"q": "Country müzikle başlayan pop yıldızı Taylor Swift hangi yıl doğdu?",
 		"ans": 1989,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q26876"
+		"kaynak": "Q26876",
+		"kardes": "a:taylorswift"
 	},
 	{
 		"id": "egl-wd-dogum-Q5608",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Rapçi Eminem hangi yıl doğdu?",
+		"q": "Detroit'te yetişen rapçi Eminem hangi yıl dünyaya geldi?",
 		"ans": 1972,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q5608"
+		"kaynak": "Q5608",
+		"kardes": "a:eminem"
 	},
 	{
 		"id": "egl-wd-dogum-Q13909",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Oyuncu Angelina Jolie hangi yıl doğdu?",
+		"q": "\"Tomb Raider\"ın Lara Croft'u Angelina Jolie hangi yıl doğdu?",
 		"ans": 1975,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q13909"
+		"kaynak": "Q13909",
+		"kardes": "a:angelinajolie"
 	},
 	{
 		"id": "egl-wd-dogum-Q34436",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Oyuncu Scarlett Johansson hangi yıl doğdu?",
+		"q": "Kara Dul'u canlandıran oyuncu Scarlett Johansson hangi yılda doğmuştur?",
 		"ans": 1984,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q34436"
+		"kaynak": "Q34436",
+		"kardes": "a:scarlettjohansson"
 	},
 	{
 		"id": "san-wd-dogum-Q5679",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Şair Lord Byron hangi yıl doğdu?",
+		"q": "Romantik İngiliz şair Lord Byron kaç yılında doğdu?",
 		"ans": 1788,
 		"unit": "",
 		"min": 1700,
 		"max": 1900,
-		"kaynak": "Q5679"
+		"kaynak": "Q5679",
+		"kardes": "a:lordbyron"
 	},
 	{
 		"id": "san-wd-dogum-Q5432",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Ressam Francisco Goya hangi yıl doğdu?",
+		"q": "İspanyol saray ressamı Francisco Goya kaç yılında doğdu?",
 		"ans": 1746,
 		"unit": "",
 		"min": 1670,
 		"max": 1870,
-		"kaynak": "Q5432"
+		"kaynak": "Q5432",
+		"kardes": "a:franciscogoya"
 	},
 	{
 		"id": "san-wd-dogum-Q5589",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Ressam Henri Matisse hangi yıl doğdu?",
+		"q": "Fovizmin öncüsü ressam Henri Matisse hangi yılda doğmuştur?",
 		"ans": 1869,
 		"unit": "",
 		"min": 1740,
 		"max": 1940,
-		"kaynak": "Q5589"
+		"kaynak": "Q5589",
+		"kardes": "a:henrimatisse"
 	},
 	{
 		"id": "egl-wd-dogum-Q8006",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Yönetmen Akira Kurosawa hangi yıl doğdu?",
+		"q": "\"Yedi Samuray\"ın yönetmeni Akira Kurosawa hangi yılda doğmuştur?",
 		"ans": 1910,
 		"unit": "",
 		"min": 1850,
 		"max": 1950,
-		"kaynak": "Q8006"
+		"kaynak": "Q8006",
+		"kardes": "a:akirakurosawa"
 	},
 	{
 		"id": "san-wd-dogum-Q9711",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Yazar Honoré de Balzac hangi yıl doğdu?",
+		"q": "\"İnsanlık Komedyası\"nın yazarı Honoré de Balzac kaç yılında doğdu?",
 		"ans": 1799,
 		"unit": "",
 		"min": 1690,
 		"max": 1890,
-		"kaynak": "Q9711"
+		"kaynak": "Q9711",
+		"kardes": "a:honordebalzac"
 	},
 	{
 		"id": "san-wd-dogum-Q7312",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Besteci Franz Schubert hangi yıl doğdu?",
+		"q": "\"Bitmemiş Senfoni\"nin bestecisi Franz Schubert kaç yılında doğdu?",
 		"ans": 1797,
 		"unit": "",
 		"min": 1690,
 		"max": 1890,
-		"kaynak": "Q7312"
+		"kaynak": "Q7312",
+		"kardes": "a:franzschubert"
 	},
 	{
 		"id": "san-wd-dogum-Q36661",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Oyun yazarı Henrik Ibsen hangi yıl doğdu?",
+		"q": "\"Bebek Evi\"nin yazarı Henrik Ibsen hangi yıl dünyaya geldi?",
 		"ans": 1828,
 		"unit": "",
 		"min": 1740,
 		"max": 1940,
-		"kaynak": "Q36661"
+		"kaynak": "Q36661",
+		"kardes": "a:henrikıbsen"
 	},
 	{
 		"id": "san-wd-dogum-Q504",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Yazar Émile Zola hangi yıl doğdu?",
+		"q": "\"Suçluyorum\" yazısıyla ünlü yazar Émile Zola hangi yılda doğmuştur?",
 		"ans": 1840,
 		"unit": "",
 		"min": 1700,
 		"max": 1900,
-		"kaynak": "Q504"
+		"kaynak": "Q504",
+		"kardes": "a:milezola"
 	},
 	{
 		"id": "san-wd-dogum-Q25973",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Yazar Hermann Hesse hangi yıl doğdu?",
+		"q": "\"Siddhartha\"nın yazarı Hermann Hesse hangi yıl dünyaya geldi?",
 		"ans": 1877,
 		"unit": "",
 		"min": 1780,
 		"max": 1980,
-		"kaynak": "Q25973"
+		"kaynak": "Q25973",
+		"kardes": "a:hermannhesse"
 	},
 	{
 		"id": "san-wd-dogum-Q7294",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Besteci Johannes Brahms hangi yıl doğdu?",
+		"q": "\"Macar Dansları\"nın bestecisi Johannes Brahms kaç yılında doğdu?",
 		"ans": 1833,
 		"unit": "",
 		"min": 1770,
 		"max": 1970,
-		"kaynak": "Q7294"
+		"kaynak": "Q7294",
+		"kardes": "a:johannesbrahms"
 	},
 	{
 		"id": "san-wd-dogum-Q7302",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Besteci Georg Friedrich Händel hangi yıl doğdu?",
+		"q": "\"Mesih\" oratoryosunun bestecisi Georg Friedrich Händel kaç yılında doğdu?",
 		"ans": 1685,
 		"unit": "",
 		"min": 1460,
 		"max": 1860,
-		"kaynak": "Q7302"
+		"kaynak": "Q7302",
+		"kardes": "a:georgfriedrichhndel"
 	},
 	{
 		"id": "san-wd-dogum-Q1512",
@@ -1787,1434 +1935,1554 @@ export default [
 		"unit": "",
 		"min": 1710,
 		"max": 1910,
-		"kaynak": "Q1512"
+		"kaynak": "Q1512",
+		"kardes": "a:robertlouisstevenson"
 	},
 	{
 		"id": "egl-wd-dogum-Q9061",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Düşünür Karl Marx hangi yıl doğdu?",
+		"q": "\"Kapital\"in yazarı Karl Marx kaç yılında doğdu?",
 		"ans": 1818,
 		"unit": "",
 		"min": 1740,
 		"max": 1940,
-		"kaynak": "Q9061"
+		"kaynak": "Q9061",
+		"kardes": "a:karlmarx"
 	},
 	{
 		"id": "egl-wd-dogum-Q9191",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Filozof René Descartes hangi yıl doğdu?",
+		"q": "\"Düşünüyorum, öyleyse varım\" diyen René Descartes hangi yıl doğdu?",
 		"ans": 1596,
 		"unit": "",
 		"min": 1380,
 		"max": 1780,
-		"kaynak": "Q9191"
+		"kaynak": "Q9191",
+		"kardes": "a:rendescartes"
 	},
 	{
 		"id": "egl-wd-dogum-Q9312",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Filozof Immanuel Kant hangi yıl doğdu?",
+		"q": "\"Saf Aklın Eleştirisi\"nin yazarı Immanuel Kant hangi yıl doğdu?",
 		"ans": 1724,
 		"unit": "",
 		"min": 1600,
 		"max": 1800,
-		"kaynak": "Q9312"
+		"kaynak": "Q9312",
+		"kardes": "a:ımmanuelkant"
 	},
 	{
 		"id": "egl-wd-dogum-Q9358",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Filozof Friedrich Nietzsche hangi yıl doğdu?",
+		"q": "\"Böyle Buyurdu Zerdüşt\"ün yazarı Friedrich Nietzsche hangi yıl dünyaya geldi?",
 		"ans": 1844,
 		"unit": "",
 		"min": 1710,
 		"max": 1910,
-		"kaynak": "Q9358"
+		"kaynak": "Q9358",
+		"kardes": "a:friedrichnietzsche"
 	},
 	{
 		"id": "egl-wd-dogum-Q6527",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Düşünür Jean-Jacques Rousseau hangi yıl doğdu?",
+		"q": "\"Toplum Sözleşmesi\"nin yazarı Jean-Jacques Rousseau kaç yılında doğdu?",
 		"ans": 1712,
 		"unit": "",
 		"min": 1630,
 		"max": 1830,
-		"kaynak": "Q6527"
+		"kaynak": "Q6527",
+		"kardes": "a:jeanjacquesrousseau"
 	},
 	{
 		"id": "egl-wd-dogum-Q1399",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Düşünür Niccolò Machiavelli hangi yıl doğdu?",
+		"q": "\"Hükümdar\"ın yazarı Niccolò Machiavelli kaç yılında doğdu?",
 		"ans": 1469,
 		"unit": "",
 		"min": 1330,
 		"max": 1730,
-		"kaynak": "Q1399"
+		"kaynak": "Q1399",
+		"kardes": "a:machiavelli"
 	},
 	{
 		"id": "egl-wd-dogum-Q9381",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "İktisatçı Adam Smith hangi yıl doğdu?",
+		"q": "\"Ulusların Zenginliği\"nin yazarı Adam Smith kaç yılında doğdu?",
 		"ans": 1723,
 		"unit": "",
 		"min": 1610,
 		"max": 1810,
-		"kaynak": "Q9381"
+		"kaynak": "Q9381",
+		"kardes": "a:adamsmith"
 	},
 	{
 		"id": "egl-wd-dogum-Q9554",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Reform önderi Martin Luther hangi yıl doğdu?",
+		"q": "Protestan Reformu'nun önderi Martin Luther hangi yıl doğdu?",
 		"ans": 1483,
 		"unit": "",
 		"min": 1310,
 		"max": 1710,
-		"kaynak": "Q9554"
+		"kaynak": "Q9554",
+		"kardes": "a:martinluther"
 	},
 	{
 		"id": "egl-wd-dogum-Q9364",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Filozof Jean-Paul Sartre hangi yıl doğdu?",
+		"q": "Nobel'i reddeden filozof Jean-Paul Sartre hangi yıl dünyaya geldi?",
 		"ans": 1905,
 		"unit": "",
 		"min": 1860,
 		"max": 1960,
-		"kaynak": "Q9364"
+		"kaynak": "Q9364",
+		"kardes": "a:jeanpaulsartre"
 	},
 	{
 		"id": "egl-wd-dogum-Q34787",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Düşünür Friedrich Engels hangi yıl doğdu?",
+		"q": "Marx'ın yol arkadaşı Friedrich Engels hangi yıl doğdu?",
 		"ans": 1820,
 		"unit": "",
 		"min": 1730,
 		"max": 1930,
-		"kaynak": "Q34787"
+		"kaynak": "Q34787",
+		"kardes": "a:friedrichengels"
 	},
 	{
 		"id": "egl-wd-dogum-Q9235",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Filozof Georg Wilhelm Friedrich Hegel hangi yıl doğdu?",
+		"q": "Alman filozof Georg Wilhelm Friedrich Hegel hangi yıl doğdu?",
 		"ans": 1770,
 		"unit": "",
 		"min": 1640,
 		"max": 1840,
-		"kaynak": "Q9235"
+		"kaynak": "Q9235",
+		"kardes": "a:georgwilhelmfriedrichhegel"
 	},
 	{
 		"id": "egl-wd-dogum-Q38193",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Filozof Arthur Schopenhauer hangi yıl doğdu?",
+		"q": "Karamsar felsefesiyle ünlü Arthur Schopenhauer hangi yılda doğmuştur?",
 		"ans": 1788,
 		"unit": "",
 		"min": 1670,
 		"max": 1870,
-		"kaynak": "Q38193"
+		"kaynak": "Q38193",
+		"kardes": "a:arthurschopenhauer"
 	},
 	{
 		"id": "egl-wd-dogum-Q8768",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Otomobil üreticisi Henry Ford hangi yıl doğdu?",
+		"q": "Model T'yi üreten sanayici Henry Ford hangi yıl dünyaya geldi?",
 		"ans": 1863,
 		"unit": "",
 		"min": 1760,
 		"max": 1960,
-		"kaynak": "Q8768"
+		"kaynak": "Q8768",
+		"kardes": "a:henryford"
 	},
 	{
 		"id": "egl-wd-dogum-Q19837",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Apple'ın kurucularından Steve Jobs hangi yıl doğdu?",
+		"q": "Apple'ın kurucularından Steve Jobs hangi yılda doğmuştur?",
 		"ans": 1955,
 		"unit": "",
 		"min": 1900,
 		"max": 2000,
-		"kaynak": "Q19837"
+		"kaynak": "Q19837",
+		"kardes": "a:stevejobs"
 	},
 	{
 		"id": "egl-wd-dogum-Q37388",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Filozof Francis Bacon hangi yıl doğdu?",
+		"q": "Deneysel yöntemin öncüsü filozof Francis Bacon kaç yılında doğdu?",
 		"ans": 1561,
 		"unit": "",
 		"min": 1390,
 		"max": 1790,
-		"kaynak": "Q37388"
+		"kaynak": "Q37388",
+		"kardes": "a:francisbacon"
 	},
 	{
 		"id": "egl-wd-dogum-Q15975",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Düşünür Montesquieu hangi yıl doğdu?",
+		"q": "Kuvvetler ayrılığını savunan düşünür Montesquieu hangi yıl dünyaya geldi?",
 		"ans": 1689,
 		"unit": "",
 		"min": 1410,
 		"max": 1810,
-		"kaynak": "Q15975"
+		"kaynak": "Q15975",
+		"kardes": "a:montesquieu"
 	},
 	{
 		"id": "spo-wd-dogum-Q615",
 		"cat": "spor",
 		"diff": 1,
 		"type": "num",
-		"q": "Futbolcu Lionel Messi hangi yıl doğdu?",
+		"q": "Arjantinli futbol yıldızı Lionel Messi hangi yıl dünyaya geldi?",
 		"ans": 1987,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q615"
+		"kaynak": "Q615",
+		"kardes": "a:lionelmessi"
 	},
 	{
 		"id": "spo-wd-dogum-Q11571",
 		"cat": "spor",
 		"diff": 1,
 		"type": "num",
-		"q": "Futbolcu Cristiano Ronaldo hangi yıl doğdu?",
+		"q": "Portekizli futbol yıldızı Cristiano Ronaldo hangi yıl doğdu?",
 		"ans": 1985,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q11571"
+		"kaynak": "Q11571",
+		"kardes": "a:ronaldo"
 	},
 	{
 		"id": "spo-wd-dogum-Q12897",
 		"cat": "spor",
 		"diff": 1,
 		"type": "num",
-		"q": "Futbolcu Pelé hangi yıl doğdu?",
+		"q": "Üç Dünya Kupası kazanan Brezilyalı Pelé kaç yılında doğdu?",
 		"ans": 1940,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q12897"
+		"kaynak": "Q12897",
+		"kardes": "a:pel"
 	},
 	{
 		"id": "spo-wd-dogum-Q36107",
 		"cat": "spor",
 		"diff": 1,
 		"type": "num",
-		"q": "Boksör Muhammed Ali hangi yıl doğdu?",
+		"q": "\"Kelebek gibi uçar, arı gibi sokar\" diyen Muhammed Ali hangi yıl dünyaya geldi?",
 		"ans": 1942,
 		"unit": "",
 		"min": 1900,
 		"max": 2000,
-		"kaynak": "Q36107"
+		"kaynak": "Q36107",
+		"kardes": "a:muhammedali"
 	},
 	{
 		"id": "spo-wd-dogum-Q17515",
 		"cat": "spor",
 		"diff": 1,
 		"type": "num",
-		"q": "Futbolcu Diego Maradona hangi yıl doğdu?",
+		"q": "\"Tanrı'nın eli\" golüyle bilinen Diego Maradona hangi yıl dünyaya geldi?",
 		"ans": 1960,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q17515"
+		"kaynak": "Q17515",
+		"kardes": "a:diegomaradona"
 	},
 	{
 		"id": "spo-wd-dogum-Q9671",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Formula 1 pilotu Michael Schumacher hangi yıl doğdu?",
+		"q": "Yedi kez dünya şampiyonu olan pilot Michael Schumacher hangi yıl doğdu?",
 		"ans": 1969,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q9671"
+		"kaynak": "Q9671",
+		"kardes": "a:michaelschumacher"
 	},
 	{
 		"id": "spo-wd-dogum-Q1426",
 		"cat": "spor",
 		"diff": 1,
 		"type": "num",
-		"q": "Tenisçi Roger Federer hangi yıl doğdu?",
+		"q": "İsviçreli tenis efsanesi Roger Federer hangi yıl dünyaya geldi?",
 		"ans": 1981,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q1426"
+		"kaynak": "Q1426",
+		"kardes": "a:rogerfederer"
 	},
 	{
 		"id": "spo-wd-dogum-Q10132",
 		"cat": "spor",
 		"diff": 1,
 		"type": "num",
-		"q": "Tenisçi Rafael Nadal hangi yıl doğdu?",
+		"q": "\"Toprak kortların kralı\" denen Rafael Nadal kaç yılında doğdu?",
 		"ans": 1986,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q10132"
+		"kaynak": "Q10132",
+		"kardes": "a:rafaelnadal"
 	},
 	{
 		"id": "spo-wd-dogum-Q5812",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Tenisçi Novak Djokovic hangi yıl doğdu?",
+		"q": "Sırp tenisçi Novak Djokovic hangi yıl dünyaya geldi?",
 		"ans": 1987,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q5812"
+		"kaynak": "Q5812",
+		"kardes": "a:novakdjokovic"
 	},
 	{
 		"id": "spo-wd-dogum-Q142794",
 		"cat": "spor",
 		"diff": 1,
 		"type": "num",
-		"q": "Futbolcu Neymar hangi yıl doğdu?",
+		"q": "Brezilyalı futbolcu Neymar kaç yılında doğdu?",
 		"ans": 1992,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q142794"
+		"kaynak": "Q142794",
+		"kardes": "a:neymar"
 	},
 	{
 		"id": "tar-wd-dogum-Q183297",
 		"cat": "tarih",
 		"diff": 1,
 		"type": "num",
-		"q": "Cumhurbaşkanı İsmet İnönü hangi yıl doğdu?",
+		"q": "Lozan'daki baş delegemiz İsmet İnönü'nün doğduğu yıl kaçtır?",
 		"ans": 1884,
 		"unit": "",
 		"min": 1760,
 		"max": 1960,
-		"kaynak": "Q183297"
+		"kaynak": "Q183297",
+		"kardes": "a:ismetinönü"
 	},
 	{
 		"id": "tar-wd-dogum-Q151735",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Cumhurbaşkanı Celal Bayar hangi yıl doğdu?",
+		"q": "Üçüncü Cumhurbaşkanımız Celal Bayar'ın doğum yılı kaçtır?",
 		"ans": 1883,
 		"unit": "",
 		"min": 1820,
 		"max": 2020,
-		"kaynak": "Q151735"
+		"kaynak": "Q151735",
+		"kardes": "a:celalbayar"
 	},
 	{
 		"id": "tar-wd-dogum-Q238745",
 		"cat": "tarih",
 		"diff": 1,
 		"type": "num",
-		"q": "Başbakan Adnan Menderes hangi yıl doğdu?",
+		"q": "Demokrat Parti'nin başbakanı Adnan Menderes kaç yılında doğdu?",
 		"ans": 1899,
 		"unit": "",
 		"min": 1790,
 		"max": 1990,
-		"kaynak": "Q238745"
+		"kaynak": "Q238745",
+		"kardes": "a:adnanmenderes"
 	},
 	{
 		"id": "tar-wd-dogum-Q151729",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Cumhurbaşkanı Süleyman Demirel hangi yıl doğdu?",
+		"q": "Dokuzuncu Cumhurbaşkanımız Süleyman Demirel hangi yıl dünyaya geldi?",
 		"ans": 1924,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q151729"
+		"kaynak": "Q151729",
+		"kardes": "a:süleymandemirel"
 	},
 	{
 		"id": "tar-wd-dogum-Q180280",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Cumhurbaşkanı Turgut Özal hangi yıl doğdu?",
+		"q": "Sekizinci Cumhurbaşkanımız Turgut Özal kaç yılında doğdu?",
 		"ans": 1927,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q180280"
+		"kaynak": "Q180280",
+		"kardes": "a:turgutözal"
 	},
 	{
 		"id": "tar-wd-dogum-Q192634",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Başbakan Bülent Ecevit hangi yıl doğdu?",
+		"q": "Kıbrıs Harekâtı dönemindeki başbakan Bülent Ecevit kaç yılında doğdu?",
 		"ans": 1925,
 		"unit": "",
 		"min": 1860,
 		"max": 1960,
-		"kaynak": "Q192634"
+		"kaynak": "Q192634",
+		"kardes": "a:bülentecevit"
 	},
 	{
 		"id": "tar-wd-dogum-Q243550",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Başbakan Necmettin Erbakan hangi yıl doğdu?",
+		"q": "Refah Partisi'nin lideri Necmettin Erbakan'ın doğum yılı kaçtır?",
 		"ans": 1926,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q243550"
+		"kaynak": "Q243550",
+		"kardes": "a:necmettinerbakan"
 	},
 	{
 		"id": "tar-wd-dogum-Q158500",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Cumhurbaşkanı Cevdet Sunay hangi yıl doğdu?",
+		"q": "Beşinci Cumhurbaşkanımız Cevdet Sunay'ın doğduğu yıl kaçtır?",
 		"ans": 1899,
 		"unit": "",
 		"min": 1820,
 		"max": 2020,
-		"kaynak": "Q158500"
+		"kaynak": "Q158500",
+		"kardes": "a:cevdetsunay"
 	},
 	{
 		"id": "tar-wd-dogum-Q313357",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Cumhurbaşkanı Fahri Korutürk hangi yıl doğdu?",
+		"q": "Altıncı Cumhurbaşkanımız Fahri Korutürk'ün doğduğu yıl kaçtır?",
 		"ans": 1903,
 		"unit": "",
 		"min": 1860,
 		"max": 1960,
-		"kaynak": "Q313357"
+		"kaynak": "Q313357",
+		"kardes": "a:fahrikorutürk"
 	},
 	{
 		"id": "tar-wd-dogum-Q269182",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Komutan Kâzım Karabekir hangi yıl doğdu?",
+		"q": "Doğu Cephesi'nin komutanı Kâzım Karabekir hangi yıl doğdu?",
 		"ans": 1882,
 		"unit": "",
 		"min": 1780,
 		"max": 1980,
-		"kaynak": "Q269182"
+		"kaynak": "Q269182",
+		"kardes": "a:kâzımkarabekir"
 	},
 	{
 		"id": "tar-wd-dogum-Q328331",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Mareşal Fevzi Çakmak hangi yıl doğdu?",
+		"q": "Kurtuluş Savaşı'nın Genelkurmay Başkanı Fevzi Çakmak hangi yıl doğdu?",
 		"ans": 1876,
 		"unit": "",
 		"min": 1790,
 		"max": 1990,
-		"kaynak": "Q328331"
+		"kaynak": "Q328331",
+		"kardes": "a:fevziçakmak"
 	},
 	{
 		"id": "tar-wd-dogum-Q153899",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Osmanlı komutanı Enver Paşa hangi yıl doğdu?",
+		"q": "Sarıkamış Harekâtı'nın komutanı Enver Paşa'nın doğduğu yıl kaçtır?",
 		"ans": 1881,
 		"unit": "",
 		"min": 1810,
 		"max": 2010,
-		"kaynak": "Q153899"
+		"kaynak": "Q153899",
+		"kardes": "a:enverpaşa"
 	},
 	{
 		"id": "tar-wd-dogum-Q315888",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Osmanlı sadrazamı Talat Paşa hangi yıl doğdu?",
+		"q": "İttihat ve Terakki'nin sadrazamı Talat Paşa hangi yılda doğmuştur?",
 		"ans": 1874,
 		"unit": "",
 		"min": 1780,
 		"max": 1980,
-		"kaynak": "Q315888"
+		"kaynak": "Q315888",
+		"kardes": "a:talatpaşa"
 	},
 	{
 		"id": "tar-wd-dogum-Q317011",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Osmanlı komutanı Cemal Paşa hangi yıl doğdu?",
+		"q": "Kanal Harekâtı'nın komutanı Cemal Paşa hangi yıl dünyaya geldi?",
 		"ans": 1872,
 		"unit": "",
 		"min": 1790,
 		"max": 1990,
-		"kaynak": "Q317011"
+		"kaynak": "Q317011",
+		"kardes": "a:cemalpaşa"
 	},
 	{
 		"id": "tar-wd-dogum-Q369930",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Osmanlı sadrazamı Mithat Paşa hangi yıl doğdu?",
+		"q": "Kanun-i Esasi'nin mimarı sadrazam Mithat Paşa'nın doğduğu yıl kaçtır?",
 		"ans": 1822,
 		"unit": "",
 		"min": 1760,
 		"max": 1960,
-		"kaynak": "Q369930"
+		"kaynak": "Q369930",
+		"kardes": "a:mithatpaşa"
 	},
 	{
 		"id": "tar-wd-dogum-Q546595",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Plevne savunucusu Gazi Osman Paşa hangi yıl doğdu?",
+		"q": "Plevne savunmasının kahramanı Gazi Osman Paşa hangi yılda doğmuştur?",
 		"ans": 1832,
 		"unit": "",
 		"min": 1730,
 		"max": 1930,
-		"kaynak": "Q546595"
+		"kaynak": "Q546595",
+		"kardes": "a:gaziosmanpaşa"
 	},
 	{
 		"id": "tar-wd-dogum-Q459104",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "İlk Türk kadın savaş pilotu Sabiha Gökçen hangi yıl doğdu?",
+		"q": "İlk Türk kadın savaş pilotu Sabiha Gökçen kaç yılında doğdu?",
 		"ans": 1913,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q459104"
+		"kaynak": "Q459104",
+		"kardes": "a:sabihagökçen"
 	},
 	{
 		"id": "tar-wd-dogum-Q134817",
 		"cat": "tarih",
 		"diff": 1,
 		"type": "num",
-		"q": "Osmanlı padişahı II. Abdülhamid hangi yıl doğdu?",
+		"q": "Hicaz Demiryolu'nu yaptıran padişah II. Abdülhamid'in doğduğu yıl kaçtır?",
 		"ans": 1842,
 		"unit": "",
 		"min": 1740,
 		"max": 1940,
-		"kaynak": "Q134817"
+		"kaynak": "Q134817",
+		"kardes": "a:ııabdülhamid"
 	},
 	{
 		"id": "tar-wd-dogum-Q174791",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Osmanlı padişahı II. Mahmud hangi yıl doğdu?",
+		"q": "Yeniçeri Ocağı'nı kaldıran padişah II. Mahmud hangi yıl doğdu?",
 		"ans": 1785,
 		"unit": "",
 		"min": 1700,
 		"max": 1900,
-		"kaynak": "Q174791"
+		"kaynak": "Q174791",
+		"kardes": "a:ıımahmud"
 	},
 	{
 		"id": "tar-wd-dogum-Q199633",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Osmanlı padişahı III. Selim hangi yıl doğdu?",
+		"q": "Nizam-ı Cedit'i kuran padişah III. Selim hangi yıl dünyaya geldi?",
 		"ans": 1761,
 		"unit": "",
 		"min": 1630,
 		"max": 1830,
-		"kaynak": "Q199633"
+		"kaynak": "Q199633",
+		"kardes": "a:ıııselim"
 	},
 	{
 		"id": "tar-wd-dogum-Q151500",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Osmanlı padişahı Abdülaziz hangi yıl doğdu?",
+		"q": "Avrupa'ya geziye çıkan ilk padişah Abdülaziz hangi yıl dünyaya geldi?",
 		"ans": 1830,
 		"unit": "",
 		"min": 1750,
 		"max": 1950,
-		"kaynak": "Q151500"
+		"kaynak": "Q151500",
+		"kardes": "a:abdülaziz"
 	},
 	{
 		"id": "tar-wd-dogum-Q174772",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Osmanlı padişahı Abdülmecid hangi yıl doğdu?",
+		"q": "Tanzimat Fermanı'nı ilan ettiren padişah Abdülmecid hangi yıl dünyaya geldi?",
 		"ans": 1823,
 		"unit": "",
 		"min": 1720,
 		"max": 1920,
-		"kaynak": "Q174772"
+		"kaynak": "Q174772",
+		"kardes": "a:abdülmecid"
 	},
 	{
 		"id": "tar-wd-dogum-Q174762",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Osmanlı padişahı IV. Murad hangi yıl doğdu?",
+		"q": "Bağdat'ı geri alan padişah IV. Murad hangi yıl doğdu?",
 		"ans": 1612,
 		"unit": "",
 		"min": 1410,
 		"max": 1810,
-		"kaynak": "Q174762"
+		"kaynak": "Q174762",
+		"kardes": "a:ıvmurad"
 	},
 	{
 		"id": "tar-wd-dogum-Q162543",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Son Osmanlı padişahı VI. Mehmed hangi yıl doğdu?",
+		"q": "Vahdettin diye bilinen son padişah VI. Mehmed hangi yılda doğmuştur?",
 		"ans": 1861,
 		"unit": "",
 		"min": 1780,
 		"max": 1980,
-		"kaynak": "Q162543"
+		"kaynak": "Q162543",
+		"kardes": "a:vımehmed"
 	},
 	{
 		"id": "tar-wd-dogum-Q151494",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Osmanlı padişahı V. Mehmed hangi yıl doğdu?",
+		"q": "Mehmed Reşad diye bilinen padişah V. Mehmed'in doğum yılı kaçtır?",
 		"ans": 1844,
 		"unit": "",
 		"min": 1770,
 		"max": 1970,
-		"kaynak": "Q151494"
+		"kaynak": "Q151494",
+		"kardes": "a:vmehmed"
 	},
 	{
 		"id": "tar-wd-dogum-Q161872",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Osmanlı padişahı II. Selim hangi yıl doğdu?",
+		"q": "Kıbrıs'ın fethedildiği dönemin padişahı II. Selim kaç yılında doğdu?",
 		"ans": 1524,
 		"unit": "",
 		"min": 1270,
 		"max": 1670,
-		"kaynak": "Q161872"
+		"kaynak": "Q161872",
+		"kardes": "a:ııselim"
 	},
 	{
 		"id": "tar-wd-dogum-Q159934",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Osmanlı padişahı III. Murad hangi yıl doğdu?",
+		"q": "Kanuni'nin torunu padişah III. Murad'ın doğum yılı kaçtır?",
 		"ans": 1546,
 		"unit": "",
 		"min": 1290,
 		"max": 1690,
-		"kaynak": "Q159934"
+		"kaynak": "Q159934",
+		"kardes": "a:ııımurad"
 	},
 	{
 		"id": "tar-wd-dogum-Q170514",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Osmanlı padişahı IV. Mehmed hangi yıl doğdu?",
+		"q": "\"Avcı\" lakaplı padişah IV. Mehmed hangi yıl dünyaya geldi?",
 		"ans": 1642,
 		"unit": "",
 		"min": 1470,
 		"max": 1870,
-		"kaynak": "Q170514"
+		"kaynak": "Q170514",
+		"kardes": "a:ıvmehmed"
 	},
 	{
 		"id": "tar-wd-dogum-Q114749",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Osmanlı padişahı I. Ahmed hangi yıl doğdu?",
+		"q": "Sultanahmet Camii'ni yaptıran padişah I. Ahmed'in doğduğu yıl kaçtır?",
 		"ans": 1590,
 		"unit": "",
 		"min": 1350,
 		"max": 1750,
-		"kaynak": "Q114749"
+		"kaynak": "Q114749",
+		"kardes": "a:ıahmed"
 	},
 	{
 		"id": "tar-wd-dogum-Q441311",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Osmanlı şehzadesi Cem Sultan hangi yıl doğdu?",
+		"q": "Fatih Sultan Mehmed'in şehzadesi Cem Sultan hangi yılda doğmuştur?",
 		"ans": 1459,
 		"unit": "",
 		"min": 1260,
 		"max": 1660,
-		"kaynak": "Q441311"
+		"kaynak": "Q441311",
+		"kardes": "a:cemsultan"
 	},
 	{
 		"id": "tar-wd-dogum-Q390123",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Bilgin Kâtip Çelebi hangi yıl doğdu?",
+		"q": "\"Cihannüma\"nın yazarı bilgin Kâtip Çelebi'nin doğum yılı kaçtır?",
 		"ans": 1609,
 		"unit": "",
 		"min": 1430,
 		"max": 1830,
-		"kaynak": "Q390123"
+		"kaynak": "Q390123",
+		"kardes": "a:kâtipçelebi"
 	},
 	{
 		"id": "san-wd-dogum-Q241248",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "Nobelli yazar Orhan Pamuk hangi yıl doğdu?",
+		"q": "\"Masumiyet Müzesi\"nin yazarı Orhan Pamuk kaç yılında doğdu?",
 		"ans": 1952,
 		"unit": "",
 		"min": 1900,
 		"max": 2000,
-		"kaynak": "Q241248"
+		"kaynak": "Q241248",
+		"kardes": "a:orhanpamuk"
 	},
 	{
 		"id": "san-wd-dogum-Q270739",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Elif Şafak hangi yıl doğdu?",
+		"q": "\"Aşk\" romanının yazarı Elif Şafak'ın doğduğu yıl kaçtır?",
 		"ans": 1971,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q270739"
+		"kaynak": "Q270739",
+		"kardes": "a:elifşafak"
 	},
 	{
 		"id": "san-wd-dogum-Q327142",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Yaşar Kemal hangi yıl doğdu?",
+		"q": "\"İnce Memed\"in yazarı Yaşar Kemal hangi yıl doğdu?",
 		"ans": 1923,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q327142"
+		"kaynak": "Q327142",
+		"kardes": "a:yaşarkemal"
 	},
 	{
 		"id": "san-wd-dogum-Q982838",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Sabahattin Ali hangi yıl doğdu?",
+		"q": "\"Kürk Mantolu Madonna\"nın yazarı Sabahattin Ali'nin doğum yılı kaçtır?",
 		"ans": 1907,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q982838"
+		"kaynak": "Q982838",
+		"kardes": "a:sabahattinali"
 	},
 	{
 		"id": "san-wd-dogum-Q401875",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Yazar Ahmet Hamdi Tanpınar hangi yıl doğdu?",
+		"q": "\"Saatleri Ayarlama Enstitüsü\"nün yazarı Ahmet Hamdi Tanpınar hangi yıl doğdu?",
 		"ans": 1901,
 		"unit": "",
 		"min": 1830,
 		"max": 1930,
-		"kaynak": "Q401875"
+		"kaynak": "Q401875",
+		"kardes": "a:ahmethamditanpınar"
 	},
 	{
 		"id": "san-wd-dogum-Q982848",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Şair Orhan Veli Kanık hangi yıl doğdu?",
+		"q": "Garip akımının şairi Orhan Veli Kanık hangi yıl dünyaya geldi?",
 		"ans": 1914,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q982848"
+		"kaynak": "Q982848",
+		"kardes": "a:orhanvelikanık"
 	},
 	{
 		"id": "san-wd-dogum-Q234289",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Yazar Halide Edib Adıvar hangi yıl doğdu?",
+		"q": "\"Sinekli Bakkal\"ın yazarı Halide Edib Adıvar hangi yıl dünyaya geldi?",
 		"ans": 1884,
 		"unit": "",
 		"min": 1810,
 		"max": 2010,
-		"kaynak": "Q234289"
+		"kaynak": "Q234289",
+		"kardes": "a:halideedibadıvar"
 	},
 	{
 		"id": "san-wd-dogum-Q316443",
 		"cat": "sanat",
 		"diff": 1,
 		"type": "num",
-		"q": "İstiklal Marşı şairi Mehmet Akif Ersoy hangi yıl doğdu?",
+		"q": "İstiklal Marşı şairi Mehmet Akif Ersoy kaç yılında doğdu?",
 		"ans": 1873,
 		"unit": "",
 		"min": 1780,
 		"max": 1980,
-		"kaynak": "Q316443"
+		"kaynak": "Q316443",
+		"kardes": "a:mehmetakifersoy"
 	},
 	{
 		"id": "san-wd-dogum-Q337500",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Vatan şairi Namık Kemal hangi yıl doğdu?",
+		"q": "\"Vatan Şairi\" diye anılan Namık Kemal hangi yılda doğmuştur?",
 		"ans": 1840,
 		"unit": "",
 		"min": 1770,
 		"max": 1970,
-		"kaynak": "Q337500"
+		"kaynak": "Q337500",
+		"kardes": "a:namıkkemal"
 	},
 	{
 		"id": "san-wd-dogum-Q83275",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Düşünür Ziya Gökalp hangi yıl doğdu?",
+		"q": "\"Türkçülüğün Esasları\"nın yazarı Ziya Gökalp'ın doğum yılı kaçtır?",
 		"ans": 1876,
 		"unit": "",
 		"min": 1750,
 		"max": 1950,
-		"kaynak": "Q83275"
+		"kaynak": "Q83275",
+		"kardes": "a:ziyagökalp"
 	},
 	{
 		"id": "san-wd-dogum-Q465181",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Yazar Ayşe Kulin hangi yıl doğdu?",
+		"q": "\"Füreya\"nın yazarı Ayşe Kulin hangi yıl dünyaya geldi?",
 		"ans": 1941,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q465181"
+		"kaynak": "Q465181",
+		"kardes": "a:ayşekulin"
 	},
 	{
 		"id": "san-wd-dogum-Q348117",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Yazar Adalet Ağaoğlu hangi yıl doğdu?",
+		"q": "\"Ölmeye Yatmak\"ın yazarı Adalet Ağaoğlu hangi yıl doğdu?",
 		"ans": 1929,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q348117"
+		"kaynak": "Q348117",
+		"kardes": "a:adaletağaoğlu"
 	},
 	{
 		"id": "san-wd-dogum-Q1136761",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Romancı Fatma Aliye Topuz hangi yıl doğdu?",
+		"q": "İlk Türk kadın romancı Fatma Aliye Topuz'un doğum yılı kaçtır?",
 		"ans": 1862,
 		"unit": "",
 		"min": 1760,
 		"max": 1960,
-		"kaynak": "Q1136761"
+		"kaynak": "Q1136761",
+		"kardes": "a:fatmaaliyetopuz"
 	},
 	{
 		"id": "san-wd-dogum-Q331896",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Sözlük yazarı Şemseddin Sami hangi yıl doğdu?",
+		"q": "\"Kâmûs-ı Türkî\"nin yazarı Şemseddin Sami'nin doğum yılı kaçtır?",
 		"ans": 1850,
 		"unit": "",
 		"min": 1720,
 		"max": 1920,
-		"kaynak": "Q331896"
+		"kaynak": "Q331896",
+		"kardes": "a:şemseddinsami"
 	},
 	{
 		"id": "san-wd-dogum-Q430941",
 		"cat": "sanat",
 		"diff": 2,
 		"type": "num",
-		"q": "Piyanist Fazıl Say hangi yıl doğdu?",
+		"q": "Dünyaca ünlü piyanist ve besteci Fazıl Say kaç yılında doğdu?",
 		"ans": 1970,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q430941"
+		"kaynak": "Q430941",
+		"kardes": "a:fazılsay"
 	},
 	{
 		"id": "san-wd-dogum-Q262078",
 		"cat": "sanat",
 		"diff": 3,
 		"type": "num",
-		"q": "Piyanist İdil Biret hangi yıl doğdu?",
+		"q": "Harika çocuk olarak yetişen piyanist İdil Biret hangi yıl doğdu?",
 		"ans": 1941,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q262078"
+		"kaynak": "Q262078",
+		"kardes": "a:idilbiret"
 	},
 	{
 		"id": "egl-wd-dogum-Q724172",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Yönetmen Nuri Bilge Ceylan hangi yıl doğdu?",
+		"q": "\"Kış Uykusu\"nun yönetmeni Nuri Bilge Ceylan hangi yılda doğmuştur?",
 		"ans": 1959,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q724172"
+		"kaynak": "Q724172",
+		"kardes": "a:nuribilgeceylan"
 	},
 	{
 		"id": "egl-wd-dogum-Q55460",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Yönetmen Ferzan Özpetek hangi yıl doğdu?",
+		"q": "\"Hamam\" filminin yönetmeni Ferzan Özpetek hangi yılda doğmuştur?",
 		"ans": 1959,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q55460"
+		"kaynak": "Q55460",
+		"kardes": "a:ferzanözpetek"
 	},
 	{
 		"id": "egl-wd-dogum-Q298139",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı Sezen Aksu hangi yıl doğdu?",
+		"q": "\"Minik Serçe\" diye anılan Sezen Aksu kaç yılında doğdu?",
 		"ans": 1954,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q298139"
+		"kaynak": "Q298139",
+		"kardes": "a:sezenaksu"
 	},
 	{
 		"id": "egl-wd-dogum-Q485771",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı Tarkan hangi yıl doğdu?",
+		"q": "\"Şımarık\"ın şarkıcısı Tarkan hangi yılda doğmuştur?",
 		"ans": 1972,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q485771"
+		"kaynak": "Q485771",
+		"kardes": "a:tarkan"
 	},
 	{
 		"id": "egl-wd-dogum-Q442656",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Müzisyen Barış Manço hangi yıl doğdu?",
+		"q": "\"Adam Olacak Çocuk\"un sunucusu Barış Manço'nun doğduğu yıl kaçtır?",
 		"ans": 1943,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q442656"
+		"kaynak": "Q442656",
+		"kardes": "a:barışmanço"
 	},
 	{
 		"id": "egl-wd-dogum-Q237378",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Şarkıcı Ajda Pekkan hangi yıl doğdu?",
+		"q": "\"Süperstar\" diye anılan Ajda Pekkan kaç yılında doğdu?",
 		"ans": 1946,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q237378"
+		"kaynak": "Q237378",
+		"kardes": "a:ajdapekkan"
 	},
 	{
 		"id": "egl-wd-dogum-Q343394",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Şarkıcı İbrahim Tatlıses hangi yıl doğdu?",
+		"q": "\"İmparator\" lakaplı şarkıcı İbrahim Tatlıses hangi yılda doğmuştur?",
 		"ans": 1952,
 		"unit": "",
 		"min": 1900,
 		"max": 2000,
-		"kaynak": "Q343394"
+		"kaynak": "Q343394",
+		"kardes": "a:ibrahimtatlıses"
 	},
 	{
 		"id": "egl-wd-dogum-Q467067",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Şarkıcı Bülent Ersoy hangi yıl doğdu?",
+		"q": "\"Diva\" diye anılan şarkıcı Bülent Ersoy'un doğum yılı kaçtır?",
 		"ans": 1952,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q467067"
+		"kaynak": "Q467067",
+		"kardes": "a:ersoy"
 	},
 	{
 		"id": "egl-wd-dogum-Q193534",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Şarkıcı Sertab Erener hangi yıl doğdu?",
+		"q": "Eurovision'u kazanan şarkıcı Sertab Erener hangi yılda doğmuştur?",
 		"ans": 1964,
 		"unit": "",
 		"min": 1900,
 		"max": 2000,
-		"kaynak": "Q193534"
+		"kaynak": "Q193534",
+		"kardes": "a:sertaberener"
 	},
 	{
 		"id": "egl-wd-dogum-Q82199",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Şarkıcı Hande Yener hangi yıl doğdu?",
+		"q": "Pop şarkıcısı Hande Yener hangi yıl doğdu?",
 		"ans": 1973,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q82199"
+		"kaynak": "Q82199",
+		"kardes": "a:handeyener"
 	},
 	{
 		"id": "egl-wd-dogum-Q331711",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Şarkıcı Mustafa Sandal hangi yıl doğdu?",
+		"q": "\"Araba\"nın şarkıcısı Mustafa Sandal'ın doğduğu yıl kaçtır?",
 		"ans": 1970,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q331711"
+		"kaynak": "Q331711",
+		"kardes": "a:mustafasandal"
 	},
 	{
 		"id": "egl-wd-dogum-Q298146",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Şarkıcı Candan Erçetin hangi yıl doğdu?",
+		"q": "\"Hazırım\"ın şarkıcısı Candan Erçetin kaç yılında doğdu?",
 		"ans": 1963,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q298146"
+		"kaynak": "Q298146",
+		"kardes": "a:candanerçetin"
 	},
 	{
 		"id": "egl-wd-dogum-Q709859",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Şarkıcı Ferdi Tayfur hangi yıl doğdu?",
+		"q": "Arabeskin usta sesi Ferdi Tayfur hangi yıl dünyaya geldi?",
 		"ans": 1945,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q709859"
+		"kaynak": "Q709859",
+		"kardes": "a:ferditayfur"
 	},
 	{
 		"id": "egl-wd-dogum-Q447589",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Oyuncu Türkan Şoray hangi yıl doğdu?",
+		"q": "\"Sultan\" diye anılan oyuncu Türkan Şoray hangi yıl doğdu?",
 		"ans": 1945,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q447589"
+		"kaynak": "Q447589",
+		"kardes": "a:türkanşoray"
 	},
 	{
 		"id": "egl-wd-dogum-Q927967",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Oyuncu Cüneyt Arkın hangi yıl doğdu?",
+		"q": "Yeşilçam'ın aksiyon yıldızı Cüneyt Arkın hangi yıl doğdu?",
 		"ans": 1937,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q927967"
+		"kaynak": "Q927967",
+		"kardes": "a:cüneytarkın"
 	},
 	{
 		"id": "egl-wd-dogum-Q470210",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Oyuncu Haluk Bilginer hangi yıl doğdu?",
+		"q": "Emmy ödüllü oyuncu Haluk Bilginer'in doğduğu yıl kaçtır?",
 		"ans": 1954,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q470210"
+		"kaynak": "Q470210",
+		"kardes": "a:halukbilginer"
 	},
 	{
 		"id": "egl-wd-dogum-Q461073",
 		"cat": "eglence",
 		"diff": 1,
 		"type": "num",
-		"q": "Oyuncu Kıvanç Tatlıtuğ hangi yıl doğdu?",
+		"q": "\"Aşk-ı Memnu\"nun Behlül'ü Kıvanç Tatlıtuğ kaç yılında doğdu?",
 		"ans": 1983,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q461073"
+		"kaynak": "Q461073",
+		"kardes": "a:kıvançtatlıtuğ"
 	},
 	{
 		"id": "egl-wd-dogum-Q1259496",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Oyuncu Halit Ergenç hangi yıl doğdu?",
+		"q": "\"Muhteşem Yüzyıl\"ın Kanuni'si Halit Ergenç'in doğum yılı kaçtır?",
 		"ans": 1970,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q1259496"
+		"kaynak": "Q1259496",
+		"kardes": "a:halitergenç"
 	},
 	{
 		"id": "egl-wd-dogum-Q531443",
 		"cat": "eglence",
 		"diff": 2,
 		"type": "num",
-		"q": "Oyuncu Kenan İmirzalıoğlu hangi yıl doğdu?",
+		"q": "\"Ezel\"in yıldızı Kenan İmirzalıoğlu kaç yılında doğdu?",
 		"ans": 1974,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q531443"
+		"kaynak": "Q531443",
+		"kardes": "a:kenanimirzalıoğlu"
 	},
 	{
 		"id": "egl-wd-dogum-Q270698",
 		"cat": "eglence",
 		"diff": 3,
 		"type": "num",
-		"q": "Oyuncu Beren Saat hangi yıl doğdu?",
+		"q": "\"Aşk-ı Memnu\"nun Bihter'i Beren Saat hangi yıl dünyaya geldi?",
 		"ans": 1984,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q270698"
+		"kaynak": "Q270698",
+		"kardes": "a:saat"
 	},
 	{
 		"id": "bil-wd-dogum-Q15118973",
 		"cat": "bilim",
 		"diff": 1,
 		"type": "num",
-		"q": "Nobelli kimyager Aziz Sancar hangi yıl doğdu?",
+		"q": "Nobel Kimya Ödüllü bilim insanı Aziz Sancar hangi yıl doğdu?",
 		"ans": 1946,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q15118973"
+		"kaynak": "Q15118973",
+		"kardes": "a:azizsancar"
 	},
 	{
 		"id": "bil-wd-dogum-Q2505089",
 		"cat": "bilim",
 		"diff": 2,
 		"type": "num",
-		"q": "Aşı geliştiren bilim insanı Uğur Şahin hangi yıl doğdu?",
+		"q": "mRNA aşısını geliştiren bilim insanı Uğur Şahin hangi yılda doğmuştur?",
 		"ans": 1965,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q2505089"
+		"kaynak": "Q2505089",
+		"kardes": "a:uğurşahin"
 	},
 	{
 		"id": "bil-wd-dogum-Q92379963",
 		"cat": "bilim",
 		"diff": 3,
 		"type": "num",
-		"q": "Aşı geliştiren bilim insanı Özlem Türeci hangi yıl doğdu?",
+		"q": "BioNTech'in kurucu ortağı Özlem Türeci kaç yılında doğdu?",
 		"ans": 1967,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q92379963"
+		"kaynak": "Q92379963",
+		"kardes": "a:özlemtüreci"
 	},
 	{
 		"id": "tar-wd-dogum-Q739524",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Tarihçi Halil İnalcık hangi yıl doğdu?",
+		"q": "Osmanlı tarihinin duayeni Halil İnalcık hangi yıl doğdu?",
 		"ans": 1916,
 		"unit": "",
 		"min": 1860,
 		"max": 1960,
-		"kaynak": "Q739524"
+		"kaynak": "Q739524",
+		"kardes": "a:halilinalcık"
 	},
 	{
 		"id": "tar-wd-dogum-Q343562",
 		"cat": "tarih",
 		"diff": 2,
 		"type": "num",
-		"q": "Tarihçi İlber Ortaylı hangi yıl doğdu?",
+		"q": "Topkapı Sarayı'nın eski müdürü İlber Ortaylı hangi yılda doğmuştur?",
 		"ans": 1947,
 		"unit": "",
 		"min": 1890,
 		"max": 1990,
-		"kaynak": "Q343562"
+		"kaynak": "Q343562",
+		"kardes": "a:ilberortaylı"
 	},
 	{
 		"id": "tar-wd-dogum-Q464906",
 		"cat": "tarih",
 		"diff": 3,
 		"type": "num",
-		"q": "Sümerolog Muazzez İlmiye Çığ hangi yıl doğdu?",
+		"q": "Sümerolog Muazzez İlmiye Çığ hangi yılda doğmuştur?",
 		"ans": 1914,
 		"unit": "",
 		"min": 1870,
 		"max": 1970,
-		"kaynak": "Q464906"
+		"kaynak": "Q464906",
+		"kardes": "a:muazzezilmiyeçığ"
 	},
 	{
 		"id": "spo-wd-dogum-Q311259",
 		"cat": "spor",
 		"diff": 1,
 		"type": "num",
-		"q": "Halterci Naim Süleymanoğlu hangi yıl doğdu?",
+		"q": "\"Cep Herkülü\" diye anılan halterci Naim Süleymanoğlu hangi yıl dünyaya geldi?",
 		"ans": 1967,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q311259"
+		"kaynak": "Q311259",
+		"kardes": "a:naimsüleymanoğlu"
 	},
 	{
 		"id": "spo-wd-dogum-Q201900",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Kaleci Rüştü Reçber hangi yıl doğdu?",
+		"q": "Milli takımın efsane kalecisi Rüştü Reçber kaç yılında doğdu?",
 		"ans": 1973,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q201900"
+		"kaynak": "Q201900",
+		"kardes": "a:rüştüreçber"
 	},
 	{
 		"id": "spo-wd-dogum-Q262203",
 		"cat": "spor",
 		"diff": 1,
 		"type": "num",
-		"q": "Teknik direktör Fatih Terim hangi yıl doğdu?",
+		"q": "UEFA Kupası'nı kazanan teknik direktör Fatih Terim hangi yıl dünyaya geldi?",
 		"ans": 1953,
 		"unit": "",
 		"min": 1880,
 		"max": 1980,
-		"kaynak": "Q262203"
+		"kaynak": "Q262203",
+		"kardes": "a:fatihterim"
 	},
 	{
 		"id": "spo-wd-dogum-Q388904",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Teknik direktör Şenol Güneş hangi yıl doğdu?",
+		"q": "Milli takımı dünya üçüncüsü yapan hoca Şenol Güneş'in doğduğu yıl kaçtır?",
 		"ans": 1952,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q388904"
+		"kaynak": "Q388904",
+		"kardes": "a:şenolgüneş"
 	},
 	{
 		"id": "spo-wd-dogum-Q487459",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Futbolcu Arda Turan hangi yıl doğdu?",
+		"q": "Barcelona'da da oynayan futbolcu Arda Turan hangi yılda doğmuştur?",
 		"ans": 1987,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q487459"
+		"kaynak": "Q487459",
+		"kardes": "a:ardaturan"
 	},
 	{
 		"id": "spo-wd-dogum-Q763465",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Futbolcu Hakan Çalhanoğlu hangi yıl doğdu?",
+		"q": "Milan ve Inter'de oynayan futbolcu Hakan Çalhanoğlu'nun doğduğu yıl kaçtır?",
 		"ans": 1994,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q763465"
+		"kaynak": "Q763465",
+		"kardes": "a:hakançalhanoğlu"
 	},
 	{
 		"id": "spo-wd-dogum-Q108159340",
 		"cat": "spor",
 		"diff": 1,
 		"type": "num",
-		"q": "Futbolcu Arda Güler hangi yıl doğdu?",
+		"q": "Real Madrid'e transfer olan genç yıldız Arda Güler'in doğum yılı kaçtır?",
 		"ans": 2005,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q108159340"
+		"kaynak": "Q108159340",
+		"kardes": "a:ardagüler"
 	},
 	{
 		"id": "spo-wd-dogum-Q298981",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Basketbolcu Hidayet Türkoğlu hangi yıl doğdu?",
+		"q": "NBA'da Orlando Magic'te oynayan Hidayet Türkoğlu hangi yıl dünyaya geldi?",
 		"ans": 1979,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q298981"
+		"kaynak": "Q298981",
+		"kardes": "a:hidayettürkoğlu"
 	},
 	{
 		"id": "spo-wd-dogum-Q317045",
 		"cat": "spor",
 		"diff": 3,
 		"type": "num",
-		"q": "Basketbolcu Mehmet Okur hangi yıl doğdu?",
+		"q": "NBA şampiyonu olan ilk Türk Mehmet Okur kaç yılında doğdu?",
 		"ans": 1979,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q317045"
+		"kaynak": "Q317045",
+		"kardes": "a:mehmetokur"
 	},
 	{
 		"id": "spo-wd-dogum-Q353064",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Halterci Halil Mutlu hangi yıl doğdu?",
+		"q": "Üç olimpiyat altını kazanan halterci Halil Mutlu hangi yıl dünyaya geldi?",
 		"ans": 1973,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q353064"
+		"kaynak": "Q353064",
+		"kardes": "a:halilmutlu"
 	},
 	{
 		"id": "spo-wd-dogum-Q3374659",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Güreşçi Taha Akgül hangi yıl doğdu?",
+		"q": "Olimpiyat şampiyonu güreşçi Taha Akgül hangi yıl dünyaya geldi?",
 		"ans": 1990,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q3374659"
+		"kaynak": "Q3374659",
+		"kardes": "a:tahaakgül"
 	},
 	{
 		"id": "spo-wd-dogum-Q20988356",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Okçu Mete Gazoz hangi yıl doğdu?",
+		"q": "Olimpiyat şampiyonu okçu Mete Gazoz'un doğum yılı kaçtır?",
 		"ans": 1999,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q20988356"
+		"kaynak": "Q20988356",
+		"kardes": "a:metegazoz"
 	},
 	{
 		"id": "spo-wd-dogum-Q8061940",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Atıcı Yusuf Dikeç hangi yıl doğdu?",
+		"q": "Olimpiyat madalyalı atıcı Yusuf Dikeç'in doğum yılı kaçtır?",
 		"ans": 1973,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q8061940"
+		"kaynak": "Q8061940",
+		"kardes": "a:yusufdikeç"
 	},
 	{
 		"id": "spo-wd-dogum-Q289248",
 		"cat": "spor",
 		"diff": 3,
 		"type": "num",
-		"q": "Tekvandocu Nur Tatar hangi yıl doğdu?",
+		"q": "İki olimpiyat madalyalı tekvandocu Nur Tatar hangi yıl doğdu?",
 		"ans": 1992,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q289248"
+		"kaynak": "Q289248",
+		"kardes": "a:nurtatar"
 	},
 	{
 		"id": "spo-wd-dogum-Q48977782",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Voleybolcu Zehra Güneş hangi yıl doğdu?",
+		"q": "Filenin Sultanları'nın orta oyuncusu Zehra Güneş hangi yıl doğdu?",
 		"ans": 1999,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q48977782"
+		"kaynak": "Q48977782",
+		"kardes": "a:güneş"
 	},
 	{
 		"id": "spo-wd-dogum-Q209992",
 		"cat": "spor",
 		"diff": 2,
 		"type": "num",
-		"q": "Kaleci Volkan Demirel hangi yıl doğdu?",
+		"q": "Fenerbahçe'nin efsane kalecisi Volkan Demirel'in doğum yılı kaçtır?",
 		"ans": 1981,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q209992"
+		"kaynak": "Q209992",
+		"kardes": "a:volkandemirel"
 	},
 	{
 		"id": "spo-wd-dogum-Q202569",
 		"cat": "spor",
 		"diff": 3,
 		"type": "num",
-		"q": "Futbolcu Emre Belözoğlu hangi yıl doğdu?",
+		"q": "Inter'de forma giyen orta saha Emre Belözoğlu'nun doğduğu yıl kaçtır?",
 		"ans": 1980,
 		"unit": "",
 		"min": 1910,
 		"max": 2010,
-		"kaynak": "Q202569"
+		"kaynak": "Q202569",
+		"kardes": "a:emrebelözoğlu"
 	},
 	{
 		"id": "spo-wd-dogum-Q284359",
 		"cat": "spor",
 		"diff": 3,
 		"type": "num",
-		"q": "Futbolcu Nihat Kahveci hangi yıl doğdu?",
+		"q": "Real Sociedad'da oynayan golcü Nihat Kahveci'nin doğduğu yıl kaçtır?",
 		"ans": 1979,
 		"unit": "",
 		"min": 1920,
 		"max": 2020,
-		"kaynak": "Q284359"
+		"kaynak": "Q284359",
+		"kardes": "a:nihatkahveci"
 	},
 	{
 		"id": "spo-wd-dogum-Q444318",
 		"cat": "spor",
 		"diff": 3,
 		"type": "num",
-		"q": "Teknik direktör Okan Buruk hangi yıl doğdu?",
+		"q": "Galatasaray'ı şampiyon yapan hoca Okan Buruk hangi yılda doğmuştur?",
 		"ans": 1973,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q444318"
+		"kaynak": "Q444318",
+		"kardes": "a:okanburuk"
 	},
 	{
 		"id": "spo-wd-dogum-Q321572",
 		"cat": "spor",
 		"diff": 3,
 		"type": "num",
-		"q": "Hakem Cüneyt Çakır hangi yıl doğdu?",
+		"q": "Şampiyonlar Ligi finali yöneten hakem Cüneyt Çakır hangi yıl doğdu?",
 		"ans": 1976,
 		"unit": "",
 		"min": 1925,
 		"max": 2025,
-		"kaynak": "Q321572"
+		"kaynak": "Q321572",
+		"kardes": "a:cüneytçakır"
 	}
 ];

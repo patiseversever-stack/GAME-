@@ -1,5 +1,5 @@
 import re,glob,collections
-RX=re.compile(r'^### (GK-\d{3}) · ([^·]+) · ([^·]+) · Zorluk (\d) · Gösterim: ([^\n]+)\n```\n(.*?)\n```\n- \*\*Soru:\*\* (.*?)\n- \*\*Şıklar:\*\* (.*?)\n- \*\*Bilgi:\*\* (.*?)$', re.M|re.S)
+RX=re.compile(r'^### (GK-\d{3,4}) · ([^·]+) · ([^·]+) · Zorluk (\d) · Gösterim: ([^\n]+)\n```\n(.*?)\n```\n- \*\*Soru:\*\* (.*?)\n- \*\*Şıklar:\*\* (.*?)\n- \*\*Bilgi:\*\* (.*?)$', re.M|re.S)
 items=[]
 for f in sorted(glob.glob('P[1-6].md')):
     for m in RX.finditer(open(f).read()):

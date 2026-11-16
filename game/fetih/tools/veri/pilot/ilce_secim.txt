@@ -1,6 +1,8 @@
 # Pilot ilçe seçimi (SORU-100K.md Aşama 1): soru olmaya değer, Türk oyuncunun makul olarak bilebileceği ilçeler.
 # Biçim: Ad | İl | zorluk (1 çok bilinen, 2 bilinen, 3 gezen ya da haberleri izleyen bilir) [| soruda görünen ad]
 # Görünen ad yalnız Wikidata etiketi TDK/resmî yazımdan ayrıysa yazılır (Kahta → Kâhta).
+# 5. alan (isteğe bağlı) ipucu: ilçeye özgü KESİN bir bilgi, sıfat öbeği olarak ("Cunda Adası'nın bağlı olduğu"). İlin ya da ilçenin
+# adını içermez, cevabı tek başına vermez; ipucu olan ilçe ipuçlu kalıpla sorulur (kullanıcı, 16 Kasım: "hep aynı kalıp olmasın").
 #
 # BAĞIMSIZ DENETİM (16 Kasım 2026):
 # - Bankada ili zaten sorulan ya da kökünde açıkça yazan ilçeler için "hangi ilde" sorusu, aynı ilçeyi (ya da ilçedeki
@@ -14,49 +16,49 @@
 # İl ve koordinat Wikidata'dan doğrulanır (tools/veri/ham/ilceler.json); uyuşmayan ya da başka ilde aynı adı taşıyan
 # ilçe üretici tarafından atlanır ve raporlanır. Merkez ilçesi ilin adını taşıyanlar (Kars, Bolu…) alınmaz.
 # --- Marmara
-Kadıköy | İstanbul | 1
-Beşiktaş | İstanbul | 1
-Üsküdar | İstanbul | 1
-Beyoğlu | İstanbul | 1
-Fatih | İstanbul | 1
-Bakırköy | İstanbul | 1
-Sarıyer | İstanbul | 1
-Şile | İstanbul | 2
-Adalar | İstanbul | 2
-Silivri | İstanbul | 1
+Kadıköy | İstanbul | 1 |  | Haydarpaşa Garı'nın bulunduğu
+Beşiktaş | İstanbul | 1 |  | Dolmabahçe Sarayı'nın bulunduğu
+Üsküdar | İstanbul | 1 |  | Şemsi Paşa Camii'nin bulunduğu
+Beyoğlu | İstanbul | 1 |  | İstiklal Caddesi'nin bulunduğu
+Fatih | İstanbul | 1 |  | Sultanahmet Meydanı'nın bulunduğu
+Bakırköy | İstanbul | 1 |  | Ataköy semtinin bağlı olduğu
+Sarıyer | İstanbul | 1 |  | Emirgan Korusu'nun bulunduğu
+Şile | İstanbul | 2 |  | Bezi ve feneriyle ünlü
+Adalar | İstanbul | 2 |  | Büyükada'nın bağlı olduğu
+Silivri | İstanbul | 1 |  | Yoğurduyla ünlü
 Çatalca | İstanbul | 1
-Beykoz | İstanbul | 1
-Eyüpsultan | İstanbul | 1
+Beykoz | İstanbul | 1 |  | Kanlıca semtinin bağlı olduğu
+Eyüpsultan | İstanbul | 1 |  | Pierre Loti Tepesi'nin bulunduğu
 Büyükçekmece | İstanbul | 1
-Gebze | Kocaeli | 1
-Gölcük | Kocaeli | 1
+Gebze | Kocaeli | 1 |  | Osman Hamdi Bey Müzesi'nin bulunduğu
+Gölcük | Kocaeli | 1 |  | Deniz üssüyle bilinen
 Karamürsel | Kocaeli | 3
 Kartepe | Kocaeli | 3
 İzmit | Kocaeli | 1
 Adapazarı | Sakarya | 1
-Sapanca | Sakarya | 1
+Sapanca | Sakarya | 1 |  | Aynı adlı gölün kıyısındaki
 Karasu | Sakarya | 3
 Hendek | Sakarya | 3
-Gemlik | Bursa | 1
+Gemlik | Bursa | 1 |  | Zeytiniyle ünlü
 Mudanya | Bursa | 1
-İnegöl | Bursa | 1
-İznik | Bursa | 2
+İnegöl | Bursa | 1 |  | Köftesiyle ünlü
+İznik | Bursa | 2 |  | Antik adı Nikaia olan
 Nilüfer | Bursa | 2
 Osmangazi | Bursa | 2
 Orhangazi | Bursa | 3
 Mustafakemalpaşa | Bursa | 3
 Çınarcık | Yalova | 3
-Bandırma | Balıkesir | 1
-Ayvalık | Balıkesir | 1
+Bandırma | Balıkesir | 1 |  | Bandırma Vapuru'na adını veren
+Ayvalık | Balıkesir | 1 |  | Cunda Adası'nın bağlı olduğu
 Edremit | Balıkesir | 2
-Erdek | Balıkesir | 2
+Erdek | Balıkesir | 2 |  | Kapıdağ Yarımadası'ndaki
 Gönen | Balıkesir | 3
 Burhaniye | Balıkesir | 3
 Susurluk | Balıkesir | 3
-Gelibolu | Çanakkale | 1
-Eceabat | Çanakkale | 2
-Bozcaada | Çanakkale | 1
-Gökçeada | Çanakkale | 1
+Gelibolu | Çanakkale | 1 |  | Tarihî yarımadaya adını veren
+Eceabat | Çanakkale | 2 |  | Kilitbahir Kalesi'nin bulunduğu
+Bozcaada | Çanakkale | 1 |  | Türkiye'nin üçüncü büyük adası olan
+Gökçeada | Çanakkale | 1 |  | Eski adı İmroz olan
 Biga | Çanakkale | 3
 Ayvacık | Çanakkale | 3
 Lapseki | Çanakkale | 3
@@ -67,27 +69,27 @@ Malkara | Tekirdağ | 2
 Lüleburgaz | Kırklareli | 1
 Babaeski | Kırklareli | 2
 Keşan | Edirne | 2
-Uzunköprü | Edirne | 2
-İpsala | Edirne | 2
+Uzunköprü | Edirne | 2 |  | Ergene üzerindeki tarihî köprüsüyle ünlü
+İpsala | Edirne | 2 |  | Pirinciyle ünlü
 Enez | Edirne | 2
-Söğüt | Bilecik | 1
+Söğüt | Bilecik | 1 |  | Osmanlı Beyliği'nin ilk merkezi olan
 Bozüyük | Bilecik | 2
 # --- Ege
-Bodrum | Muğla | 1
+Bodrum | Muğla | 1 |  | Antik adı Halikarnas olan
 Marmaris | Muğla | 1
-Fethiye | Muğla | 1
+Fethiye | Muğla | 1 |  | Antik adı Telmessos olan
 Datça | Muğla | 1
 Dalaman | Muğla | 2
 Köyceğiz | Muğla | 2
-Milas | Muğla | 2
-Kuşadası | Aydın | 1
-Didim | Aydın | 1
+Milas | Muğla | 2 |  | Halısıyla ünlü
+Kuşadası | Aydın | 1 |  | Güvercinada kalesiyle bilinen
+Didim | Aydın | 1 |  | Apollon Tapınağı'nın bulunduğu
 Söke | Aydın | 2
 Nazilli | Aydın | 2
-Çeşme | İzmir | 1
-Bergama | İzmir | 1
-Selçuk | İzmir | 1
-Foça | İzmir | 2
+Çeşme | İzmir | 1 |  | Alaçatı'nın bağlı olduğu
+Bergama | İzmir | 1 |  | Antik Pergamon'un bulunduğu
+Selçuk | İzmir | 1 |  | Efes Antik Kenti'nin bulunduğu
+Foça | İzmir | 2 |  | Akdeniz foklarının yaşadığı kıyılarıyla bilinen
 Urla | İzmir | 2
 Karşıyaka | İzmir | 1
 Bornova | İzmir | 1
@@ -95,141 +97,141 @@ Konak | İzmir | 1
 Ödemiş | İzmir | 2
 Tire | İzmir | 2
 Dikili | İzmir | 2
-Seferihisar | İzmir | 2
+Seferihisar | İzmir | 2 |  | Sığacık Kalesi'nin bulunduğu
 Aliağa | İzmir | 2
 Menemen | İzmir | 2
 Kemalpaşa | İzmir | 3
 Akhisar | Manisa | 2
-Salihli | Manisa | 2
+Salihli | Manisa | 2 |  | Antik Sardes kentinin bulunduğu
 Turgutlu | Manisa | 2
-Soma | Manisa | 1
-Alaşehir | Manisa | 2
-Kula | Manisa | 3
-Pamukkale | Denizli | 1
-Buldan | Denizli | 2
+Soma | Manisa | 1 |  | Kömür madenleriyle bilinen
+Alaşehir | Manisa | 2 |  | Antik adı Filadelfiya olan
+Kula | Manisa | 3 |  | Volkanik arazisiyle jeopark olan
+Pamukkale | Denizli | 1 |  | Antik Hierapolis'in bulunduğu
+Buldan | Denizli | 2 |  | Dokumasıyla ünlü
 Simav | Kütahya | 3
 Tavşanlı | Kütahya | 3
 Gediz | Kütahya | 3
-Sandıklı | Afyonkarahisar | 2
+Sandıklı | Afyonkarahisar | 2 |  | Kaplıcalarıyla bilinen
 Dinar | Afyonkarahisar | 3
 # --- Akdeniz
-Alanya | Antalya | 1
+Alanya | Antalya | 1 |  | Kızıl Kule'nin bulunduğu
 Kemer | Antalya | 1
-Manavgat | Antalya | 1
-Kaş | Antalya | 1
+Manavgat | Antalya | 1 |  | Şelalesiyle ünlü
+Kaş | Antalya | 1 |  | Meis Adası'nın karşısındaki
 Kumluca | Antalya | 2
-Finike | Antalya | 2
-Demre | Antalya | 2
+Finike | Antalya | 2 |  | Portakalıyla ünlü
+Demre | Antalya | 2 |  | Aziz Nikolaos Kilisesi'nin bulunduğu
 Gazipaşa | Antalya | 2
-Serik | Antalya | 2
+Serik | Antalya | 2 |  | Aspendos Tiyatrosu'nun bulunduğu
 Konyaaltı | Antalya | 1
-Muratpaşa | Antalya | 2
-Eğirdir | Isparta | 2
-Yalvaç | Isparta | 2
-Tarsus | Mersin | 1
-Silifke | Mersin | 1
-Anamur | Mersin | 2
-Erdemli | Mersin | 2
+Muratpaşa | Antalya | 2 |  | Kaleiçi'nin bulunduğu
+Eğirdir | Isparta | 2 |  | Aynı adlı gölün kıyısındaki
+Yalvaç | Isparta | 2 |  | Antik Pisidia Antiokheia'sının bulunduğu
+Tarsus | Mersin | 1 |  | Kleopatra Kapısı'nın bulunduğu
+Silifke | Mersin | 1 |  | Göksu Deltası'nın bulunduğu
+Anamur | Mersin | 2 |  | Muzuyla ünlü
+Erdemli | Mersin | 2 |  | Kızkalesi'nin bağlı olduğu
 Kozan | Adana | 2
-Ceyhan | Adana | 1
+Ceyhan | Adana | 1 |  | Petrol boru hattı terminaliyle bilinen
 Yumurtalık | Adana | 2
 Pozantı | Adana | 2
 Seyhan | Adana | 2
-Antakya | Hatay | 1
-İskenderun | Hatay | 1
-Samandağ | Hatay | 2
+Antakya | Hatay | 1 |  | Saint Pierre Kilisesi'nin bulunduğu
+İskenderun | Hatay | 1 |  | Büyük İskender'in adını taşıyan
+Samandağ | Hatay | 2 |  | Musa Dağı eteğindeki
 Dörtyol | Hatay | 2
 Reyhanlı | Hatay | 2
 Arsuz | Hatay | 2
 Elbistan | Kahramanmaraş | 2
 Afşin | Kahramanmaraş | 2
 # --- İç Anadolu
-Çankaya | Ankara | 1
+Çankaya | Ankara | 1 |  | Anıtkabir'in bulunduğu
 Keçiören | Ankara | 1
 Etimesgut | Ankara | 1
-Beypazarı | Ankara | 1
-Polatlı | Ankara | 1
-Kızılcahamam | Ankara | 2
+Beypazarı | Ankara | 1 |  | Kurusu ve tarihî evleriyle ünlü
+Polatlı | Ankara | 1 |  | Antik Gordion'un bulunduğu
+Kızılcahamam | Ankara | 2 |  | Soğuksu Milli Parkı'nın bulunduğu
 Çubuk | Ankara | 3
 Sincan | Ankara | 1
 Ürgüp | Nevşehir | 1
-Avanos | Nevşehir | 1
-Derinkuyu | Nevşehir | 2
-Hacıbektaş | Nevşehir | 2
+Avanos | Nevşehir | 1 |  | Çömlekçiliğiyle ünlü
+Derinkuyu | Nevşehir | 2 |  | Yeraltı şehriyle ünlü
+Hacıbektaş | Nevşehir | 2 |  | Bektaşi dergâhıyla bilinen
 Akşehir | Konya | 1
-Beyşehir | Konya | 2
+Beyşehir | Konya | 2 |  | Eşrefoğlu Camii'nin bulunduğu
 Seydişehir | Konya | 3
 Selçuklu | Konya | 2
 Meram | Konya | 1
-Karapınar | Konya | 3
+Karapınar | Konya | 3 |  | Kumullarıyla bilinen
 Talas | Kayseri | 3
 Ermenek | Karaman | 3
-Sivrihisar | Eskişehir | 2
+Sivrihisar | Eskişehir | 2 |  | Ahşap direkli Ulu Camii'siyle bilinen
 Tepebaşı | Eskişehir | 2
-Odunpazarı | Eskişehir | 2
-Divriği | Sivas | 2
+Odunpazarı | Eskişehir | 2 |  | Renkli tarihî evleriyle bilinen
+Divriği | Sivas | 2 |  | Ulu Camii UNESCO listesinde olan
 # --- Karadeniz
-Safranbolu | Karabük | 1
-Amasra | Bartın | 1
+Safranbolu | Karabük | 1 |  | Tarihî ahşap evleriyle ünlü
+Amasra | Bartın | 1 |  | Balığı ve kalesiyle bilinen
 Akçakoca | Düzce | 2
 Ereğli | Zonguldak | 2
 Mengen | Bolu | 2
 Mudurnu | Bolu | 2
 Gerede | Bolu | 3
-Tosya | Kastamonu | 2
-İnebolu | Kastamonu | 2
-Taşköprü | Kastamonu | 3
-Bafra | Samsun | 1
-Çarşamba | Samsun | 2
+Tosya | Kastamonu | 2 |  | Pirinciyle bilinen
+İnebolu | Kastamonu | 2 |  | İstiklal Yolu'nun başladığı
+Taşköprü | Kastamonu | 3 |  | Sarımsağıyla ünlü
+Bafra | Samsun | 1 |  | Kızılırmak deltasındaki
+Çarşamba | Samsun | 2 |  | Yeşilırmak deltasındaki
 Atakum | Samsun | 2
 Merzifon | Amasya | 1
 Turhal | Tokat | 2
-Zile | Tokat | 2
+Zile | Tokat | 2 |  | Sezar'ın "Geldim, gördüm, yendim" dediği
 Niksar | Tokat | 2
 Sungurlu | Çorum | 2
-Osmancık | Çorum | 2
+Osmancık | Çorum | 2 |  | Pirinciyle tanınan
 Ünye | Ordu | 2
 Fatsa | Ordu | 2
-Akçaabat | Trabzon | 1
-Maçka | Trabzon | 2
-Sürmene | Trabzon | 2
+Akçaabat | Trabzon | 1 |  | Köftesine adını veren
+Maçka | Trabzon | 2 |  | Sümela Manastırı'nın bulunduğu
+Sürmene | Trabzon | 2 |  | Bıçaklarıyla ünlü
 Of | Trabzon | 1
 Çayeli | Rize | 2
 Ardeşen | Rize | 2
-Çamlıhemşin | Rize | 2
+Çamlıhemşin | Rize | 2 |  | Ayder Yaylası'nın bulunduğu
 Hopa | Artvin | 2
-Borçka | Artvin | 3
-Yusufeli | Artvin | 2
+Borçka | Artvin | 3 |  | Karagöl'üyle bilinen
+Yusufeli | Artvin | 2 |  | Aynı adlı barajla bilinen
 # --- Doğu Anadolu
-Sarıkamış | Kars | 1
-Doğubayazıt | Ağrı | 1
+Sarıkamış | Kars | 1 |  | Kayak merkeziyle bilinen
+Doğubayazıt | Ağrı | 1 |  | İshak Paşa Sarayı'nın bulunduğu
 Erciş | Van | 2
-Tatvan | Bitlis | 2
-Ahlat | Bitlis | 2
-Malazgirt | Muş | 1
-Oltu | Erzurum | 2
-Tortum | Erzurum | 3
-Palandöken | Erzurum | 2
-Kemaliye | Erzincan | 2
-Keban | Elazığ | 2
-Darende | Malatya | 2
+Tatvan | Bitlis | 2 |  | Nemrut Krater Gölü'ne yakın
+Ahlat | Bitlis | 2 |  | Selçuklu mezar taşlarıyla ünlü
+Malazgirt | Muş | 1 |  | 1071 zaferine adını veren
+Oltu | Erzurum | 2 |  | Siyah süs taşına adını veren
+Tortum | Erzurum | 3 |  | Şelalesiyle bilinen
+Palandöken | Erzurum | 2 |  | Kış sporlarıyla ünlü
+Kemaliye | Erzincan | 2 |  | Karanlık Kanyon'uyla bilinen
+Keban | Elazığ | 2 |  | Barajıyla bilinen
+Darende | Malatya | 2 |  | Somuncu Baba Türbesi'nin bulunduğu
 # --- Güneydoğu Anadolu
-Midyat | Mardin | 1
+Midyat | Mardin | 1 |  | Telkâri gümüş işçiliğiyle ünlü
 Nusaybin | Mardin | 2
 Kızıltepe | Mardin | 2
 Hasankeyf | Batman | 1
-Kahta | Adıyaman | 2 | Kâhta
-Birecik | Şanlıurfa | 2
-Halfeti | Şanlıurfa | 1
-Harran | Şanlıurfa | 1
+Kahta | Adıyaman | 2 | Kâhta | Nemrut Dağı'na çıkılan
+Birecik | Şanlıurfa | 2 |  | Kelaynaklarıyla ünlü
+Halfeti | Şanlıurfa | 1 |  | Siyah gülüyle ünlü
+Harran | Şanlıurfa | 1 |  | Kümbet evleriyle ünlü
 Siverek | Şanlıurfa | 2
 Viranşehir | Şanlıurfa | 2
 Suruç | Şanlıurfa | 2
-Nizip | Gaziantep | 1
+Nizip | Gaziantep | 1 |  | Zeugma Antik Kenti'nin bulunduğu
 İslahiye | Gaziantep | 3
 Şahinbey | Gaziantep | 2
-Ergani | Diyarbakır | 3
-Sur | Diyarbakır | 2
+Ergani | Diyarbakır | 3 |  | Çayönü Höyüğü'nün bulunduğu
+Sur | Diyarbakır | 2 |  | Tarihî surlarıyla ünlü
 Cizre | Şırnak | 1
 Silopi | Şırnak | 2
 Yüksekova | Hakkari | 2

@@ -6,7 +6,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Fatih ilçesi hangi ildedir?",
+		"q": "Sultanahmet Meydanı'nın bulunduğu Fatih hangi ilimizdedir?",
 		"a": [
 			"İstanbul",
 			"Yalova",
@@ -20,7 +20,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Bakırköy ilçesi hangi ildedir?",
+		"q": "Ataköy semtinin bağlı olduğu Bakırköy ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"İstanbul",
 			"Yalova",
@@ -34,7 +34,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Sarıyer hangi ilin ilçesidir?",
+		"q": "Emirgan Korusu'nun bulunduğu Sarıyer hangi ilin ilçesidir?",
 		"a": [
 			"İstanbul",
 			"Kırklareli",
@@ -48,7 +48,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Silivri ilçesi hangi ildedir?",
+		"q": "Yoğurduyla ünlü Silivri ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"İstanbul",
 			"Kırklareli",
@@ -62,7 +62,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Çatalca hangi ilin ilçesidir?",
+		"q": "Çatalca'ya giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"İstanbul",
 			"Tekirdağ",
@@ -76,7 +76,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Beykoz hangi ile bağlı bir ilçedir?",
+		"q": "Kanlıca semtinin bağlı olduğu Beykoz hangi ilin ilçesidir?",
 		"a": [
 			"İstanbul",
 			"Kocaeli",
@@ -90,7 +90,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Eyüpsultan hangi ile bağlı bir ilçedir?",
+		"q": "Pierre Loti Tepesi'nin bulunduğu Eyüpsultan hangi ilimizdedir?",
 		"a": [
 			"İstanbul",
 			"Yalova",
@@ -104,7 +104,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Büyükçekmece ilçesi hangi ildedir?",
+		"q": "Büyükçekmece'nin bağlı olduğu il hangisi?",
 		"a": [
 			"İstanbul",
 			"Kırklareli",
@@ -118,7 +118,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Gebze ilçesi hangi ildedir?",
+		"q": "Osman Hamdi Bey Müzesi'nin bulunduğu Gebze hangi ilin ilçesidir?",
 		"a": [
 			"Kocaeli",
 			"Sakarya",
@@ -132,7 +132,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Gölcük hangi ilin ilçesidir?",
+		"q": "Deniz üssüyle bilinen Gölcük hangi ilimizdedir?",
 		"a": [
 			"Kocaeli",
 			"Yalova",
@@ -146,7 +146,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Kartepe hangi ilin ilçesidir?",
+		"q": "Kartepe hangi ile bağlı bir ilçedir?",
 		"a": [
 			"Kocaeli",
 			"Bursa",
@@ -160,7 +160,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "İzmit hangi ilin ilçesidir?",
+		"q": "Haritada İzmit ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"Kocaeli",
 			"Bursa",
@@ -174,7 +174,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Adapazarı hangi ile bağlı bir ilçedir?",
+		"q": "Adapazarı ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Sakarya",
 			"Bolu",
@@ -188,7 +188,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Sapanca hangi ilin ilçesidir?",
+		"q": "Aynı adlı gölün kıyısındaki Sapanca ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Sakarya",
 			"Düzce",
@@ -202,7 +202,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Hendek ilçesi hangi ildedir?",
+		"q": "Hendek ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Sakarya",
 			"Kocaeli",
@@ -216,7 +216,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Osmangazi hangi ile bağlı bir ilçedir?",
+		"q": "Haritada Osmangazi ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"Bursa",
 			"Sakarya",
@@ -230,7 +230,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Orhangazi hangi ile bağlı bir ilçedir?",
+		"q": "Orhangazi'ye giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"Bursa",
 			"Kütahya",
@@ -244,7 +244,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Mustafakemalpaşa ilçesi hangi ildedir?",
+		"q": "Mustafakemalpaşa hangi ile bağlı bir ilçedir?",
 		"a": [
 			"Bursa",
 			"Sakarya",
@@ -258,7 +258,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Çınarcık ilçesi hangi ildedir?",
+		"q": "Haritada Çınarcık ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"Yalova",
 			"İstanbul",
@@ -272,7 +272,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Bandırma hangi ilin ilçesidir?",
+		"q": "Bandırma Vapuru'na adını veren Bandırma hangi ilin ilçesidir?",
 		"a": [
 			"Balıkesir",
 			"Manisa",
@@ -286,7 +286,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Ayvalık ilçesi hangi ildedir?",
+		"q": "Cunda Adası'nın bağlı olduğu Ayvalık ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Balıkesir",
 			"İzmir",
@@ -300,7 +300,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Erdek hangi ile bağlı bir ilçedir?",
+		"q": "Kapıdağ Yarımadası'ndaki Erdek hangi ilin ilçesidir?",
 		"a": [
 			"Balıkesir",
 			"Çanakkale",
@@ -314,7 +314,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Burhaniye hangi ile bağlı bir ilçedir?",
+		"q": "Burhaniye'nin bağlı olduğu il hangisi?",
 		"a": [
 			"Balıkesir",
 			"Kütahya",
@@ -328,7 +328,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Susurluk ilçesi hangi ildedir?",
+		"q": "Susurluk'a giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"Balıkesir",
 			"Kütahya",
@@ -342,7 +342,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Eceabat ilçesi hangi ildedir?",
+		"q": "Kilitbahir Kalesi'nin bulunduğu Eceabat hangi ilin ilçesidir?",
 		"a": [
 			"Çanakkale",
 			"Tekirdağ",
@@ -356,7 +356,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Biga ilçesi hangi ildedir?",
+		"q": "Haritada Biga ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"Çanakkale",
 			"Tekirdağ",
@@ -370,7 +370,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Çerkezköy hangi ilin ilçesidir?",
+		"q": "Çerkezköy'e giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"Tekirdağ",
 			"Çanakkale",
@@ -384,7 +384,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Malkara ilçesi hangi ildedir?",
+		"q": "Malkara'ya giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"Tekirdağ",
 			"Kırklareli",
@@ -398,7 +398,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Lüleburgaz hangi ile bağlı bir ilçedir?",
+		"q": "Lüleburgaz hangi ilin ilçesidir?",
 		"a": [
 			"Kırklareli",
 			"İstanbul",
@@ -412,7 +412,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Babaeski ilçesi hangi ildedir?",
+		"q": "Babaeski ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Kırklareli",
 			"Tekirdağ",
@@ -426,7 +426,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Keşan ilçesi hangi ildedir?",
+		"q": "Keşan'a giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"Edirne",
 			"Kırklareli",
@@ -440,7 +440,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "İpsala hangi ile bağlı bir ilçedir?",
+		"q": "Pirinciyle ünlü İpsala hangi ilin ilçesidir?",
 		"a": [
 			"Edirne",
 			"Kırklareli",
@@ -468,7 +468,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Bozüyük hangi ile bağlı bir ilçedir?",
+		"q": "Haritada Bozüyük ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"Bilecik",
 			"Sakarya",
@@ -482,7 +482,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Datça ilçesi hangi ildedir?",
+		"q": "Datça'ya giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"Muğla",
 			"Denizli",
@@ -496,7 +496,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Köyceğiz hangi ile bağlı bir ilçedir?",
+		"q": "Köyceğiz ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Muğla",
 			"Aydın",
@@ -510,7 +510,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Milas ilçesi hangi ildedir?",
+		"q": "Halısıyla ünlü Milas ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Muğla",
 			"Aydın",
@@ -538,7 +538,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Bergama ilçesi hangi ildedir?",
+		"q": "Antik Pergamon'un bulunduğu Bergama hangi ilimizdedir?",
 		"a": [
 			"İzmir",
 			"Balıkesir",
@@ -552,7 +552,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Urla hangi ile bağlı bir ilçedir?",
+		"q": "Haritada Urla ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"İzmir",
 			"Balıkesir",
@@ -566,7 +566,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Bornova hangi ilin ilçesidir?",
+		"q": "Haritada Bornova ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"İzmir",
 			"Balıkesir",
@@ -580,7 +580,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Ödemiş hangi ilin ilçesidir?",
+		"q": "Ödemiş'in bağlı olduğu il hangisi?",
 		"a": [
 			"İzmir",
 			"Balıkesir",
@@ -594,7 +594,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Tire hangi ilin ilçesidir?",
+		"q": "Tire hangi ile bağlı bir ilçedir?",
 		"a": [
 			"İzmir",
 			"Aydın",
@@ -608,7 +608,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Dikili ilçesi hangi ildedir?",
+		"q": "Haritada Dikili ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"İzmir",
 			"Balıkesir",
@@ -622,7 +622,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Seferihisar hangi ile bağlı bir ilçedir?",
+		"q": "Sığacık Kalesi'nin bulunduğu Seferihisar ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"İzmir",
 			"Manisa",
@@ -636,7 +636,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Akhisar ilçesi hangi ildedir?",
+		"q": "Akhisar hangi ilin ilçesidir?",
 		"a": [
 			"Manisa",
 			"Uşak",
@@ -650,7 +650,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Salihli hangi ile bağlı bir ilçedir?",
+		"q": "Antik Sardes kentinin bulunduğu Salihli hangi ilimizdedir?",
 		"a": [
 			"Manisa",
 			"Kütahya",
@@ -664,7 +664,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Turgutlu hangi ilin ilçesidir?",
+		"q": "Turgutlu ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Manisa",
 			"Uşak",
@@ -678,7 +678,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Alaşehir hangi ilin ilçesidir?",
+		"q": "Antik adı Filadelfiya olan Alaşehir ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Manisa",
 			"Uşak",
@@ -692,7 +692,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Kula hangi ile bağlı bir ilçedir?",
+		"q": "Volkanik arazisiyle jeopark olan Kula hangi ilin ilçesidir?",
 		"a": [
 			"Manisa",
 			"Kütahya",
@@ -706,7 +706,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Buldan ilçesi hangi ildedir?",
+		"q": "Dokumasıyla ünlü Buldan hangi ilimizdedir?",
 		"a": [
 			"Denizli",
 			"Muğla",
@@ -720,7 +720,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Simav hangi ilin ilçesidir?",
+		"q": "Simav'a giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"Kütahya",
 			"Manisa",
@@ -734,7 +734,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Tavşanlı ilçesi hangi ildedir?",
+		"q": "Tavşanlı'nın bağlı olduğu il hangisi?",
 		"a": [
 			"Kütahya",
 			"Eskişehir",
@@ -748,7 +748,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Sandıklı ilçesi hangi ildedir?",
+		"q": "Kaplıcalarıyla bilinen Sandıklı hangi ilimizdedir?",
 		"a": [
 			"Afyonkarahisar",
 			"Konya",
@@ -762,7 +762,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Kaş ilçesi hangi ildedir?",
+		"q": "Meis Adası'nın karşısındaki Kaş ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Antalya",
 			"Burdur",
@@ -776,7 +776,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Kumluca ilçesi hangi ildedir?",
+		"q": "Kumluca hangi ilin ilçesidir?",
 		"a": [
 			"Antalya",
 			"Isparta",
@@ -790,7 +790,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Finike hangi ile bağlı bir ilçedir?",
+		"q": "Portakalıyla ünlü Finike hangi ilimizdedir?",
 		"a": [
 			"Antalya",
 			"Muğla",
@@ -804,7 +804,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Demre hangi ile bağlı bir ilçedir?",
+		"q": "Aziz Nikolaos Kilisesi'nin bulunduğu Demre ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Antalya",
 			"Mersin",
@@ -818,7 +818,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Gazipaşa hangi ilin ilçesidir?",
+		"q": "Gazipaşa hangi ile bağlı bir ilçedir?",
 		"a": [
 			"Antalya",
 			"Burdur",
@@ -832,7 +832,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Serik ilçesi hangi ildedir?",
+		"q": "Aspendos Tiyatrosu'nun bulunduğu Serik hangi ilimizdedir?",
 		"a": [
 			"Antalya",
 			"Isparta",
@@ -846,7 +846,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Konyaaltı ilçesi hangi ildedir?",
+		"q": "Konyaaltı hangi ilin ilçesidir?",
 		"a": [
 			"Antalya",
 			"Burdur",
@@ -860,7 +860,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Muratpaşa hangi ilin ilçesidir?",
+		"q": "Kaleiçi'nin bulunduğu Muratpaşa hangi ilin ilçesidir?",
 		"a": [
 			"Antalya",
 			"Burdur",
@@ -874,7 +874,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Eğirdir hangi ilin ilçesidir?",
+		"q": "Aynı adlı gölün kıyısındaki Eğirdir hangi ilin ilçesidir?",
 		"a": [
 			"Isparta",
 			"Afyonkarahisar",
@@ -888,7 +888,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Yalvaç hangi ile bağlı bir ilçedir?",
+		"q": "Antik Pisidia Antiokheia'sının bulunduğu Yalvaç hangi ilin ilçesidir?",
 		"a": [
 			"Isparta",
 			"Antalya",
@@ -902,7 +902,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Erdemli hangi ile bağlı bir ilçedir?",
+		"q": "Kızkalesi'nin bağlı olduğu Erdemli ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Mersin",
 			"Niğde",
@@ -916,7 +916,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Kozan hangi ile bağlı bir ilçedir?",
+		"q": "Kozan'ın bağlı olduğu il hangisi?",
 		"a": [
 			"Adana",
 			"Niğde",
@@ -930,7 +930,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Yumurtalık hangi ilin ilçesidir?",
+		"q": "Yumurtalık'ın bağlı olduğu il hangisi?",
 		"a": [
 			"Adana",
 			"Hatay",
@@ -944,7 +944,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Pozantı ilçesi hangi ildedir?",
+		"q": "Pozantı'nın bağlı olduğu il hangisi?",
 		"a": [
 			"Adana",
 			"Kayseri",
@@ -958,7 +958,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Samandağ ilçesi hangi ildedir?",
+		"q": "Musa Dağı eteğindeki Samandağ ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Hatay",
 			"Adana",
@@ -972,7 +972,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Dörtyol hangi ile bağlı bir ilçedir?",
+		"q": "Dörtyol hangi ilin ilçesidir?",
 		"a": [
 			"Hatay",
 			"Adana",
@@ -986,7 +986,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Reyhanlı hangi ile bağlı bir ilçedir?",
+		"q": "Reyhanlı hangi ilin ilçesidir?",
 		"a": [
 			"Hatay",
 			"Osmaniye",
@@ -1000,7 +1000,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Arsuz ilçesi hangi ildedir?",
+		"q": "Haritada Arsuz ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"Hatay",
 			"Adana",
@@ -1014,7 +1014,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Elbistan hangi ile bağlı bir ilçedir?",
+		"q": "Elbistan hangi ilin ilçesidir?",
 		"a": [
 			"Kahramanmaraş",
 			"Gaziantep",
@@ -1028,7 +1028,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Afşin hangi ilin ilçesidir?",
+		"q": "Afşin ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Kahramanmaraş",
 			"Adana",
@@ -1042,7 +1042,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Keçiören ilçesi hangi ildedir?",
+		"q": "Keçiören hangi ilin ilçesidir?",
 		"a": [
 			"Ankara",
 			"Bolu",
@@ -1056,7 +1056,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Etimesgut hangi ilin ilçesidir?",
+		"q": "Haritada Etimesgut ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"Ankara",
 			"Eskişehir",
@@ -1070,7 +1070,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Polatlı hangi ilin ilçesidir?",
+		"q": "Antik Gordion'un bulunduğu Polatlı hangi ilimizdedir?",
 		"a": [
 			"Ankara",
 			"Kırşehir",
@@ -1084,7 +1084,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Kızılcahamam ilçesi hangi ildedir?",
+		"q": "Soğuksu Milli Parkı'nın bulunduğu Kızılcahamam hangi ilin ilçesidir?",
 		"a": [
 			"Ankara",
 			"Kırıkkale",
@@ -1098,7 +1098,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Sincan ilçesi hangi ildedir?",
+		"q": "Sincan hangi ilin ilçesidir?",
 		"a": [
 			"Ankara",
 			"Eskişehir",
@@ -1112,7 +1112,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Ürgüp ilçesi hangi ildedir?",
+		"q": "Ürgüp ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Nevşehir",
 			"Kayseri",
@@ -1126,7 +1126,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Avanos hangi ilin ilçesidir?",
+		"q": "Çömlekçiliğiyle ünlü Avanos ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Nevşehir",
 			"Niğde",
@@ -1140,7 +1140,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Hacıbektaş hangi ile bağlı bir ilçedir?",
+		"q": "Bektaşi dergâhıyla bilinen Hacıbektaş hangi ilimizdedir?",
 		"a": [
 			"Nevşehir",
 			"Kayseri",
@@ -1154,7 +1154,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Beyşehir hangi ilin ilçesidir?",
+		"q": "Eşrefoğlu Camii'nin bulunduğu Beyşehir ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Konya",
 			"Afyonkarahisar",
@@ -1168,7 +1168,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Meram ilçesi hangi ildedir?",
+		"q": "Meram hangi ile bağlı bir ilçedir?",
 		"a": [
 			"Konya",
 			"Mersin",
@@ -1182,7 +1182,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Karapınar hangi ile bağlı bir ilçedir?",
+		"q": "Kumullarıyla bilinen Karapınar ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Konya",
 			"Niğde",
@@ -1196,7 +1196,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Talas ilçesi hangi ildedir?",
+		"q": "Talas'ın bağlı olduğu il hangisi?",
 		"a": [
 			"Kayseri",
 			"Kahramanmaraş",
@@ -1210,7 +1210,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Ermenek ilçesi hangi ildedir?",
+		"q": "Ermenek'e giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"Karaman",
 			"Antalya",
@@ -1224,7 +1224,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Sivrihisar hangi ilin ilçesidir?",
+		"q": "Ahşap direkli Ulu Camii'siyle bilinen Sivrihisar hangi ilin ilçesidir?",
 		"a": [
 			"Eskişehir",
 			"Konya",
@@ -1238,7 +1238,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Tepebaşı hangi ile bağlı bir ilçedir?",
+		"q": "Tepebaşı ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Eskişehir",
 			"Kütahya",
@@ -1252,7 +1252,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Odunpazarı ilçesi hangi ildedir?",
+		"q": "Renkli tarihî evleriyle bilinen Odunpazarı hangi ilin ilçesidir?",
 		"a": [
 			"Eskişehir",
 			"Konya",
@@ -1266,7 +1266,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Akçakoca hangi ilin ilçesidir?",
+		"q": "Akçakoca'nın bağlı olduğu il hangisi?",
 		"a": [
 			"Düzce",
 			"Zonguldak",
@@ -1280,7 +1280,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Gerede hangi ilin ilçesidir?",
+		"q": "Gerede ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Bolu",
 			"Çankırı",
@@ -1294,7 +1294,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Tosya hangi ilin ilçesidir?",
+		"q": "Pirinciyle bilinen Tosya ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Kastamonu",
 			"Karabük",
@@ -1308,7 +1308,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Çarşamba hangi ile bağlı bir ilçedir?",
+		"q": "Yeşilırmak deltasındaki Çarşamba hangi ilimizdedir?",
 		"a": [
 			"Samsun",
 			"Amasya",
@@ -1322,7 +1322,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Atakum hangi ilin ilçesidir?",
+		"q": "Atakum ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Samsun",
 			"Tokat",
@@ -1336,7 +1336,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Turhal hangi ile bağlı bir ilçedir?",
+		"q": "Turhal hangi ilin ilçesidir?",
 		"a": [
 			"Tokat",
 			"Yozgat",
@@ -1364,7 +1364,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Sungurlu hangi ile bağlı bir ilçedir?",
+		"q": "Sungurlu hangi ilin ilçesidir?",
 		"a": [
 			"Çorum",
 			"Kastamonu",
@@ -1378,7 +1378,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Ünye hangi ile bağlı bir ilçedir?",
+		"q": "Ünye ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Ordu",
 			"Giresun",
@@ -1392,7 +1392,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Fatsa ilçesi hangi ildedir?",
+		"q": "Fatsa'nın bağlı olduğu il hangisi?",
 		"a": [
 			"Ordu",
 			"Samsun",
@@ -1406,7 +1406,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Maçka ilçesi hangi ildedir?",
+		"q": "Sümela Manastırı'nın bulunduğu Maçka ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Trabzon",
 			"Bayburt",
@@ -1420,7 +1420,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Sürmene ilçesi hangi ildedir?",
+		"q": "Bıçaklarıyla ünlü Sürmene hangi ilin ilçesidir?",
 		"a": [
 			"Trabzon",
 			"Rize",
@@ -1434,7 +1434,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Of ilçesi hangi ildedir?",
+		"q": "Haritada Of ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"Trabzon",
 			"Gümüşhane",
@@ -1462,7 +1462,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Ardeşen hangi ilin ilçesidir?",
+		"q": "Haritada Ardeşen ilçesini hangi ilin sınırları içinde bulursun?",
 		"a": [
 			"Rize",
 			"Erzurum",
@@ -1476,7 +1476,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Hopa hangi ile bağlı bir ilçedir?",
+		"q": "Hopa ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Artvin",
 			"Rize",
@@ -1490,7 +1490,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Borçka hangi ilin ilçesidir?",
+		"q": "Karagöl'üyle bilinen Borçka hangi ilimizdedir?",
 		"a": [
 			"Artvin",
 			"Rize",
@@ -1504,7 +1504,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Sarıkamış ilçesi hangi ildedir?",
+		"q": "Kayak merkeziyle bilinen Sarıkamış hangi ilimizdedir?",
 		"a": [
 			"Kars",
 			"Iğdır",
@@ -1518,7 +1518,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Erciş ilçesi hangi ildedir?",
+		"q": "Erciş'e giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"Van",
 			"Şırnak",
@@ -1532,7 +1532,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Tortum hangi ilin ilçesidir?",
+		"q": "Şelalesiyle bilinen Tortum hangi ilimizdedir?",
 		"a": [
 			"Erzurum",
 			"Kars",
@@ -1546,7 +1546,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Keban hangi ilin ilçesidir?",
+		"q": "Barajıyla bilinen Keban ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Elazığ",
 			"Bingöl",
@@ -1560,7 +1560,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Darende hangi ile bağlı bir ilçedir?",
+		"q": "Somuncu Baba Türbesi'nin bulunduğu Darende hangi ilimizdedir?",
 		"a": [
 			"Malatya",
 			"Diyarbakır",
@@ -1574,7 +1574,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Nusaybin ilçesi hangi ildedir?",
+		"q": "Nusaybin'in bağlı olduğu il hangisi?",
 		"a": [
 			"Mardin",
 			"Batman",
@@ -1588,7 +1588,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Kızıltepe ilçesi hangi ildedir?",
+		"q": "Kızıltepe'ye giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"Mardin",
 			"Diyarbakır",
@@ -1602,7 +1602,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Siverek ilçesi hangi ildedir?",
+		"q": "Siverek'e giden bir gezgin hangi ilimize varmış olur?",
 		"a": [
 			"Şanlıurfa",
 			"Gaziantep",
@@ -1616,7 +1616,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Viranşehir hangi ile bağlı bir ilçedir?",
+		"q": "Viranşehir hangi ilin ilçesidir?",
 		"a": [
 			"Şanlıurfa",
 			"Gaziantep",
@@ -1630,7 +1630,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Suruç ilçesi hangi ildedir?",
+		"q": "Suruç hangi ile bağlı bir ilçedir?",
 		"a": [
 			"Şanlıurfa",
 			"Adıyaman",
@@ -1644,7 +1644,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Nizip ilçesi hangi ildedir?",
+		"q": "Zeugma Antik Kenti'nin bulunduğu Nizip hangi ilimizdedir?",
 		"a": [
 			"Gaziantep",
 			"Kahramanmaraş",
@@ -1658,7 +1658,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "İslahiye ilçesi hangi ildedir?",
+		"q": "İslahiye hangi ile bağlı bir ilçedir?",
 		"a": [
 			"Gaziantep",
 			"Kilis",
@@ -1686,7 +1686,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Ergani hangi ilin ilçesidir?",
+		"q": "Çayönü Höyüğü'nün bulunduğu Ergani hangi ilin ilçesidir?",
 		"a": [
 			"Diyarbakır",
 			"Bingöl",
@@ -1700,7 +1700,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Sur ilçesi hangi ildedir?",
+		"q": "Tarihî surlarıyla ünlü Sur hangi ilin ilçesidir?",
 		"a": [
 			"Diyarbakır",
 			"Batman",
@@ -1714,7 +1714,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "Cizre ilçesi hangi ildedir?",
+		"q": "Cizre'nin bağlı olduğu il hangisi?",
 		"a": [
 			"Şırnak",
 			"Siirt",
@@ -1728,7 +1728,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Silopi hangi ilin ilçesidir?",
+		"q": "Silopi hangi ile bağlı bir ilçedir?",
 		"a": [
 			"Şırnak",
 			"Mardin",
@@ -1742,7 +1742,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Yüksekova ilçesi hangi ildedir?",
+		"q": "Yüksekova ilçesi hangi ilimizde yer alır?",
 		"a": [
 			"Hakkari",
 			"Şırnak",

@@ -111,3 +111,26 @@ Bankaya 16.170 soru oturdu; denetçiler yazılanların ~%12'sini sildi, ~%10'unu
 5. Yarı doğru tf ya da yıldırım maddesi (bir uzman "aslında…" der): "genlerin yarısı anneden", "dinozorlar ve mamutlar".
 6. Aşırı bilinmez soru (yalnız uzman). Zorluk: kolay en az %25, zor en çok %30.
 Dosya içi tekrar da sayılır (iki soru aynı bilgiyi sormasın; bir sorunun metni öbürünün cevabını vermesin).
+
+## 12. Anlatım çeşitliliği (kullanıcı şartı, 16 Kasım 2026)
+
+Kullanıcı: "Türkçe soru yapısı hep aynı, 'şurası hangi ildedir' hep aynı; anlatımı geliştirelim ama karakter limitini
+geçmeyelim." Bu yüzden hem elle yazılan hem üretilen (Wikidata) her aile için:
+
+- **Tek kalıp yok.** Bir ailede aynı soru sonu ("hangi ildedir?", "hangisi?", "kimdir?") en çok yaklaşık %25.
+  - Üretilen ailede kalıplar sırayla dağıtılır, kalıp kimliğin özetiyle seçilir (yeniden üretimde soru kalıbını korur).
+    Örnekler: `tools/veri/pilot/ilce.mjs` (KALIP, KALIP_IP, PIN) ve `kisi.mjs` (KALIP, KALIP_TR).
+- **İpucu ve tanım.** Çıplak "X hangi yıl doğdu?" yerine kişiyi/yeri ayırt eden kesin bir öbek kullanılır:
+  - '"Suç ve Ceza"nın yazarı Fyodor Dostoyevski hangi yıl dünyaya geldi?'
+  - "Cunda Adası'nın bağlı olduğu Ayvalık hangi ilimizdedir?"
+  - İpucu kesin bilgi olmalı, cevabı tek başına vermemeli, ilin/cevabın adını içermemeli.
+- **İpucu başka sorunun cevabını açmamalı.** Kökteki ipucu bankada bir sorunun cevabını söylüyorsa
+  (ör. "Ölüdeniz'in bulunduğu Fethiye" ↔ "Ölüdeniz hangi ilçemizdedir? → Fethiye"):
+  - ya ipucu değiştirilir,
+  - ya da soru `kardes: 'a:<cevap>'` taşır (`src/quiz/hafiza.js`: aynı maçta birlikte çıkmaz).
+  - Tarama: `node tools/soru/ipucu_acik.mjs` (ilçe ipuçları; kalan bulgular elle okunur).
+- **Ekli kalıp yalnız ekin kesin olduğu adlarda.** Türkçe adlar `ek.js` ile çekimlenir. Yabancı adlarda okunuşa bağlı ek
+  kalıba konmaz ("X'in doğduğu yıl" yalnız Türk adlarında).
+  - Tanımdaki her ekli yabancı ad `tools/denetim/ek_tara.mjs` ile taranır (NBA'da, Tiffany'de, Holmes'un).
+- **Sınır her zaman `src/quiz/sinirlar.js`'ten.** Uzun kalıp sığmazsa sıradaki kalıp denenir; hiçbiri sığmazsa tanım kısaltılır.
+  - Tahmin sorusunun Mancınık ikizi de aynı sınıra uyar (num ve mancinik ikisi de 80).

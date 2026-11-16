@@ -8,6 +8,8 @@ process.chdir(new URL('../../..', import.meta.url).pathname);
 await import('../../../test/kanca.mjs');
 const { ihlaller } = await import('../../../src/quiz/sinirlar.js');
 const { BANK } = await import('../../../src/data/bank.js');
+const { ek } = await import('../../../src/quiz/ek.js');
+const { kardes } = await import('../../../src/quiz/hafiza.js');
 
 const K = [...JSON.parse(readFileSync('tools/veri/ham/kisiler.json', 'utf8')), ...JSON.parse(readFileSync('tools/veri/ham/kisiler_tr.json', 'utf8'))];
 const byAd = new Map();
@@ -22,19 +24,33 @@ const h32 = (s) => {
 // sayılmaz; sayılırsa yeniden üretimde bütün kişiler "zaten soruluyor" diye atlanır ve dosya boşalır.
 const sorulmus = BANK.filter((q) => q.type === 'num' && !/-wd-/.test(q.id) && /doğdu|doğum/.test(q.q)).map((q) => q.q);
 
-const secim = readFileSync('tools/veri/pilot/kisi_secim.txt', 'utf8')
-	.split('\n')
-	.map((l) => l.trim())
-	.filter((l) => l && !l.startsWith('#'))
-	.map((l) => {
-		// 5. alan (isteğe bağlı): soruda görünen ad, Wikidata etiketi Türkçede yerleşik ya da TDK yazımından ayrıysa
-		// (Celine Dion → Céline Dion, Katip Çelebi → Kâtip Çelebi); bankadaki yazımla da tutarlı olmalı
-		const [ad, kat, tanim, z, goster] = l.split('|').map((x) => x.trim());
-		return { ad, kat, tanim, diff: Number(z), goster: goster || ad };
-	});
+// bölüm başlığı ("# --- Türkiye: …") kişinin Türk olup olmadığını söyler: ad ekli kalıp ("X'in doğduğu yıl") yalnız Türk
+// adlarında kullanılır (yabancı adın eki okunuşa bağlı, ek.js her okunuşu bilmez; ekli kalıp yanlış ek riski taşımasın)
+let bolumTr = false;
+const secim = [];
+for (const ham of readFileSync('tools/veri/pilot/kisi_secim.txt', 'utf8').split('\n')) {
+	const l = ham.trim();
+	if (l.startsWith('# ---')) bolumTr = /Türkiye/.test(l);
+	if (!l || l.startsWith('#')) continue;
+	// 5. alan (isteğe bağlı): soruda görünen ad, Wikidata etiketi Türkçede yerleşik ya da TDK yazımından ayrıysa
+	// (Celine Dion → Céline Dion, Katip Çelebi → Kâtip Çelebi); bankadaki yazımla da tutarlı olmalı
+	const [ad, kat, tanim, z, goster] = l.split('|').map((x) => x.trim());
+	secim.push({ ad, kat, tanim, diff: Number(z), goster: goster || ad, tr: bolumTr });
+}
+
+// Soru kalıpları (kullanıcı, 16 Kasım 2026: "hep aynı kalıp olmasın"). Kalıp sırayla dağıtılır (aynı kalıp aileye eşit
+// pay), sıra kimliğin özetine göre: yeniden üretimde aynı soru aynı kalıbı alır. Ekli kalıp yalnız Türk adlarında.
+const KALIP = [
+	(t, a) => `${t} ${a} hangi yıl doğdu?`,
+	(t, a) => `${t} ${a} hangi yıl dünyaya geldi?`,
+	(t, a) => `${t} ${a} kaç yılında doğdu?`,
+	(t, a) => `${t} ${a} hangi yılda doğmuştur?`,
+];
+const KALIP_TR = [(t, a) => `${t} ${ek(a, 'in')} doğduğu yıl kaçtır?`, (t, a) => `${t} ${ek(a, 'in')} doğum yılı kaçtır?`];
 
 const rapor = { secilen: secim.length, atlanan: [], soru: 0, kat: {}, zorluk: { 1: 0, 2: 0, 3: 0 } };
 const out = [];
+const kisiOf = new Map(); // soru → seçim satırı (kalıp dağıtımı için)
 const gorulen = new Set();
 for (const s of secim) {
 	const k = byAd.get(s.ad);
@@ -71,7 +87,7 @@ for (const s of secim) {
 		cat: s.kat,
 		diff: s.diff,
 		type: 'num',
-		q: `${s.tanim} ${s.goster} hangi yıl doğdu?`,
+		q: KALIP[0](s.tanim, s.goster), // kalıp aşağıda, bütün aile seçildikten sonra dengeli dağıtılır
 		ans: y,
 		unit: '',
 		min,
@@ -84,8 +100,53 @@ for (const s of secim) {
 		continue;
 	}
 	out.push(q);
+	kisiOf.set(q, s);
 	rapor.kat[s.kat] = (rapor.kat[s.kat] || 0) + 1;
 	rapor.zorluk[s.diff]++;
+}
+// kalıp dağıtımı: Türk adları kendi sırasıyla (ekli kalıplar dahil), yabancılar kendi sırasıyla; sınırı aşan kalıp
+// atlanır, sıradaki denenir (hiçbiri sığmazsa ilk kalıp kalır: o da yukarıda sınırdan geçti)
+for (const tr of [true, false]) {
+	const kalip = tr ? [...KALIP, ...KALIP_TR] : KALIP;
+	const grup = out.filter((q) => kisiOf.get(q).tr === tr).sort((a, b) => h32(a.kaynak + 'k') - h32(b.kaynak + 'k'));
+	grup.forEach((q, i) => {
+		const s = kisiOf.get(q);
+		for (let j = 0; j < kalip.length; j++) {
+			const metin = kalip[(i + j) % kalip.length](s.tanim, s.goster);
+			if (!ihlaller({ ...q, q: metin }).length && !ihlaller({ ...q, q: metin, type: 'mancinik' }).length) {
+				q.q = metin;
+				break;
+			}
+		}
+	});
+}
+// Açık kardeş (hafiza.js): tanım kişiyi ayırt eden eseri ya da lakabı söyler ('"Savaş ve Barış"ın yazarı Lev Tolstoy'); kök,
+// cevabı bu kişi olan bankadaki sorunun cevabını açar ("Savaş ve Barış'ın yazarı kimdir?"). Soru o cevabın anahtarını
+// taşır: ikisi aynı maçta sorulmaz (seçici kardeşi bayat sayar). Bankada cevap çoğu kez kısa ad ("Tolstoy"): adın
+// soyadla biten ardışık kelimelerinden biri olan en sık cevap seçilir; bankada yoksa tam ad.
+const cevapSay = new Map();
+for (const b of BANK) {
+	if (/-wd-/.test(b.id)) continue;
+	const k = kardes(b);
+	if (k && k.startsWith('a:')) cevapSay.set(k, (cevapSay.get(k) || 0) + 1);
+}
+rapor.kardes = { bankadaCevap: 0, tamAd: 0 };
+for (const q of out) {
+	const s = kisiOf.get(q);
+	const adaylar = new Set();
+	for (const ad of [s.goster, s.ad]) {
+		const w = ad.split(/\s+/);
+		// soyadla biten ardışık kelimeler ("Tolstoy", "Lev Tolstoy"): yalnız ad ("Albert") iki kişiyi bağlamasın
+		for (let i = 0; i < w.length; i++) adaylar.add(kardes({ type: 'choice', a: [w.slice(i).join(' ')] }));
+	}
+	const enSik = [...adaylar].filter((k) => k && k.length >= 6 && cevapSay.has(k)).sort((a, b) => cevapSay.get(b) - cevapSay.get(a))[0];
+	q.kardes = enSik || kardes({ type: 'choice', a: [s.goster] });
+	rapor.kardes[enSik ? 'bankadaCevap' : 'tamAd']++;
+}
+rapor.kalip = {};
+for (const q of out) {
+	const k = q.q.replace(/^.* (\S+ \S+\?)$/, '$1');
+	rapor.kalip[k] = (rapor.kalip[k] || 0) + 1;
 }
 // zorluk dengesi (BRIF §9: kolay ≥ %25, zor ≤ %30). Zorluk yalnız seçim dosyasından gelir. Eskiden eşik tutmazsa en çok dilde
 // maddesi olanlar kendiliğinden bir kademe kolaylaşıyordu (Molière, Martin Luther 3 → 1); bağımsız denetim bunu dürüst bulmadı

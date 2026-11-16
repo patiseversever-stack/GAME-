@@ -178,6 +178,10 @@ export function kardes(q) {
 }
 
 function anahtar(q) {
+	// Açık kardeş: kökü başka soruların cevabını söyleyen soru (Wikidata doğum yılı: '"Savaş ve Barış"ın yazarı Lev Tolstoy
+	// hangi yıl doğdu?' kökü "Savaş ve Barış'ın yazarı kimdir?" sorusunun cevabını açar). Anahtarı o cevabın anahtarıdır
+	// ('a:' + cevap); Mancınık ikizi kaynaktan kopyalandığı için aynı anahtarı taşır.
+	if (typeof q.kardes === 'string' && q.kardes) return q.kardes;
 	if (q.src) return 'q:' + q.src; // Mancınık: bankadaki tahmin sorusunun kardeşi
 	let a = null;
 	switch (q.type) {
