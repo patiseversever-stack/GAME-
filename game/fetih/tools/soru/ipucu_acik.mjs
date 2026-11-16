@@ -1,5 +1,6 @@
 // İpucu açılma taraması: node tools/soru/ipucu_acik.mjs
-// İpuçlu ilçe kökleri (tools/veri/pilot/ilce_secim.txt 5. alan) bankadaki başka bir sorunun cevabını açıyor mu: cevabı o ilçe
+// İpuçlu kökler (ilçe pilotu: tools/veri/pilot/ilce_secim.txt; Türkiye derin: tools/veri/aile/derin_secim.txt) bankadaki
+// başka bir sorunun cevabını açıyor mu: cevabı o yer
 // olan ve kökünde/şıklarında ipucunun özel adı geçen sorular listelenir (BRIF.md §12). Her bulgu elle okunur: ortak
 // kelime ("adası") açılma değilse geçilir, gerçek açılmada ipucu değiştirilir.
 process.chdir(new URL('../..', import.meta.url).pathname);
@@ -7,7 +8,12 @@ await import('../../test/kanca.mjs');
 const fs = await import('node:fs');
 const { BANK } = await import('../../src/data/bank.js');
 const kucuk = (s) => s.toLocaleLowerCase('tr-TR');
-const sec = fs.readFileSync('tools/veri/pilot/ilce_secim.txt', 'utf8').split('\n').filter((l) => l && !l.startsWith('#')).map((l) => l.split('|').map((x) => x.trim())).filter((f) => f[4]);
+const satir = (f) => fs.readFileSync(f, 'utf8').split('\n').filter((l) => l && !l.startsWith('#')).map((l) => l.split('|').map((x) => x.trim()));
+// ilçe pilotu: ad | il | zorluk | görünen ad | ipucu · Türkiye derin: QID | tür | ad | il | zorluk | ipucu | yasak
+const sec = [
+	...satir('tools/veri/pilot/ilce_secim.txt').filter((f) => f[4]),
+	...satir('tools/veri/aile/derin_secim.txt').filter((f) => f[5]).map((f) => [f[2].replace(/\s+(Dağı|Dağ|Gölü|Antik Kenti|Höyüğü)$/u, ''), f[3], f[4], '', f[5]]),
+];
 const metin = (q) => kucuk([q.q, ...(Array.isArray(q.a) ? q.a : []), q.f, q.info, q.b, q.alt, q.note, ...(q.clues || []), ...(q.hints || [])].filter(Boolean).join(' | '));
 let n = 0;
 for (const [ad, il, z, goster, ip] of sec) {

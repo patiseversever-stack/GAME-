@@ -8,6 +8,8 @@
 # - Adı bir ilçeyle aynıysa o ilçenin ili çeldirici olmaz (Babadağ dağı Muğla'da; Babadağ ilçesi Denizli'de).
 # - Yükseklik sorusu yok: kaynaklar arasında 5–55 m fark var (Kaçkar 3932/3937, Erciyes 3916/3917, Nemrut 2150/2206).
 # - İpucu kesin bilgi, sıfat öbeği; ilin adını içermez, bankadaki başka sorunun cevabını açmaz (tools/soru/ipucu_acik.mjs).
+# denge (16 Kasım): zor payı %50 çıktı (sınır %30); yalnız yöresinin bileceği 25 yer çıkarıldı (pilotun kuralı):
+#   Artos Dağı, Göllü Dağ, Yamanlar Dağı, Erek Dağı, Nif Dağı, Işıklar Dağı, Aktaş Gölü, Akdoğan Gölü, Erçek Gölü, Boraboy Gölü, Eber Gölü, Suğla Gölü, Arin Gölü, Seyfe Gölü, Gölcük Gölü, Narlıgöl, Keşiş Gölü, Arykanda Antik Kenti, Limyra Antik Kenti, Selge Antik Kenti, Klazomenai Antik Kenti, Erythrai Antik Kenti, Şapinuva, Hacılar Höyük, Anemurium Antik Kenti
 # --- dağ
 Q126804 | dag | Erciyes Dağı | Kayseri | 1 | Kayak merkezi olan sönmüş yanardağ
 Q925688 | dag | Uludağ | Bursa | 1 | Eski adı Keşiş Dağı olan
@@ -16,22 +18,14 @@ Q1433508 | dag | Süphan Dağı | Bitlis | 2
 Q1143135 | dag | Cudi Dağı | Şırnak | 2 | Tufan rivayetleriyle anılan
 Q1953975 | dag | Musa Dağı | Hatay | 2
 Q3022142 | dag | Demirkazık Dağı | Niğde | 3 | Aladağlar'ın en yüksek zirvesi
-Q2388359 | dag | Tahtalı Dağı | Antalya | 2 | Antik adı Olimpos olan
+Q2388359 | dag | Tahtalı Dağı | Antalya | 2
 Q1091987 | dag | Cilo Dağı | Hakkari | 2 | Uludoruk zirvesiyle bilinen
-Q6018069 | dag | Artos Dağı | Van | 3
-Q1559343 | dag | Göllü Dağ | Niğde | 3
 Q4837427 | dag | Babadağ | Muğla | 2 | Yamaç paraşütüyle ünlü | Denizli
 Q6920390 | dag | Davraz Dağı | Isparta | 2 | Kayak merkeziyle bilinen
-Q962205 | dag | Yamanlar Dağı | İzmir | 3
-Q6920664 | dag | Erek Dağı | Van | 3
-Q6922413 | dag | Nif Dağı | İzmir | 3
-Q16665138 | dag | Işıklar Dağı | Tekirdağ | 3 | Antik adı Ganos olan
 Q6056994 | dag | Kayış Dağı | İstanbul | 2
 # --- göl
 Q1334148 | gol | Eğirdir Gölü | Isparta | 1
 Q192369 | gol | İznik Gölü | Bursa | 1
-Q421825 | gol | Aktaş Gölü | Ardahan | 3 | Gürcistan sınırındaki
-Q30681483 | gol | Akdoğan Gölü | Muş | 3
 Q3234128 | gol | Salda Gölü | Burdur | 1 | Turkuaz suyuyla ünlü
 Q1095336 | gol | Uzungöl | Trabzon | 1
 Q2661366 | gol | Köyceğiz Gölü | Muğla | 2
@@ -39,26 +33,72 @@ Q305501 | gol | Abant Gölü | Bolu | 1
 Q2380189 | gol | Hazar Gölü | Elazığ | 2 | Sular altında bir şehir kalıntısı bulunan
 Q1891954 | gol | Manyas Kuşgölü | Balıkesir | 2 | Kuş Cenneti Milli Parkı'nın bulunduğu
 Q2988251 | gol | Nemrut Gölü | Bitlis | 2 | Bir yanardağın kraterindeki
-Q1366366 | gol | Erçek Gölü | Van | 3
 Q2478029 | gol | Nazik Gölü | Bitlis | 3
 Q1797436 | gol | Küçükçekmece Gölü | İstanbul | 2
 Q601695 | gol | Marmara Gölü | Manisa | 3
 Q4809067 | gol | Uluabat Gölü | Bursa | 2 | Antik adı Apolyont olan
 Q1021881 | gol | Büyükçekmece Gölü | İstanbul | 2
 Q1676200 | gol | Işıklı Gölü | Denizli | 3
-Q893292 | gol | Boraboy Gölü | Amasya | 3
-Q1278759 | gol | Eber Gölü | Afyonkarahisar | 3
 Q6587092 | gol | Ladik Gölü | Samsun | 3
 Q4810216 | gol | Mogan Gölü | Ankara | 2
 Q4810695 | gol | Eymir Gölü | Ankara | 2 | ODTÜ arazisindeki
 Q4702037 | gol | Akyatan Gölü | Adana | 3
 Q4171154 | gol | Durusu Gölü | İstanbul | 2 | Eski adı Terkos olan
-Q6111551 | gol | Suğla Gölü | Konya | 3
 Q805908 | gol | Balıklıgöl | Şanlıurfa | 1 | Kutsal sayılan balıklarıyla bilinen
-Q20470564 | gol | Arin Gölü | Bitlis | 3
 Q49313576 | gol | Tortum Gölü | Erzurum | 2 | Heyelanla oluşmuş
-Q6048583 | gol | Seyfe Gölü | Kırşehir | 3
-Q14395861 | gol | Gölcük Gölü | Isparta | 3 | Krater gölü olan
 Q6065286 | gol | Meke Krater Gölü | Konya | 2 | "Dünyanın nazar boncuğu" denen
-Q20988477 | gol | Narlıgöl | Niğde | 3
-Q1740373 | gol | Keşiş Gölü | Van | 3
+# --- antik kent ve ören yeri (Wikidata il bağı yanlış olabilir: Nicomedia İzmit'tir, Yalova değil; seçilmedi)
+Q47611 | antik | Efes Antik Kenti | İzmir | 1
+Q22647 | antik | Troya Antik Kenti | Çanakkale | 1
+Q18986 | antik | Pergamon Antik Kenti | İzmir | 1 | Parşömene adını veren
+Q214944 | antik | Göbeklitepe | Şanlıurfa | 1
+Q192522 | antik | Çatalhöyük | Konya | 1 | Dünyanın en eski yerleşimlerinden
+Q181007 | antik | Hattuşa | Çorum | 1
+Q546010 | antik | Ani Ören Yeri | Kars | 1 | "Bin bir kilise şehri" denen
+Q7428276 | antik | Hierapolis Antik Kenti | Denizli | 1
+Q152405 | antik | Side Antik Kenti | Antalya | 1
+Q618495 | antik | Afrodisias Antik Kenti | Aydın | 2 | Heykeltıraşlık okuluyla ünlü
+Q169460 | antik | Milet Antik Kenti | Aydın | 2 | Thales'in doğduğu
+Q671358 | antik | Didyma Antik Kenti | Aydın | 2 | Apollon kehanet merkezi olan
+Q142819 | antik | Priene Antik Kenti | Aydın | 2 | Izgara planıyla ünlü
+Q1779332 | antik | Nysa Antik Kenti | Aydın | 3
+Q849709 | antik | Laodikeia Antik Kenti | Denizli | 2 | Vahiy'deki yedi kiliseden birinin bulunduğu
+Q279191 | antik | Sagalassos Antik Kenti | Burdur | 2 | Antoninler Çeşmesi'yle ünlü
+Q719815 | antik | Perge Antik Kenti | Antalya | 2
+Q633757 | antik | Aspendos Antik Kenti | Antalya | 2
+Q599462 | antik | Termessos Antik Kenti | Antalya | 2 | İskender'in alamadığı
+Q464936 | antik | Ksanthos Antik Kenti | Antalya | 2 | Likya'nın başkenti olan
+Q703480 | antik | Letoon Antik Kenti | Muğla | 3 | Leto'ya adanmış tapınaklarıyla bilinen
+Q233121 | antik | Patara Antik Kenti | Antalya | 2 | Aziz Nikolaos'un doğduğu
+Q652024 | antik | Myra Antik Kenti | Antalya | 2
+Q1380189 | antik | Olimpos Antik Kenti | Antalya | 2 | Yanartaş'a yakın
+Q595329 | antik | Faselis Antik Kenti | Antalya | 2 | Üç limanıyla bilinen
+Q1325973 | antik | Tlos Antik Kenti | Muğla | 3
+Q690575 | antik | Knidos Antik Kenti | Muğla | 2 | Praksiteles'in Afrodit heykeliyle ünlü
+Q608095 | antik | Kaunos Antik Kenti | Muğla | 2 | Dalyan Çayı kıyısındaki
+Q1361187 | antik | Stratonikeia Antik Kenti | Muğla | 3
+Q1375099 | antik | Euromos Antik Kenti | Muğla | 3 | Zeus Tapınağı ayakta duran
+Q744631 | antik | Assos Antik Kenti | Çanakkale | 2 | Aristoteles'in bir süre yaşadığı
+Q1393407 | antik | Alexandria Troas Antik Kenti | Çanakkale | 3
+Q615449 | antik | Kyzikos Antik Kenti | Balıkesir | 3
+Q232615 | antik | Sardes Antik Kenti | Manisa | 2 | Lidya Krallığı'nın başkenti olan
+Q17586 | antik | Teos Antik Kenti | İzmir | 3 | Dionysos Tapınağı'yla bilinen
+Q1758695 | antik | Allianoi Antik Kenti | İzmir | 3 | Baraj suları altında kalan
+Q411571 | antik | Aizanoi Antik Kenti | Kütahya | 2 | İyi korunmuş Zeus Tapınağı'yla ünlü
+Q542854 | antik | Gordion Antik Kenti | Ankara | 2 | Frigya'nın başkenti olan
+Q728353 | antik | Pessinus Antik Kenti | Eskişehir | 3 | Kybele kültünün merkezi olan
+Q196987 | antik | Zeugma Antik Kenti | Gaziantep | 1 | Çingene Kızı mozaiğiyle ünlü
+Q283680 | antik | Karkamış Antik Kenti | Gaziantep | 2
+Q26959195 | antik | Yesemek Açık Hava Müzesi | Gaziantep | 3 | Hititlerin taş heykel atölyesi olan
+Q705132 | antik | Arslantepe Höyüğü | Malatya | 2 | En eski kılıçların bulunduğu
+Q538605 | antik | Kültepe | Kayseri | 2 | Asurlu tüccarların ticaret kolonisi olan
+Q558861 | antik | Alacahöyük | Çorum | 2 | Hatti güneş kurslarıyla ünlü
+Q585145 | antik | Dara Antik Kenti | Mardin | 2 | "Mezopotamya'nın Efes'i" denen
+Q272720 | antik | Çayönü | Diyarbakır | 3
+Q5996986 | antik | Karahantepe | Şanlıurfa | 2
+Q1729026 | antik | Karatepe-Aslantaş | Osmaniye | 2 | İki dilli yazıtıyla ünlü
+Q535982 | antik | Kilistra Antik Kenti | Konya | 3 | Kayaya oyulmuş yapılarıyla bilinen
+Q447212 | antik | Altıntepe | Erzincan | 3 | Urartu kalıntılarıyla bilinen
+Q272699 | antik | Çavuştepe | Van | 3 | Urartu sarayının bulunduğu
+Q794830 | antik | Aşıklı Höyük | Aksaray | 3
+Q579468 | antik | Pisidia Antiokheia Antik Kenti | Isparta | 3 |  | Hatay

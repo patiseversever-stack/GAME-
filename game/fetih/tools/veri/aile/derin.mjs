@@ -150,7 +150,7 @@ const secim = readFileSync('tools/veri/aile/derin_secim.txt', 'utf8')
 	});
 
 // Ek: "Gölü/Dağı" ile biten bileşik ad iyelikli (ek.js sözlüğü "Kuşgölü"nü bilmez: "Kuşgölü'ye" değil "Kuşgölü'ne")
-const ekle = (ad, tur) => ek(ad, tur, /(gölü|dağı)$/i.test(ad) ? { iyelik: true } : undefined);
+const ekle = (ad, tur) => ek(ad, tur, /(gölü|dağı|kenti|höyüğü|müzesi|yeri)$/i.test(ad) ? { iyelik: true } : undefined);
 // arama adı: "Erciyes Dağı" bankada çoğu kez "Erciyes" diye geçer; türü bildiren son kelime atılır
 const cekirdek = (ad) => ad.replace(/\s+(Dağı|Dağ|Gölü|Krater Gölü|Barajı|Kalesi|Antik Kenti)$/u, '').trim();
 
@@ -170,8 +170,15 @@ const KALIP = {
 		(a) => `Haritada ${ekle(a, 'i')} hangi ilde bulursun?`,
 		(a) => `${ekle(a, 'in')} bulunduğu il hangisi?`,
 	],
+	antik: [
+		(a) => `${a} hangi ilimizdedir?`,
+		(a) => `${a} hangi ilin sınırları içinde yer alır?`,
+		(a) => `${ekle(a, 'i')} gezmek isteyen biri hangi ile gitmeli?`,
+		(a) => `${ekle(a, 'in')} kalıntıları hangi ilimizde?`,
+		(a) => `Haritada ${ekle(a, 'i')} hangi ilde bulursun?`,
+	],
 };
-const KALIP_IP = [(a, h) => `${h} ${a} hangi ilimizdedir?`, (a, h) => `${h} ${a} hangi ilin sınırları içinde?`];
+const KALIP_IP = [(a, h) => `${h} ${a} hangi ilimizde yer alır?`, (a, h) => `${h} ${a} hangi ilin sınırları içinde?`, (a, h) => `${h} ${a} hangi ilde bulunur?`];
 // Haritada bul: en az 4 kelime, çıplak "X nerede?" yok (test/harita.test.mjs)
 const PIN = [(a) => `${a} Türkiye haritasında nerede?`, (a) => `${ekle(a, 'i')} haritada bulabilir misin?`];
 const PIN_IP = [(a, h) => `${h} ${a} haritada nerede?`];
@@ -268,8 +275,8 @@ mkdirSync('src/data/q/wd', { recursive: true });
 const bas = (ne) =>
 	`// ${ne} (SORU-100K.md Aşama 2, aile 1: Türkiye derin). ÜRETİLDİ: tools/veri/aile/derin.mjs — elle düzeltme yapma,\n` +
 	`// seçimi tools/veri/aile/derin_secim.txt'de değiştirip yeniden üret. Koordinat Wikidata'dan (CC0), il elle doğrulandı.\n`;
-writeFileSync('src/data/q/wd/derin.js', bas('Dağ ve göl hangi ilde') + 'export default ' + JSON.stringify(test, null, '\t') + ';\n');
-writeFileSync('src/data/q/wd/derin_pin.js', bas('Dağ ve göl haritada bul') + 'export default ' + JSON.stringify(harita, null, '\t') + ';\n');
+writeFileSync('src/data/q/wd/derin.js', bas('Dağ, göl ve antik kent hangi ilde') + 'export default ' + JSON.stringify(test, null, '\t') + ';\n');
+writeFileSync('src/data/q/wd/derin_pin.js', bas('Dağ, göl ve antik kent haritada bul') + 'export default ' + JSON.stringify(harita, null, '\t') + ';\n');
 console.log(JSON.stringify({ ...rapor, atlanan: rapor.atlanan.length, bankada: rapor.bankada.length, bankadaHarita: rapor.bankadaHarita.length }, null, 1));
 console.log('  bankada ili zaten sorulan/açılan: ' + rapor.bankada.join('; '));
 console.log('  bankada harita sorusu olan: ' + rapor.bankadaHarita.join('; '));
