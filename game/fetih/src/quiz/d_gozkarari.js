@@ -3,7 +3,8 @@
 //   blur    bulanıktan netleşir            zoom    çok yakından uzaklaşır (odak: kurulumun bulduğu en ayrıntılı nokta)
 //   sil     siyah siluet (derlemede çıkarılmış maske), cevapta görsel açılır
 //   detail  tablolarda ayrıntıdan bütüne: bir ayrıntıdan başlar, hem uzaklaşır hem ortaya kayar
-//   spot · yapboz · karo · perde · cizim: büyütmesiz deneme kipleri (gk_kipler.js; galeride deneme-gkkip.js)
+//   karo · cizim  büyütmesiz kipler (gk_kipler.js; galeride deneme-gkkip.js): bulanık zeminde karolar açılır · kurşun
+//                 kalem çiziminden renge. Siluet de sinematik: gölge önce bulanık renge, sonra net görsele dönüşür.
 // 4 şık, 20 sn, joker yok. Erken bilen çok puan: 100 → 40 (sürenin %85'inde erir; kartın üstünde canlı sayaç).
 // Düelloda ikisi de bilirse hızlı olan kazanır (mac.js HIZLI). Cevaptan sonra görsel tamamen netleşir, üstünden ışık
 // geçer, çerçevenin altına cevap kurdelesi, altına tek satır ilginç bilgi gelir.
@@ -20,7 +21,7 @@ import { frameOf, frameSVG, hashStr } from './gk_cerceve.js';
 import { KONULAR } from '../data/gozkarari.js';
 import { clock } from '../core/clock.js';
 import { gorselUrl, gorselUrlHemen, paketli } from './gorsel_paket.js';
-import { YENI_KIP, KIP_SON, kipSvg, kipKur } from './gk_kipler.js';
+import { YENI_KIP, KIP_SON, kipSvg, kipKur, siluetGecis, cizimHazirla } from './gk_kipler.js';
 
 export const GK_BASE = 'gk/';
 const MODE = { blur: 'Netleşiyor', zoom: 'Uzaklaşıyor', sil: 'Siluet', detail: 'Ayrıntıdan bütüne' };
@@ -52,7 +53,11 @@ export function gkOnyukle(q) {
 		im.decoding = 'async';
 		cache.set(u, im);
 		gorselUrl(GK_BASE, u).then(
-			(a) => (im.src = a),
+			(a) => {
+				im.src = a;
+				// çizim kipi: kalem çizimi ve açılış haritaları kart açılmadan hazırlansın
+				if (q.mode === 'cizim' && u.endsWith('.webp')) cizimHazirla(a, q.f || [0.5, 0.5], hashStr(q.id || q.img)).catch(() => {});
+			},
 			() => cache.delete(u),
 		);
 	}
@@ -182,7 +187,9 @@ export const gozkarari = {
 			<div class="gk-sw"><div class="gk-st"><svg class="sd" viewBox="0 0 400 300" aria-hidden="true"><path d="${fr.d}" fill="#02040c"/></svg><svg viewBox="0 0 400 300" role="img" aria-label="Göz Kararı görseli">
 				<defs>${fr.defs}${kp ? kp.defs : ''}<clipPath id="c${k}"><path d="${fr.d}"/></clipPath>
 					<filter id="b${k}" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="0" edgeMode="duplicate"/></filter>
-					${sil ? `${silBg}<mask id="m${k}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="300"><image class="mk"${msrc ? ` href="${msrc}"` : ''} width="400" height="300" preserveAspectRatio="none"/></mask>` : ''}
+					${sil ? `${silBg}<mask id="m${k}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="300"><image class="mk"${msrc ? ` href="${msrc}"` : ''} width="400" height="300" preserveAspectRatio="none"/></mask>
+					<filter id="iv${k}" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncR type="table" tableValues="1 0"/><feFuncG type="table" tableValues="1 0"/><feFuncB type="table" tableValues="1 0"/></feComponentTransfer></filter>
+					<mask id="mi${k}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="300"><image class="mk"${msrc ? ` href="${msrc}"` : ''} width="400" height="300" preserveAspectRatio="none" filter="url(#iv${k})"/></mask>` : ''}
 					<linearGradient id="l${k}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
 					<radialGradient id="v${k}" cx=".5" cy=".5" r=".72"><stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></radialGradient>
 					<linearGradient id="w${k}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1b2550"/><stop offset=".5" stop-color="#2d3c78"/><stop offset="1" stop-color="#1b2550"/></linearGradient>
@@ -191,9 +198,9 @@ export const gozkarari = {
 					<rect width="400" height="300" fill="#141c3c"/>
 					<rect class="ld" x="-200" width="200" height="300" fill="url(#w${k})"/>
 					${kp ? kp.alt : ''}
-					<g class="zm"${kp ? kp.zmAttr : ''}><image class="im gi${sil ? ' nv' : ''}"${src ? ` href="${src}"` : ''} width="400" height="300" preserveAspectRatio="xMidYMid slice"${sil ? ' opacity="0"' : kp ? kp.imAttr : ` filter="url(#b${k})"`}/></g>
+					<g class="zm"${kp ? kp.zmAttr : ''}><image class="im gi"${src ? ` href="${src}"` : ''} width="400" height="300" preserveAspectRatio="xMidYMid slice"${kp ? kp.imAttr : ` filter="url(#b${k})"`}/></g>
 					${kp ? kp.tas + kp.ust : ''}
-					${sil ? `<g class="sl nv"><rect width="400" height="300" fill="url(#sg${k})"/><rect width="400" height="300" fill="#121830" mask="url(#m${k})"/></g>` : ''}
+					${sil ? `<g class="sl"><rect class="sb" width="400" height="300" fill="url(#sg${k})" mask="url(#mi${k})"/><rect class="sd2" width="400" height="300" fill="#121830" mask="url(#m${k})"/><rect class="sbt" width="400" height="300" fill="url(#sg${k})"${msrc ? ' opacity="0"' : ''}/></g>` : ''}
 					<rect width="400" height="300" fill="url(#v${k})" pointer-events="none"/>
 					<rect class="sh" x="-60" width="90" height="300" fill="url(#l${k})" pointer-events="none"/>
 				</g>
@@ -211,7 +218,7 @@ export const gozkarari = {
 		// yüklenince yükleme ışıltısı kalkar; yüklenemezse çerçeve boş kalır (soru yine cevaplanır)
 		const probe = new Image();
 		probe.onload = () => st.classList.add('ok');
-		const kip = yeni ? kipKur(q.mode, el, { f0, seed: hashStr(q.id || q.img || '') }) : null;
+		const kip = yeni ? kipKur(q.mode, el, { f0, seed: hashStr(q.id || q.img || '') }) : sil ? siluetGecis(el, blur) : null;
 		gorselUrl(GK_BASE, q.img + '.webp').then(
 			(a) => {
 				// ana görsel ve yapboz parçaları aynı adresi kullanır
@@ -222,9 +229,14 @@ export const gozkarari = {
 			() => {},
 		);
 		if (sil) {
-			const mk = el.querySelector('image.mk');
 			gorselUrl(GK_BASE, q.img + '.m.png').then(
-				(a) => mk && mk.getAttribute('href') !== a && mk.setAttribute('href', a),
+				async (a) => {
+					const t = new Image();
+					t.src = a;
+					await t.decode().catch(() => {});
+					for (const mk of el.querySelectorAll('image.mk')) if (mk.getAttribute('href') !== a) mk.setAttribute('href', a);
+					requestAnimationFrame(() => el.querySelector('.sl .sbt')?.setAttribute('opacity', '0'));
+				},
 				() => {},
 			);
 		}
@@ -305,10 +317,6 @@ export const gozkarari = {
 					if (t < 1) requestAnimationFrame(step);
 				};
 				requestAnimationFrame(step);
-				if (sil) {
-					im.setAttribute('opacity', '1');
-					el.querySelector('.sl')?.setAttribute('opacity', '0');
-				}
 				st.classList.add('rv');
 				root.classList.add('rv');
 				const me = results.find((r) => r.p?.human) || null;

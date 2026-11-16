@@ -1,10 +1,10 @@
 // DENEME · GÖZ KARARI KİPLERİ (kullanıcı 16 Kasım 2026): yakından uzaklaşma ve ayrıntıdan bütüne kipleri görseli 5–6,5 kat
-// büyüttüğü için piksel piksel görünüyor. Yerine büyütmesiz beş kip denenir (gk_kipler.js); karşılaştırma için mevcut
-// netleşme ve siluet de aynı yerde. Kullanıcı galeride deneyip seçer; seçilenler maça girer, yakın çekim ve ayrıntı
-// kaldırılır.
+// büyüttüğü için piksel piksel görünüyordu. Beş büyütmesiz kip denendi; kullanıcı karo ve çizimi seçti (sinematik
+// yapılmasını istedi), netleşme ve siluet kalıyor (siluet yavaş yavaş görsele dönüşüyor). Anahtar deliği, yapboz ve perde
+// kaldırıldı. Yeni görseller gelince bu dört kip maça bağlanır; yakın çekim ve ayrıntı kalkar.
 //
 // Her kip galeride ayrı satır (en üstte, kırmızı YENİ). Örnek sorular gerçek Göz Kararı soruları, kip soruya yazılır
-// (q.mode); tip yine gozkarari: kart, süre ve puan oyundakiyle birebir aynı. Yeni kipler ve netleşme aynı 8 soruyla
+// (q.mode); tip yine gozkarari: kart, süre ve puan oyundakiyle birebir aynı. Karo, çizim ve netleşme aynı 8 soruyla
 // (karşılaştırılabilsin: hayvan, böcek, eşya, mimari, 3D, gravür, tablo, minyatür); siluet maskesi olan 8 soruyla.
 
 import { gozkarari } from './d_gozkarari.js';
@@ -15,13 +15,10 @@ const SILUET = ['GK-314', 'GK-318', 'GK-338', 'GK-373', 'GK-399', 'GK-413', 'GK-
 
 // [galeri anahtarı, kip, ad, tanıtım, sorular]
 const KIPLER = [
-	['gkk_spot', 'spot', 'GK · Anahtar Deliği', 'Işık halkası ayrıntıda açılır, genişler', ORTAK],
-	['gkk_yapboz', 'yapboz', 'GK · Yapboz', 'Karışık parçalar yerine kayar', ORTAK],
-	['gkk_karo', 'karo', 'GK · Karo Karo', 'Kareler rastgele açılır', ORTAK],
-	['gkk_perde', 'perde', 'GK · Perde', 'Şeritlerin aralığı genişler', ORTAK],
-	['gkk_cizim', 'cizim', 'GK · Çizimden Fotoğrafa', 'Önce kontur, sonra renk', ORTAK],
-	['gkk_blur', 'blur', 'GK · Netleşme (mevcut)', 'Bulanıktan nete', ORTAK],
-	['gkk_sil', 'sil', 'GK · Siluet (mevcut)', 'Siyah gölge, cevapta görsel', SILUET],
+	['gkk_karo', 'karo', 'GK · Karo Karo', 'Bulanık zeminde karolar parlayarak açılır', ORTAK],
+	['gkk_cizim', 'cizim', 'GK · Çizimden Fotoğrafa', 'Kurşun kalem çizimi, sonra sulu boya renk', ORTAK],
+	['gkk_blur', 'blur', 'GK · Netleşme', 'Bulanıktan nete', ORTAK],
+	['gkk_sil', 'sil', 'GK · Siluet', 'Gölge yavaş yavaş görsele dönüşür', SILUET],
 ];
 
 export const TYPES = Object.fromEntries(KIPLER.map(([t]) => [t, gozkarari]));

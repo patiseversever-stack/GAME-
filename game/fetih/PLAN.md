@@ -24,6 +24,14 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
        - eski webp'ler (`dist/gk/GK-*.webp`) aynı çıktı klasörüne kopyalanır;
        - `python3 -I tools/gozkarari/kur.py <çıktı>` çalıştırılır;
        - temas sayfası, siluet maskesi ve ilk kadraj gözle denetlenir.
+  - **Göz Kararı kipleri: kullanıcı kararı (16 Kasım).** Kalanlar: netleşme, siluet, karo karo, çizimden fotoğrafa.
+    - Yakın çekim ve ayrıntı (büyütme, pikselleşme) kalkacak. Anahtar deliği, yapboz, perde denendi, beğenilmedi, silindi.
+    - Karo: bulanık, karartılmış zeminde karolar kart çevrilir gibi parlayarak açılır. Çizim: XDoG hat + renk soldurma
+      gölgesiyle kurşun kalem, çizim belirir, renk odaktan sulu boya gibi yayılır. Siluet: gölge bulanık renge, sonra
+      net görsele dönüşür (oyundaki siluet de böyle). Kod: `src/quiz/gk_kipler.js`; galeride `deneme-gkkip.js`.
+    - **Yeni görseller gelince:** bu dört kip maça bağlanır; `Gösterim: yakın çekim` → karo, `ayrıntı` (tablo) → çizim
+      (kur.py MODE eşlemesi); eski 167 yakın çekim/ayrıntı sorusu da aynı eşlemeyle geçer; galerideki deneme bölümü kalkar.
+      Büyütme kalktığı için bütün görseller 640×480 yeterli.
   - **Görsel kalitesi ve dosya sınırı (16 Kasım):**
     - Kullanıcının gönderdiği görsellerin hepsi ~19 KB'a sıkıştırılmış geldi, çoğu küçültülmüş (224–640 px): pikselleşme buradan.
     - Ölçüm: 510 görselin 158'i çok kötü (yakın çekim/ayrıntı ≤512 px: 112; bulanık ≤320 px: 46), liste `ornek_gorsel/cok_kotu_gorseller.md`.
