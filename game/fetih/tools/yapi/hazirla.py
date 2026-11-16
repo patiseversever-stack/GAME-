@@ -1,9 +1,10 @@
 # Kazı Kazan ve Gölge Oyunu: 100 yapı görselini oyuna hazırlar (beyaz zemini saydam yap, kırp, küçült, WebP).
 # Kullanım: python3 -I tools/yapi/hazirla.py <girdi klasörü> <çıktı klasörü>
-# Girdi: NN_ad.webp ya da NN_ad.png (1024x1024, dış zemin beyaz). Çıktı: NN.webp (RGBA, en uzun kenar 600).
+# Girdi: NN_ad.webp ya da NN_ad.png (1024x1024, dış zemin beyaz); 1000 görsel listesinden gelenler YP-101.png gibi
+# (GORSEL-1000-K5.md). Çıktı: NN.webp (RGBA, en uzun kenar 600); YP-101 → 101.webp.
 # Zemin: kenardan taşan "beyaza yakın" bölge (sel doldurma); kapalı kalan saf beyaz boşluklar (aralık, kemer içi) da saydam.
 # Kenar: 0,8 px yumuşatma ve beyaz hale temizliği (yarı saydam pikselin rengi beyazdan arındırılır).
-import os, sys
+import os, re, sys
 import numpy as np
 from PIL import Image
 from scipy import ndimage as nd
@@ -16,7 +17,10 @@ for f in sorted(os.listdir(src)):
     p = os.path.join(src, f)
     if not os.path.getsize(p):
         print('BOŞ', f); continue
-    no = f.split('_')[0]
+    m = re.match(r'(?:YP-)?(\d{2,3})(?:[_. ]|$)', f, re.I)
+    if not m or not re.search(r'\.(png|webp|jpe?g)$', f, re.I):
+        print('ATLANDI (ad ya da tür tanınmadı)', f); continue
+    no = m.group(1)
     im = np.asarray(Image.open(p).convert('RGB')).astype(np.float32)
     mn = im.min(2); mx = im.max(2)
     bgish = (mn >= 238) & (mx - mn <= 14)
