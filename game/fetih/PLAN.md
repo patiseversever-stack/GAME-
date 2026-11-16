@@ -11,14 +11,19 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 - **Kullanıcı isteği (16 Kasım): Türkçe anlatım tek kalıp olmasın.** "Şurası hangi ildedir" hep aynı. Soru kalıpları
   çeşitlensin, ipucu eklensin, karakter sınırı (`src/quiz/sinirlar.js`) aşılmasın. Pilot aileleri ve bütün yeni aileler için.
 - **UNUTMA: kullanıcı görsel gönderecek.**
-  1. **Bu akşam: Göz Kararı'nın 200 görseli (GK-311…GK-510).**
-     - Komutlar `GOZKARARI-TEK.md`'de, dosya `GozKarari-2.zip`.
-     - Bağlama:
+  1. **Göz Kararı GK-311…GK-510: BAĞLANDI (16 Kasım, `GozKarari-2.zip`, 200 görsel).** Oyunda 510 Göz Kararı sorusu.
+     - 200 görselin hepsi cevabıyla yan yana gözle denetlendi (temas sayfası); yanlış ya da cevapla uyuşmayan görsel çıkmadı.
+     - Elle düzeltmeler (`kur.py`, `gorsel_test.py`):
+       - 4 siluet maskesi nesneyi tanıtmadığı için bulanık kipe alındı: Sac, Ud, Kulplu beygir, Trilobit (`SIL_RED`).
+       - 8 yakın çekim/ayrıntı odağı elle verildi, ilk kadraj konuya düşsün diye: Pamuk, Kanun, Kudüm, Yağ kandili, Zincir zırh, Zihgir, Ragbi, Mondrian (`ODAK_EL`).
+       - GK-468 Çekiç (turuncu zeminde ince nesne) "neredeyse boş" ölçütüne takıldı; gözle onaylandı (`GOZLE_ONAYLI`).
+     - Uzunluk sözleşmesini aşan 8 eski kök (P7, P8) anlamı korunarak kısaltıldı.
+     - Bağlama yolu (sonraki ZIP'ler için aynı):
        - zip kendi boş klasörüne açılır;
-       - `python3 -I tools/gozkarari/donustur.py <zip_klasörü> <çıktı>` çalıştırılır: 448×336 webp, ~18 KB; yanlış oranı kırpıp raporlar;
+       - `python3 -I tools/gozkarari/donustur.py <zip_klasörü> <çıktı>` çalıştırılır;
        - eski webp'ler (`dist/gk/GK-*.webp`) aynı çıktı klasörüne kopyalanır;
-       - `python3 -I tools/gozkarari/kur.py <çıktı>` çalıştırılır.
-     - Sonra görseller tek tek denetlenir, testler koşulur, yayın yapılır.
+       - `python3 -I tools/gozkarari/kur.py <çıktı>` çalıştırılır;
+       - temas sayfası, siluet maskesi ve ilk kadraj gözle denetlenir.
   2. **Bu akşam ya da sonra: 1250 yeni görsel (tek dosya `GORSEL-1000-TEK.md`, 7 grup, grup başına ZIP `Gorsel-1000-K1…K7.zip`).**
      - 1000 görsel + 250 ünlü kişi portresi (GK-1311–1560; kullanıcı kararı, KARARLAR.md: yalnız en geç 1955'te ölmüşler, telifsiz kaynak).
      - Portreler gelince her biri kişiye benziyor mu tek tek bakılacak; benzemeyen maç dışı. Komut dosyaları `GORSEL-1000.md` (özet) ve `GORSEL-1000-K*.md` (ChatGPT'ye verilecek parçalar).

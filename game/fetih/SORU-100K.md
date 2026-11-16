@@ -14,7 +14,7 @@
   - Tahmin 5–8 bin gerçekçi değil; bu aile birkaç yüz soru verir (antik kent, kale, baraj eklenince).
 - Anlatım çeşitliliği: ilçe (108 ipucu, 10 kalıp) ve doğum yılı (259 tanım, 6 kalıp) yenilendi. Kural: `tools/soru/BRIF.md` §12.
 - Kullanıcı ek şartı: soru anlatımı tek kalıp olmayacak (kalıp çeşitliliği + ipucu, karakter sınırı içinde).
-- Bekleyen görseller: Göz Kararı GK-311…510 (bu akşam), 1000 yeni görsel (`GORSEL-1000.md`).
+- Göz Kararı GK-311…510 bağlandı (16 Kasım): oyunda 510 Göz Kararı sorusu. Bekleyen görseller: 1250 yeni görsel (`GORSEL-1000-TEK.md`).
 Banka bugün 20.103 soru (sayım: `tools/soru/sayim/2026-11-15_20103.json`).
 
 ## Kullanıcının şartları (değişmez)

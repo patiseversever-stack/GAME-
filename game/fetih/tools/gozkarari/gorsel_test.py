@@ -12,6 +12,8 @@ from scipy import ndimage as nd
 D, J = sys.argv[1], sys.argv[2]
 OUT = sys.argv[3] if len(sys.argv) > 3 else None
 items = json.load(open(J))
+# Gözle denetlenip doğru bulunan, ölçüte takılan görseller (16 Kasım 2026: GK-468 turuncu zeminde çekiç, std 10.5)
+GOZLE_ONAYLI = {'GK-468'}
 err, warn = [], []
 H = {}
 for it in items:
@@ -27,7 +29,9 @@ for it in items:
     if abs(w / h - 4 / 3) > 0.01: err.append(f"{it['id']}: oran {w}x{h}")
     if not 12000 <= sz <= 24000: warn.append(f"{it['id']}: boyut {sz} B")
     a = np.asarray(im.convert('L'), dtype=np.float32)
-    if a.std() < 12: err.append(f"{it['id']}: neredeyse boş (std {a.std():.1f})")
+    if a.std() < 12:
+        # düz zeminde ince nesne (çekiç teli) de düşük std verir: gözle bakılıp onaylananlar yalnız uyarı
+        (warn if it['id'] in GOZLE_ONAYLI else err).append(f"{it['id']}: neredeyse boş (std {a.std():.1f})" + (' · gözle onaylı' if it['id'] in GOZLE_ONAYLI else ''))
     g = np.asarray(im.convert('L').resize((9, 8), Image.LANCZOS), dtype=np.int16)
     H[it['id']] = (g[:, 1:] > g[:, :-1]).flatten()
     # köşe yazısı şüphesi: alt köşelerde ince yüksek frekanslı kontrast (imza)

@@ -100,6 +100,12 @@ def paintbox(im):
     if (b[2] - b[0]) > 0.97 and (b[3] - b[1]) > 0.97: return None
     return [round(x, 3) for x in b]
 
+# Maskesi çıkan ama gözle bakınca nesneyi tanıtmayan siluetler (dağınık leke, kopuk parça, kaybolan bacak): bulanık kipe
+# (16 Kasım 2026 denetimi: Sac taş ve ateşle karışıyor, Ud kopuk, Kulplu beygirin bacakları yok, Trilobit delikli oval)
+SIL_RED = {'GK-365', 'GK-376', 'GK-459', 'GK-490'}
+# Otomatik odak konuyu ıskalayınca elle odak (0..1): ilk kadraj halıya, duvara, sehpaya, boş beyaza düşüyordu (16 Kasım 2026)
+ODAK_EL = {'GK-333': (0.70, 0.55), 'GK-372': (0.50, 0.45), 'GK-384': (0.27, 0.40), 'GK-401': (0.50, 0.45),
+           'GK-409': (0.48, 0.45), 'GK-410': (0.33, 0.58), 'GK-457': (0.48, 0.58), 'GK-496': (0.30, 0.68)}
 rows, switched = [], []
 for it in items:
     src = os.path.join(SRC, it['id'] + '.webp')
@@ -107,14 +113,14 @@ for it in items:
     mode = MODE[it['g']]
     if mode == 'sil':
         mp = os.path.join(mdir, it['id'] + '.m.png')
-        if os.path.exists(mp):
+        if os.path.exists(mp) and it['id'] not in SIL_RED:
             Image.open(mp).convert('L').resize((320, 240), Image.LANCZOS).save(os.path.join(OUT, it['id'] + '.m.png'), optimize=True)
         else:
             mode = 'blur'; switched.append(it['id'] + ' ' + it['dogru'])
     im = Image.open(src).convert('RGB')
     w, h = im.size
     row = dict(id='gk-' + it['id'][3:], img=it['id'], cat=CAT[it['konu']], konu=KONU[it['konu']], diff=it['z'], mode=mode, q=it['q'], a=it['a'], b=it['b'])
-    if mode in ('zoom', 'detail'): row['f'] = focus(im)
+    if mode in ('zoom', 'detail'): row['f'] = ODAK_EL.get(it['id']) or focus(im)
     if it['konu'].startswith('Tablolar'):
         bx = paintbox(im)
         if bx: row['box'] = bx
