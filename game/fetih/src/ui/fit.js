@@ -71,6 +71,7 @@ export function fitEl(el) {
 	const key = el.textContent + '|' + w;
 	if (el.__fit === key) return true;
 	el.style.fontSize = '';
+	el.style.overflowWrap = '';
 	el.classList.remove('fit-2');
 	const base = parseFloat(getComputedStyle(el).fontSize) || 14;
 	const over = () => el.scrollWidth > el.clientWidth + 0.5;
@@ -81,7 +82,11 @@ export function fitEl(el) {
 		const floor = Math.max(MIN_PX, base * (line ? 0.72 : 0.55));
 		if (!shrink(el, floor, base, over) && line) {
 			el.classList.add('fit-2');
-			shrink(el, Math.max(MIN_PX, base * 0.55), base * 0.86, over);
+			// iki satırda da önce kelime bölmeden küçülür: bölünebilen yazı hiç "taşmaz" (overflow-wrap:anywhere), küçültme
+			// yapılmadan uzun kelime heceden kesiliyordu (Göz Kararı "Argenteuil'de", stres denetimi); bölme yalnız en küçük
+			// boyda da sığmazsa son çare
+			el.style.overflowWrap = 'normal';
+			if (!shrink(el, Math.max(MIN_PX, base * 0.55), base * 0.86, over)) el.style.overflowWrap = '';
 		}
 	}
 	el.__fit = el.textContent + '|' + el.clientWidth;

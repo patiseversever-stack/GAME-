@@ -206,6 +206,8 @@ const measure = () => {
 				if (opq(e) < 0.12 || !vis(e)) continue;
 				const cs = getComputedStyle(e);
 				if (e.tagName === 'CANVAS') continue;
+				// patlama parçacığı (.fl-p): bir anlık süs efekti, bilerek yazının üstünden uçar (Fitil BOOM!) — sayılmaz
+				if (e.classList?.contains('fl-p')) continue;
 				// boş, saydam kutu (zemin yok, kenar yok, yazı yok, görsel yok) sayılmaz
 				const own = [...e.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim());
 				const paints = own || cs.backgroundImage !== 'none' || !/rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor) || parseFloat(cs.borderTopWidth) > 0 || e.tagName === 'IMG' || e instanceof SVGElement;

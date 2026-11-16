@@ -73,7 +73,7 @@ const CSS = /* css */ `
 .dn-yb-msg.good{color:#7dff9a}
 .dn-yb .fl-send{flex:none;width:auto;min-width:136px;height:52px;padding:0 16px;font-size:18px;display:flex;align-items:center;gap:8px;justify-content:center}
 .dn-yb .fl-send::before{content:'';width:18px;height:18px;flex:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 21l3.8-1 11-11-2.8-2.8-11 11z' fill='%23c8241a'/%3E%3Cpath d='M15.6 5.6l2.8 2.8 1.8-1.8a1.4 1.4 0 0 0 0-2l-.8-.8a1.4 1.4 0 0 0-2 0z' fill='%231a1f3a'/%3E%3C/svg%3E") center/contain no-repeat}
-.dn-yb-o{display:grid;gap:10px;padding-top:4px}
+.dn-yb-o{display:grid;gap:10px;padding-top:4px;padding-inline:4px} /* eğik şık köşesi kart kenarında kesilmesin (stres denetimi) */
 .dn-yb-o.three{grid-template-columns:repeat(3,minmax(0,1fr))}
 .dn-yb-o:empty{display:none}
 .dn-yb-o .fl-opt{min-height:62px;padding:8px 6px;justify-content:center;text-align:center;border:0;border-radius:3px;clip-path:none;color:#2a1a00;
