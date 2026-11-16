@@ -1,6 +1,12 @@
 # Soru bankası 100 bin planı
 
-**Durum: BAŞLANMADI.** Kullanıcı açıkça "başla" demeden hiçbir aşamaya geçilmez (15 Kasım 2026 kararı).
+**Durum (16 Kasım 2026):**
+
+- Aşama 0 bitti (kapının son adımları: tam test, açılış ölçümü, yayın).
+- Aşama 1 pilotu kullanıcı onayından geçti.
+- **Aşama 2 başladı.**
+- Kullanıcı ek şartı: soru anlatımı tek kalıp olmayacak (kalıp çeşitliliği + ipucu, karakter sınırı içinde).
+- Bekleyen görseller: Göz Kararı GK-311…510 (bu akşam), 1000 yeni görsel (`GORSEL-1000.md`).
 Banka bugün 20.103 soru (sayım: `tools/soru/sayim/2026-11-15_20103.json`).
 
 ## Kullanıcının şartları (değişmez)

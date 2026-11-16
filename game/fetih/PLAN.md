@@ -2,19 +2,29 @@
 
 Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 
-## Son durum (15 Kasım 2026)
+## Son durum (16 Kasım 2026)
 
-- **Soru bankası:** 20.103 soru. Eski → yeni sayımlar `tools/soru/sayim/` altında. Oyun, galeri ve defter bu sürümle yayında.
-- **Sıradaki büyük iş: soru bankası 100 bin. BAŞLANMADI.** Kullanıcı "başla" demeden başlanmaz. Bütün plan, kullanıcının şartları ve kapılar `SORU-100K.md` dosyasında; şartlar özetle:
-  - dünya standardı, saçma soru yok, kusursuz Türkçe;
-  - her ekrana sığma, taşma ve binme yok;
-  - tip başına en çok karakter ölçülüp teste bağlanacak;
-  - testler her adımda koşulacak.
-- **Bekleyen: Göz Kararı +200.** Komutlar `GOZKARARI-TEK.md`'de. Kullanıcı `GozKarari-2.zip`'i (GK-311…GK-510 görselleri) gönderince yapılacaklar:
-  - PNG'ler 448×336 webp'ye (12–24 KB) çevrilir;
-  - `python3 -I tools/gozkarari/kur.py <klasör>` çalıştırılır (eski 310 webp de aynı klasörde olmalı);
-  - görseller tek tek denetlenir, testler koşulur, yayın yapılır.
-- **Ajan kuralı:** Aynı anda en çok 2 ajan (kota), kullanıcı izin verirse 4. Sırayı ben belirlerim.
+- **Soru bankası:** 20.815 soru. 100 bin planı `SORU-100K.md`'de.
+  - Aşama 0 (altyapı) bitti; kapının son adımları açık: tam test, açılış ölçümü, yayın.
+  - Aşama 1 pilotu (Wikidata: ilçe + doğum yılı, 444 soru + 268 Mancınık ikizi) kullanıcı onayından geçti.
+  - **Aşama 2 başladı** (16 Kasım, kullanıcı: "pilot tamam aşama 2ye geç").
+- **Kullanıcı isteği (16 Kasım): Türkçe anlatım tek kalıp olmasın.** "Şurası hangi ildedir" hep aynı. Soru kalıpları
+  çeşitlensin, ipucu eklensin, karakter sınırı (`src/quiz/sinirlar.js`) aşılmasın. Pilot aileleri ve bütün yeni aileler için.
+- **UNUTMA: kullanıcı görsel gönderecek.**
+  1. **Bu akşam: Göz Kararı'nın 200 görseli (GK-311…GK-510).**
+     - Komutlar `GOZKARARI-TEK.md`'de, dosya `GozKarari-2.zip`.
+     - Bağlama: zip kendi boş klasörüne açılır. PNG'ler 448×336 webp'ye çevrilir (12–24 KB).
+     - Eski 310 webp (`dist/gk/`) aynı klasöre konur. Ardından `python3 -I tools/gozkarari/kur.py <klasör>`.
+     - Sonra görseller tek tek denetlenir, testler koşulur, yayın yapılır.
+  2. **Bu akşam ya da sonra: 1000 yeni görsel.** Komut dosyaları `GORSEL-1000.md` (özet) ve `GORSEL-1000-K*.md` (ChatGPT'ye verilecek parçalar).
+     - Göz Kararı: GK-511 ve sonrası.
+     - Yapı görselleri (Kazı Kazan + Gölge Oyunu): YP-101 ve sonrası.
+     - Kaynak listeler (soru, şık, bilgi): `tools/gozkarari/P9.md`… ve `tools/yapi/Y1.md`…
+     - Bağlama:
+       - Göz Kararı: yukarıdaki gibi. `kur.py` dört haneli numarayı ve yeni konuları (CAT) tanımalı.
+       - Yapı: `python3 -I tools/yapi/hazirla.py <girdi> dist/yapi`, ardından `python3 -I tools/yapi/karo.py`, sonra `src/data/ek/kazi.js` ve `golge.js` kayıtları.
+     - 1000'in hepsi bir gecede gelmeyebilir. Gelen parça bağlanır, gelmeyen numara maçta çıkmaz.
+- **Ajan kuralı:** Aynı anda en çok 2 ajan (kota). Kullanıcı 4'e izin verdi (15 Kasım). Sırayı ben belirlerim.
 
 ## Kullanıcının istediği (kararlar)
 
