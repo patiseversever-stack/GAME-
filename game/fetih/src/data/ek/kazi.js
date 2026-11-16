@@ -78,7 +78,7 @@ export const YAPILAR = [
 	D(44, 'cografya', 1, Y, ['Big Ben', 'Westminster Abbey', 'Tower Bridge', 'Buckingham Sarayı'], 'Big Ben', 'Londra · Birleşik Krallık', 'Saat kulesinin adı Elizabeth Kulesi'),
 	// London Bridge sanılır: Londra’nın açılır, kuleli köprüsü Tower Bridge
 	D(45, 'cografya', 2, Y, ['Tower Bridge', 'London Bridge', 'Golden Gate Köprüsü', 'Galata Köprüsü'], 'Tower Bridge', 'Londra · Birleşik Krallık', 'Açılır köprü · 1894'),
-	D(46, 'tarih', 2, 'Bu heykeli ABD’ye hangi ülke hediye etti?', ['Fransa', 'İngiltere', 'İtalya', 'İspanya'], 'Özgürlük Heykeli', 'New York · ABD', 'Fransa’nın hediyesi · 1886'),
+	D(46, 'tarih', 2, 'Bu heykeli ABD’ye hangi ülke verdi?', ['Fransa', 'İngiltere', 'İtalya', 'İspanya'], 'Özgürlük Heykeli', 'New York · ABD', 'Fransa’nın hediyesi · 1886'),
 	// Chrysler de art deco: resimde Empire State’in basamaklı gövdesi ve direği
 	D(47, 'cografya', 2, Y, ['Empire State Binası', 'Chrysler Binası', 'One World Trade Center', 'Burj Halife'], 'Empire State Binası', 'New York · ABD', '102 katlı · 1931'),
 	// Lizbon bilerek yok (kırmızı asma köprüsü Golden Gate’e çok benzer)

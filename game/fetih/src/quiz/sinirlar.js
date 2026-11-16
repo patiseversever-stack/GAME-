@@ -151,7 +151,7 @@ export const SINIR = {
 	ikidogru: { kok: 36, madde: 103, not: 158, uzunKelime: 21 },
 	ilavi: { kok: 34, ipucu: 73, uzunKelime: 20 },
 	kayip: { kok: 28, sik: 14, ipucu: 59, uzunKelime: 14 },
-	kazi: { kok: 41, sik: 26, not: 48, uzunKelime: 16 },
+	kazi: { kok: 36, sik: 26, not: 48, uzunKelime: 16 }, // stres 320: 41 karakterlik geniş harfli kök üç satıra iniyor, dördüncü şıkkı joker şeridinin altına itiyordu
 	kelimeavi: { kok: 31, ipucu: 40, kelime: 9, uzunKelime: 17 },
 	kimim: { kok: 36, ipucu: 98, uzunKelime: 22 },
 	kusbakisi: { kok: 61, sik: 27, uzunKelime: 16 },
