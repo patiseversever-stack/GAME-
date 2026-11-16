@@ -115,13 +115,16 @@ for md, zipad, ilk, son in parcalar:
 for k in range(1, 6):
     ara = f'GK-{511 + 200 * (k - 1)} – GK-{710 + 200 * (k - 1)}' if k < 5 else 'YP-101 – YP-300'
     o.append(satir.get(k, f"| `GORSEL-1000-K{k}.md` | {ara} | 200 | {'Göz Kararı' if k < 5 else 'Kazı Kazan + Gölge Oyunu'} | hazırlanıyor |"))
-o += ['', 'Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görseli gelmeyen numara maçta çıkmaz.', '',
+o += ['', '**Kullanım:** her parça için ChatGPT\'de yeni bir sohbet aç, parça dosyasını ekle ve "Talimatı uygula, başla" yaz. Durursa "devam" yaz. '
+      'Bitince verdiği ZIP\'i bana gönder.', '',
+      'Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görseli gelmeyen numara maçta çıkmaz.', '',
       '## Görsel nereye gidiyor', '',
       '- **Göz Kararı:** görsel bulanıktan netleşir, yakından uzaklaşır, siluetten renge geçer ya da bir tablonun parçasından bütününe açılır; 4 şıktan biri seçilir.',
       '- **Kazı Kazan:** yapı folyonun altındadır; kazıdıkça görünür, 4 şıktan biri seçilir.',
       '- **Gölge Oyunu:** yapının yalnız gölgesi Karagöz perdesine düşer; üç ipucu sırayla açılır. Gölgesi ayırt edilemeyen yapı yalnız Kazı Kazan\'a gider.', '']
 konu = None
-o += ['## Göz Kararı', '']
+if gk:
+    o += ['## Göz Kararı', '']
 for x in gk:
     if x['konu'] != konu:
         konu = x['konu']
