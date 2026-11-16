@@ -39,7 +39,7 @@ def oku_yp():
 gk, yp = oku_gk(), oku_yp()
 no = lambda s: int(s.split('-')[1])
 hata = []
-if [no(x['id']) for x in gk] != list(range(511, 511 + len(gk))): hata.append('GK numaraları sıralı/eksiksiz değil')
+if len({x['id'] for x in gk}) != len(gk): hata.append('GK numarası iki kez')
 if [no(x['id']) for x in yp] != list(range(101, 101 + len(yp))): hata.append('YP numaraları sıralı/eksiksiz değil')
 for x in gk + yp:
     if not x['cmd'].endswith('no logo'): hata.append(x['id'] + ': komut "no logo" ile bitmiyor')
@@ -92,21 +92,29 @@ def parca(k, ad, liste, tur):
     return md, zipad, ilk, son
 
 
+# Parça numarası sabit: Göz Kararı K1 = GK-511–710, K2 = 711–910, K3 = 911–1110, K4 = 1111–1310; yapı K5. Hazır olan
+# parça (200 maddesi tam) yazılır; gelmeyen parça özette "hazırlanıyor" görünür (parçalar ayrı ayrı teslim edilebilsin).
 parcalar = []
-for i in range(0, len(gk), 200):
-    parcalar.append(parca(len(parcalar) + 1, 'GÖZ KARARI', gk[i:i + 200], 'gk'))
-if yp:
-    parcalar.append(parca(len(parcalar) + 1, 'YAPI GÖRSELLERİ (Kazı Kazan + Gölge Oyunu)', yp, 'yp'))
+for k in range(4):
+    bas = 511 + 200 * k
+    dilim = [x for x in gk if bas <= no(x['id']) < bas + 200]
+    if len(dilim) == 200:
+        parcalar.append(parca(k + 1, 'GÖZ KARARI', dilim, 'gk'))
+if len(yp) == 200:
+    parcalar.append(parca(5, 'YAPI GÖRSELLERİ (Kazı Kazan + Gölge Oyunu)', yp, 'yp'))
 
 # özet (kullanıcı için)
 o = ['# 1000 YENİ GÖRSEL · özet', '',
      'Bu dosya senin için: her görselin numarası, oyunda hangi soru tipine gideceği, sorusu ve doğru cevabı.',
      'ChatGPT\'ye bu dosyayı DEĞİL, aşağıdaki parça dosyalarını ver (her biri kendi içinde talimatlı; soru ve cevap yazmaz ki görsele yazı sızmasın).', '',
      '## Parçalar', '', '| Parça | Numaralar | Görsel | Soru tipi | ZIP adı |', '|---|---|---|---|---|']
+satir = {}
 for md, zipad, ilk, son in parcalar:
-    gkmi = ilk.startswith('GK')
-    n = no(son) - no(ilk) + 1
-    o.append(f"| `{md}` | {ilk} – {son} | {n} | {'Göz Kararı' if gkmi else 'Kazı Kazan + Gölge Oyunu'} | `{zipad}` |")
+    k = int(md.split('-K')[1][0])
+    satir[k] = f"| `{md}` | {ilk} – {son} | {no(son) - no(ilk) + 1} | {'Göz Kararı' if k < 5 else 'Kazı Kazan + Gölge Oyunu'} | `{zipad}` |"
+for k in range(1, 6):
+    ara = f'GK-{511 + 200 * (k - 1)} – GK-{710 + 200 * (k - 1)}' if k < 5 else 'YP-101 – YP-300'
+    o.append(satir.get(k, f"| `GORSEL-1000-K{k}.md` | {ara} | 200 | {'Göz Kararı' if k < 5 else 'Kazı Kazan + Gölge Oyunu'} | hazırlanıyor |"))
 o += ['', 'Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görseli gelmeyen numara maçta çıkmaz.', '',
       '## Görsel nereye gidiyor', '',
       '- **Göz Kararı:** görsel bulanıktan netleşir, yakından uzaklaşır, siluetten renge geçer ya da bir tablonun parçasından bütününe açılır; 4 şıktan biri seçilir.',
