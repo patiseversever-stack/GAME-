@@ -89,97 +89,129 @@ export function kipSvg(kip, k, { src }) {
 }
 
 // ---------------------------------------------------------------- çizim: kurşun kalem görseli ve açılış haritaları
-const SW = 800; // çizim çözünürlüğü (telefonda kart ~380 css px × 2–3 yoğunluk: çizgi keskin kalsın)
-const SH = 600;
+// Hesap telefonda 0,4–1 sn sürer (800×600, dört Gauss geçişi): ana iş parçacığında maç girişini takıltırdı. Çekirdek kendi
+// içinde kapalıdır (dışarıdan hiçbir değişkene dokunmaz), metin olarak bir Web Worker'a verilir (blob: adresi; ses ve yapı
+// işçileri gibi). İşçi ya da OffscreenCanvas yoksa (eski tarayıcı) aynı çekirdek ana iş parçacığında çalışır.
 
-/** Ayrılabilir Gauss bulanıklığı (kenarda kenar pikseli tekrar eder). */
-function gauss(src, w, h, s) {
-	const r = Math.max(1, Math.ceil(s * 3));
-	const k = new Float32Array(2 * r + 1);
-	let t = 0;
-	for (let i = -r; i <= r; i++) t += k[i + r] = Math.exp(-(i * i) / (2 * s * s));
-	for (let i = 0; i < k.length; i++) k[i] /= t;
-	const a = new Float32Array(w * h);
-	const b = new Float32Array(w * h);
-	for (let y = 0; y < h; y++) {
-		const o = y * w;
-		for (let x = 0; x < w; x++) {
-			let v = 0;
-			for (let j = -r; j <= r; j++) v += k[j + r] * src[o + (x + j < 0 ? 0 : x + j >= w ? w - 1 : x + j)];
-			a[o + x] = v;
+/** Kalem çizimi çekirdeği. DIŞ DEĞİŞKEN KULLANMA: işçiye metin olarak kopyalanır. */
+function cizimCekirdek() {
+	const SW = 800; // çizim çözünürlüğü (telefonda kart ~380 css px × 2–3 yoğunluk: çizgi keskin kalsın)
+	const SH = 600;
+	const W = 400; // açılış haritaları (maske yumuşak: yarı çözünürlük yeter)
+	const H = 300;
+	const cl = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
+	function rng(seed) {
+		let a = seed >>> 0 || 1;
+		return () => {
+			a = (a + 0x6d2b79f5) >>> 0;
+			let t = a;
+			t = Math.imul(t ^ (t >>> 15), t | 1);
+			t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+			return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+		};
+	}
+	/** Ayrılabilir Gauss (küçük σ): kenarda kenar pikseli tekrar eder. */
+	function gaussTam(src, w, h, s) {
+		const r = Math.max(1, Math.ceil(s * 3));
+		const k = new Float32Array(2 * r + 1);
+		let t = 0;
+		for (let i = -r; i <= r; i++) t += k[i + r] = Math.exp(-(i * i) / (2 * s * s));
+		for (let i = 0; i < k.length; i++) k[i] /= t;
+		const a = new Float32Array(w * h);
+		const b = new Float32Array(w * h);
+		for (let y = 0; y < h; y++) {
+			const o = y * w;
+			for (let x = 0; x < w; x++) {
+				let v = 0;
+				for (let j = -r; j <= r; j++) v += k[j + r] * src[o + (x + j < 0 ? 0 : x + j >= w ? w - 1 : x + j)];
+				a[o + x] = v;
+			}
+		}
+		for (let y = 0; y < h; y++)
+			for (let x = 0; x < w; x++) {
+				let v = 0;
+				for (let j = -r; j <= r; j++) v += k[j + r] * a[(y + j < 0 ? 0 : y + j >= h ? h - 1 : y + j) * w + x];
+				b[y * w + x] = v;
+			}
+		return b;
+	}
+	/** Kutu bulanıklığı (yarıçap r), kayan toplamla: σ'dan bağımsız hızda. */
+	function kutu(src, dst, w, h, r, yatay) {
+		const n = yatay ? w : h;
+		const m = yatay ? h : w;
+		const adim = yatay ? 1 : w;
+		const bas = (j) => (yatay ? j * w : j);
+		const olc = 1 / (2 * r + 1);
+		for (let j = 0; j < m; j++) {
+			const o = bas(j);
+			const at = (i) => src[o + (i < 0 ? 0 : i >= n ? n - 1 : i) * adim];
+			let t = 0;
+			for (let i = -r; i <= r; i++) t += at(i);
+			for (let i = 0; i < n; i++) {
+				dst[o + i * adim] = t * olc;
+				t += at(i + r + 1) - at(i - r);
+			}
 		}
 	}
-	for (let y = 0; y < h; y++)
-		for (let x = 0; x < w; x++) {
-			let v = 0;
-			for (let j = -r; j <= r; j++) v += k[j + r] * a[(y + j < 0 ? 0 : y + j >= h ? h - 1 : y + j) * w + x];
-			b[y * w + x] = v;
+	/** Büyük σ: üç kutu geçişi (Gauss yaklaşımı, gözle ayırt edilmez), küçük σ: tam çekirdek. */
+	function gauss(src, w, h, s) {
+		if (s < 2) return gaussTam(src, w, h, s);
+		const wi = Math.floor(Math.sqrt((12 * s * s) / 3 + 1));
+		const wl = wi % 2 ? wi : wi - 1;
+		const mm = Math.round((12 * s * s - 3 * wl * wl - 12 * wl - 9) / (-4 * wl - 4));
+		let a = Float32Array.from(src);
+		let b = new Float32Array(w * h);
+		for (let p = 0; p < 3; p++) {
+			const r = ((p < mm ? wl : wl + 2) - 1) / 2;
+			kutu(a, b, w, h, r, true);
+			kutu(b, a, w, h, r, false);
 		}
-	return b;
-}
-
-/** Yumuşak gürültü alanı (0..1): küçük rastgele ızgara, tuval büyütmesiyle pürüzsüzleşir. */
-function gurultu(w, h, gx, gy, R) {
-	const c = document.createElement('canvas');
-	c.width = gx;
-	c.height = gy;
-	const x = c.getContext('2d');
-	const d = x.createImageData(gx, gy);
-	for (let i = 0; i < gx * gy; i++) {
-		const v = Math.floor(R() * 255);
-		d.data[4 * i] = d.data[4 * i + 1] = d.data[4 * i + 2] = v;
-		d.data[4 * i + 3] = 255;
+		return a;
 	}
-	x.putImageData(d, 0, 0);
-	const b = document.createElement('canvas');
-	b.width = w;
-	b.height = h;
-	const y = b.getContext('2d', { willReadFrequently: true });
-	y.imageSmoothingEnabled = true;
-	y.imageSmoothingQuality = 'high';
-	y.drawImage(c, 0, 0, w, h);
-	const p = y.getImageData(0, 0, w, h).data;
-	const o = new Float32Array(w * h);
-	for (let i = 0; i < w * h; i++) o[i] = p[4 * i] / 255;
-	return o;
-}
-
-const blobUrl = (c) => new Promise((ok) => c.toBlob((b) => ok(b ? URL.createObjectURL(b) : c.toDataURL('image/png')), 'image/png'));
-function griTuval(w, h, f) {
-	const c = document.createElement('canvas');
-	c.width = w;
-	c.height = h;
-	const x = c.getContext('2d');
-	const d = x.createImageData(w, h);
-	for (let i = 0; i < w * h; i++) {
-		const v = Math.round(cl(f(i)) * 255);
-		d.data[4 * i] = d.data[4 * i + 1] = d.data[4 * i + 2] = v;
-		d.data[4 * i + 3] = 255;
+	/** Yumuşak gürültü alanı (0..1): küçük rastgele ızgara, tuval büyütmesiyle pürüzsüzleşir. */
+	function gurultu(tuval, w, h, gx, gy, R) {
+		const c = tuval(gx, gy);
+		const x = c.getContext('2d');
+		const d = x.createImageData(gx, gy);
+		for (let i = 0; i < gx * gy; i++) {
+			const v = Math.floor(R() * 255);
+			d.data[4 * i] = d.data[4 * i + 1] = d.data[4 * i + 2] = v;
+			d.data[4 * i + 3] = 255;
+		}
+		x.putImageData(d, 0, 0);
+		const b = tuval(w, h);
+		const y = b.getContext('2d', { willReadFrequently: true });
+		y.imageSmoothingEnabled = true;
+		y.imageSmoothingQuality = 'high';
+		y.drawImage(c, 0, 0, w, h);
+		const p = y.getImageData(0, 0, w, h).data;
+		const o = new Float32Array(w * h);
+		for (let i = 0; i < w * h; i++) o[i] = p[4 * i] / 255;
+		return o;
 	}
-	x.putImageData(d, 0, 0);
-	return c;
-}
-
-const CIZIM = new Map(); // görsel adresi → Promise<{ cizim, harita1, harita2 }>
-/**
- * Görselden kurşun kalem çizimi ve iki açılış haritası üretir (görsel başına bir kez; önden indirmede de çağrılır).
- * harita1: çizimin belirme sırası (koyu hat önce), harita2: rengin yayılma sırası (odaktan dışa, düzensiz kenar).
- * @param {string} url görselin adresi (blob: ya da düz)
- * @param {number[]} f0 odak (0..1)
- * @param {number} seed
- */
-export function cizimHazirla(url, f0 = [0.5, 0.5], seed = 1) {
-	if (CIZIM.has(url)) return CIZIM.get(url);
-	const p = (async () => {
-		const im = new Image();
-		im.src = url;
-		await im.decode();
-		const c = document.createElement('canvas');
-		c.width = SW;
-		c.height = SH;
+	function griTuval(tuval, w, h, f) {
+		const c = tuval(w, h);
+		const x = c.getContext('2d');
+		const d = x.createImageData(w, h);
+		for (let i = 0; i < w * h; i++) {
+			const v = Math.round(cl(f(i)) * 255);
+			d.data[4 * i] = d.data[4 * i + 1] = d.data[4 * i + 2] = v;
+			d.data[4 * i + 3] = 255;
+		}
+		x.putImageData(d, 0, 0);
+		return c;
+	}
+	/**
+	 * @param {CanvasImageSource} kaynak çözülmüş görsel (ImageBitmap)
+	 * @param {number[]} f0 odak (0..1) · @param {number} seed
+	 * @param {(w:number,h:number)=>any} tuval tuval üretici · @param {(c:any)=>Promise<Blob>} blobla PNG kodlayıcı
+	 * @returns {Promise<{cizim: Blob, harita1: Blob, harita2: Blob}>}
+	 */
+	async function uret(kaynak, f0, seed, tuval, blobla) {
+		const c = tuval(SW, SH);
 		const x = c.getContext('2d', { willReadFrequently: true });
 		x.imageSmoothingQuality = 'high';
-		x.drawImage(im, 0, 0, SW, SH); // görsel 4:3
+		x.drawImage(kaynak, 0, 0, SW, SH); // görsel 4:3
 		const d = x.getImageData(0, 0, SW, SH);
 		const px = d.data;
 		const N = SW * SH;
@@ -195,21 +227,19 @@ export function cizimHazirla(url, f0 = [0.5, 0.5], seed = 1) {
 		const bi = gauss(ters, SW, SH, 7);
 		const gt = gauss(L, SW, SH, 4);
 		const R = rng(seed);
-		const lif = gurultu(SW, SH, 220, 165, R); // kâğıt lifi
-		const leke = gurultu(SW, SH, 9, 7, R); // kâğıdın geniş tonu
+		const lif = gurultu(tuval, SW, SH, 220, 165, R); // kâğıt lifi
+		const leke = gurultu(tuval, SW, SH, 9, 7, R); // kâğıdın geniş tonu
 		const deger = new Float32Array(N); // 1 = kâğıt, 0 = koyu grafit
 		const TAU = 0.982;
 		const EPS = -0.006;
 		const PHI = 95;
-		for (let y = 0; y < SH; y++)
-			for (let xx = 0; xx < SW; xx++) {
-				const i = y * SW + xx;
-				const D = g1[i] - TAU * g2[i];
-				const e = D >= EPS ? 1 : 1 + Math.tanh(PHI * (D - EPS));
-				const dodge = Math.pow(cl(L[i] / Math.max(1 - bi[i], 0.02)), 2.4);
-				const ton = 1 - 0.28 * Math.pow(1 - gt[i], 1.5);
-				deger[i] = cl(Math.min(dodge, Math.pow(e, 1.3)) * ton);
-			}
+		for (let i = 0; i < N; i++) {
+			const D = g1[i] - TAU * g2[i];
+			const e = D >= EPS ? 1 : 1 + Math.tanh(PHI * (D - EPS));
+			const dodge = Math.pow(cl(L[i] / Math.max(1 - bi[i], 0.02)), 2.4);
+			const ton = 1 - 0.28 * Math.pow(1 - gt[i], 1.5);
+			deger[i] = cl(Math.min(dodge, Math.pow(e, 1.3)) * ton);
+		}
 		const kagit = [244, 236, 219];
 		const grafit = [52, 46, 42];
 		for (let y = 0; y < SH; y++)
@@ -221,24 +251,21 @@ export function cizimHazirla(url, f0 = [0.5, 0.5], seed = 1) {
 				const kenar = 1 - 0.1 * Math.pow(Math.hypot(kx * 1.15, ky * 1.3) * 1.6, 2.4);
 				const pk = (0.965 + 0.05 * (lif[i] - 0.5) + 0.04 * (leke[i] - 0.5)) * kenar;
 				const v = deger[i];
-				for (let c2 = 0; c2 < 3; c2++) px[4 * i + c2] = Math.round((kagit[c2] * pk) * v + grafit[c2] * (1 - v));
+				for (let c2 = 0; c2 < 3; c2++) px[4 * i + c2] = Math.round(kagit[c2] * pk * v + grafit[c2] * (1 - v));
 				px[4 * i + 3] = 255;
 			}
 		x.putImageData(d, 0, 0);
-		const cizim = await blobUrl(c);
-		// açılış haritaları (400×300 yeterli; maske yumuşak): açık = erken
-		const ince = gurultu(W, H, 80, 60, R);
-		const kaba = gurultu(W, H, 7, 5, R);
+		// açılış haritaları: açık = erken
+		const ince = gurultu(tuval, W, H, 80, 60, R);
+		const kaba = gurultu(tuval, W, H, 7, 5, R);
 		const a1 = new Float32Array(W * H);
 		const a2 = new Float32Array(W * H);
-		const fx = f0[0];
-		const fy = f0[1];
 		for (let y = 0; y < H; y++)
 			for (let xx = 0; xx < W; xx++) {
 				const i = y * W + xx;
 				const v = deger[y * 2 * SW + xx * 2];
-				a1[i] = 0.58 * v + 0.27 * ince[i] + 0.15 * ((xx / W) * 0.6 + (y / H) * 0.4);
-				a2[i] = 0.5 * kaba[i] + 0.5 * Math.min(1, Math.hypot(xx / W - fx, (y / H - fy) * 0.75) * 1.5);
+				a1[i] = 0.58 * v + 0.27 * ince[i] + 0.15 * ((xx / W) * 0.6 + (y / H) * 0.4); // koyu hat önce
+				a2[i] = 0.5 * kaba[i] + 0.5 * Math.min(1, Math.hypot(xx / W - f0[0], (y / H - f0[1]) * 0.75) * 1.5); // odaktan dışa
 			}
 		const nrm = (a) => {
 			let lo = Infinity;
@@ -247,8 +274,94 @@ export function cizimHazirla(url, f0 = [0.5, 0.5], seed = 1) {
 			const s = hi - lo || 1;
 			return (i) => 1 - (a[i] - lo) / s;
 		};
-		const [harita1, harita2] = await Promise.all([blobUrl(griTuval(W, H, nrm(a1))), blobUrl(griTuval(W, H, nrm(a2)))]);
+		const [cizim, harita1, harita2] = await Promise.all([blobla(c), blobla(griTuval(tuval, W, H, nrm(a1))), blobla(griTuval(tuval, W, H, nrm(a2)))]);
 		return { cizim, harita1, harita2 };
+	}
+	return { uret };
+}
+
+// işçi: çekirdeğin metni + mesaj işleyici (blob: adresinden). OffscreenCanvas 2B yoksa işçi "yok" der, ana iş parçacığı yapar.
+let ISCI;
+const BEKLEYEN = new Map();
+let SAYAC = 0;
+function isci() {
+	if (ISCI !== undefined) return ISCI;
+	ISCI = null;
+	try {
+		if (typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined' || typeof createImageBitmap === 'undefined') return ISCI;
+		const kod = `const C = (${cizimCekirdek.toString()})();
+self.onmessage = async (e) => {
+	const { id, blob, f0, seed } = e.data;
+	try {
+		if (!new OffscreenCanvas(1, 1).getContext('2d')) throw new Error('2d yok');
+		const bm = await createImageBitmap(blob);
+		const r = await C.uret(bm, f0, seed, (w, h) => new OffscreenCanvas(w, h), (c) => c.convertToBlob({ type: 'image/png' }));
+		self.postMessage({ id, r });
+	} catch (err) {
+		self.postMessage({ id, hata: String(err && err.message || err) });
+	}
+};`;
+		const w = new Worker(URL.createObjectURL(new Blob([kod], { type: 'text/javascript' })));
+		w.onmessage = (e) => {
+			const b = BEKLEYEN.get(e.data.id);
+			if (!b) return;
+			BEKLEYEN.delete(e.data.id);
+			if (e.data.r) b.ok(e.data.r);
+			else b.no(new Error(e.data.hata || 'işçi'));
+		};
+		w.onerror = () => {
+			for (const b of BEKLEYEN.values()) b.no(new Error('işçi çöktü'));
+			BEKLEYEN.clear();
+			ISCI = null;
+		};
+		ISCI = w;
+	} catch {
+		ISCI = null;
+	}
+	return ISCI;
+}
+async function anaIsParcacigindaUret(url, f0, seed) {
+	const im = new Image();
+	im.src = url;
+	await im.decode();
+	const tuval = (w, h) => {
+		const c = document.createElement('canvas');
+		c.width = w;
+		c.height = h;
+		return c;
+	};
+	const blobla = (c) => new Promise((ok, no) => c.toBlob((b) => (b ? ok(b) : no(new Error('png'))), 'image/png'));
+	return cizimCekirdek().uret(im, f0, seed, tuval, blobla);
+}
+
+const CIZIM = new Map(); // görsel adresi → Promise<{ cizim, harita1, harita2 }> (blob: adresleri)
+/**
+ * Görselden kurşun kalem çizimi ve iki açılış haritası üretir (görsel başına bir kez; önden indirmede de çağrılır).
+ * harita1: çizimin belirme sırası (koyu hat önce), harita2: rengin yayılma sırası (odaktan dışa, düzensiz kenar).
+ * @param {string} url görselin adresi (blob: ya da düz)
+ * @param {number[]} f0 odak (0..1)
+ * @param {number} seed
+ */
+export function cizimHazirla(url, f0 = [0.5, 0.5], seed = 1) {
+	if (CIZIM.has(url)) return CIZIM.get(url);
+	const p = (async () => {
+		let r = null;
+		const w = isci();
+		if (w) {
+			try {
+				const blob = await (await fetch(url)).blob();
+				const id = ++SAYAC;
+				r = await new Promise((ok, no) => {
+					BEKLEYEN.set(id, { ok, no });
+					w.postMessage({ id, blob, f0: [f0[0], f0[1]], seed });
+				});
+			} catch {
+				r = null; // işçi yapamadı: ana iş parçacığı
+			}
+		}
+		if (!r) r = await anaIsParcacigindaUret(url, f0, seed);
+		const u = (b) => URL.createObjectURL(b);
+		return { cizim: u(r.cizim), harita1: u(r.harita1), harita2: u(r.harita2) };
 	})();
 	CIZIM.set(url, p);
 	p.catch(() => CIZIM.delete(url));

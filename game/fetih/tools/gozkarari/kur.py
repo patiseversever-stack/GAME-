@@ -4,7 +4,7 @@
 #      olmayan YENİ madde (GK-311+) atlanır: ikinci liste parça parça gelebilir; ilk 310'un hepsi şart
 #   2. gorsel_test.py'yi çalıştırır (hata varsa durur); siluet maskesi çıkmayanlar bulanık kipe geçer
 #   3. görselleri dist/gk/ altına kopyalar, siluet maskelerini 320×240 gri PNG olarak yazar (GK-xxx.m.png)
-#   4. yakın çekim / ayrıntı kipleri için odak noktası bulur (en yoğun ayrıntılı bölge, kenarlardan uzak)
+#   4. karo / çizim kipleri için odak noktası bulur (en yoğun ayrıntılı bölge, kenarlardan uzak; çizimde rengin yayıldığı yer)
 #   5. src/data/gozkarari.js'i üretir (elle düzenlenmez)
 import sys, os, re, json, glob, shutil, subprocess, tempfile
 import numpy as np
@@ -71,7 +71,9 @@ CAT = {
     'Yazarlar ve şairler II': 'sanat', 'Sanatçılar ve besteciler II': 'sanat',
 }
 KONU = {k: i for i, k in enumerate(CAT)}
-MODE = {'bulanık': 'blur', 'yakın çekim': 'zoom', 'siluet': 'sil', 'ayrıntı': 'detail'}
+# Gösterim → kip. Kullanıcı kararı (16 Kasım 2026): yakın çekim ve ayrıntı görseli 5–6,5 kat büyütüp pikselletiyordu;
+# yerlerine büyütmesiz kipler: yakın çekim → karo karo, ayrıntı (tablolar) → çizimden fotoğrafa (src/quiz/gk_kipler.js).
+MODE = {'bulanık': 'blur', 'yakın çekim': 'karo', 'siluet': 'sil', 'ayrıntı': 'cizim', 'karo': 'karo', 'çizim': 'cizim'}
 # içerik uyarlaması yapılmış tablolar (üretim raporu): aslına birebir değil; soru tablonun adını/ressamını sorar, kompozisyon aynı
 UYARLAMA = {'GK-267', 'GK-268', 'GK-275', 'GK-279', 'GK-287', 'GK-292'}
 
@@ -122,7 +124,7 @@ for it in items:
     if im.size != (448, 336): im = im.resize((448, 336), Image.LANCZOS)
     w, h = im.size
     row = dict(id='gk-' + it['id'][3:], img=it['id'], cat=CAT[it['konu']], konu=KONU[it['konu']], diff=it['z'], mode=mode, q=it['q'], a=it['a'], b=it['b'])
-    if mode in ('zoom', 'detail'): row['f'] = ODAK_EL.get(it['id']) or focus(im)
+    if mode in ('karo', 'cizim'): row['f'] = ODAK_EL.get(it['id']) or focus(im)
     if it['konu'].startswith('Tablolar'):
         bx = paintbox(im)
         if bx: row['box'] = bx

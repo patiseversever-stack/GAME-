@@ -14,7 +14,7 @@ export const TYPES = { gozkarari };
 
 export const ORDER = [['gozkarari', 'Göz Kararı', 'Bulanık, yakın, siluet: görseli erken tanı']];
 
-// galeride önce vitrin: her kipten ikişer örnek (uzaklaşma, ayrıntıdan bütüne, siluet, netleşme); sonra konular sırayla döner
+// galeride önce vitrin: her kipten ikişer örnek (karo karo, çizimden fotoğrafa, siluet, netleşme); sonra konular sırayla döner
 const VITRIN = ['GK-013', 'GK-043', 'GK-263', 'GK-265', 'GK-021', 'GK-050', 'GK-001', 'GK-011'];
 const byKonu = new Map();
 for (const q of GK) {

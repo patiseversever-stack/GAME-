@@ -1,8 +1,7 @@
 // GÖZ KARARI: görselli soru (KARARLAR.md v1.6). Görsel düz konmaz: konusuna göre 14 desenli çerçeveden birine kesilir
 // (gk_cerceve.js). Gösterim kipleri:
-//   blur    bulanıktan netleşir            zoom    çok yakından uzaklaşır (odak: kurulumun bulduğu en ayrıntılı nokta)
-//   sil     siyah siluet (derlemede çıkarılmış maske), cevapta görsel açılır
-//   detail  tablolarda ayrıntıdan bütüne: bir ayrıntıdan başlar, hem uzaklaşır hem ortaya kayar
+//   blur    bulanıktan netleşir
+//   sil     siyah siluet (derlemede çıkarılmış maske); gölge önce bulanık renge, sonra net görsele dönüşür
 //   karo · cizim  büyütmesiz kipler (gk_kipler.js; galeride deneme-gkkip.js): bulanık zeminde karolar açılır · kurşun
 //                 kalem çiziminden renge. Siluet de sinematik: gölge önce bulanık renge, sonra net görsele dönüşür.
 // 4 şık, 20 sn, joker yok. Erken bilen çok puan: 100 → 40 (sürenin %85'inde erir; kartın üstünde canlı sayaç).
@@ -24,7 +23,7 @@ import { gorselUrl, gorselUrlHemen, paketli } from './gorsel_paket.js';
 import { YENI_KIP, KIP_SON, kipSvg, kipKur, siluetGecis, cizimHazirla } from './gk_kipler.js';
 
 export const GK_BASE = 'gk/';
-const MODE = { blur: 'Netleşiyor', zoom: 'Uzaklaşıyor', sil: 'Siluet', detail: 'Ayrıntıdan bütüne' };
+const MODE = { blur: 'Netleşiyor', sil: 'Siluet' };
 const SPAN = 0.85; // puan ve görsel sürenin bu payında açılır
 const BLUR_K = 0.65; // bulanık kip SPAN'ın bu payında tam netleşir (kullanıcı: fotoğrafta netleşme biraz daha çabuk)
 
@@ -249,14 +248,11 @@ export const gozkarari = {
 		const fNow = () => clamp((clock.now() - t0) / span, 0, 1);
 		// kipin o andaki görünümü: bulanıklık (px), ölçek, odak
 		const view = (f) => {
-			const e = ease(clamp(f, 0, 1));
 			if (q.mode === 'blur') {
 				// netleşme puandan hızlı: sürenin ~%55'inde (20 sn'de ~11 sn) tam net; puan yine bütün aralıkta erir
 				const eb = ease(clamp(f / BLUR_K, 0, 1));
 				return { b: 24 * Math.pow(1 - eb, 1.35), s: 1.04 - 0.04 * eb, x: 0.5, y: 0.5 };
 			}
-			if (q.mode === 'zoom') return { b: 0, s: Math.exp(Math.log(5) * (1 - e)), x: f0[0], y: f0[1] };
-			if (q.mode === 'detail') return { b: 0, s: Math.exp(Math.log(6.5) * (1 - e)), x: f0[0] + (0.5 - f0[0]) * e, y: f0[1] + (0.5 - f0[1]) * e };
 			return { b: 0, s: 1, x: 0.5, y: 0.5 };
 		};
 		const apply = (o) => {

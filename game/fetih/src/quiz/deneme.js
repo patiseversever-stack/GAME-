@@ -27,11 +27,9 @@ import * as y2 from './deneme-yeni2.js';
 import * as y3 from './deneme-yeni3.js';
 import * as y4 from './deneme-yeni4.js';
 import * as y5 from './deneme-yeni5.js';
-// Göz Kararı büyütmesiz kip denemesi (galerinin en üstü): kullanıcı seçecek
-import * as gkkip from './deneme-gkkip.js';
 export { bindApp } from './d_ortak.js';
 
-const TAZE_GROUPS = [gkkip, y1, y2, y3, y4, y5];
+const TAZE_GROUPS = [y1, y2, y3, y4, y5];
 const GROUPS = [harita, duello, akil, icat3b, icat, gk, ...TAZE_GROUPS];
 /** En yeni tipler (galeride en üstte, kırmızı YENİ rozetiyle): [tip, ad, tanıtım]. */
 export const TAZE_ORDER = TAZE_GROUPS.flatMap((g) => g.ORDER);
