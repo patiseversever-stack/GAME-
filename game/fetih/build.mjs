@@ -121,7 +121,7 @@ const bankaBlok = HTML_GOMULU ? '' : `<script type="application/octet-stream" id
 console.log(`soru paketi: ${BANKA.sayi} soru · ham ${kb(BANKA.ham)} · gzip ${kb(BANKA.gz)} · base64 ${kb(BANKA.b64.length)}`);
 
 // Göz Kararı görsel paketleri (src/quiz/gorsel_paket.js): yayın ortamında bir sürüm en çok 511 dosya alır; görseller
-// (dist/gk/GK-xxx.webp + siluet maskeleri .m.png) onarlı paketlere toplanır: <çıktı>/gkp/<k>.bin. Görsel numarası paketi
+// (dist/gk/GK-xxx.webp + siluet maskeleri .m.png) onarlı paketlere toplanır: <çıktı>/gkp/<k>.webp. Görsel numarası paketi
 // belirler (GK-001…010 → 0), yeni görsel eklenince eski paketlerin içeriği değişmez. Dizin sayfaya çalışmayan veri bloğu
 // olarak gömülür; oyun görseli bayt aralığıyla ister.
 const GKP_BOY = 10;
@@ -149,7 +149,7 @@ function gorselPaketle() {
 			bas += b.length;
 			ad++;
 		}
-		writeFileSync(join(dist, 'gkp', `${k}.bin`), Buffer.concat(parca));
+		writeFileSync(join(dist, 'gkp', `${k}.webp`), Buffer.concat(parca));
 		toplam += bas;
 	}
 	return { dizin, paket: paket.size, ad, toplam };

@@ -46,7 +46,7 @@ test('sunucu aralığı tanıyor: yalnız o görselin baytları', async () => {
 	assert.match(u, /^blob:/);
 	assert.deepEqual(await baytlari(bloblar[0]), [4, 5, 6, 7]);
 	assert.equal(bloblar[0].type, 'image/webp');
-	assert.deepEqual(log, ['gkp/0.bin bytes=3-6']);
+	assert.deepEqual(log, ['gkp/0.webp bytes=3-6']);
 	assert.equal(m.gorselUrlHemen('gk/', 'GK-002.webp'), u); // artık eşzamanlı
 	assert.equal(await m.gorselUrl('gk/', 'GK-002.webp'), u); // ikinci istek yok
 	assert.equal(log.length, 1);

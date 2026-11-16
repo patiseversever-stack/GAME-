@@ -1,11 +1,13 @@
 // GÖRSEL PAKETLERİ. Yayın ortamında bir sürüm en çok 511 dosya alır (16 Kasım 2026: 510 Göz Kararı görseli + maskeleri +
 // yapı görselleri 695 dosya tuttu, yayın reddedildi). Göz Kararı görselleri derlemede (build.mjs gorselPaketle) onarlı
-// paketlere toplanır: gkp/<k>.bin (GK-001…010 → 0.bin, siluet maskeleri kendi görselinin paketinde). Dizin sayfaya
+// paketlere toplanır: gkp/<k>.webp (GK-001…010 → 0.webp, siluet maskeleri kendi görselinin paketinde). Dizin sayfaya
 // çalışmayan bir veri bloğu olarak gömülür: <script type="application/json" id="fl-gkp">{"GK-001.webp":[k,baş,uzunluk]…}.
 //
 // Görsel tek tek bayt aralığıyla (Range) istenir: yalnız o görselin baytları iner. Sunucu aralığı tanımazsa (200) paketin
 // tamamı gelir; bellekte tutulur, aynı paketteki öteki görseller ondan kesilir. Dizin yoksa (geliştirme: dist/gk düz
 // dosyaları; fetih.esm.js) düz yol kullanılır: davranış eskisiyle aynı.
+// Uzantı .webp: yayın ortamı .bin sunmuyor; paketin ilk baytları zaten geçerli bir webp başlığı, oyun paketi resim
+// olarak açmaz, baytlarını keser.
 const PAKET_KLASORU = 'gkp/';
 
 let DIZIN; // undefined: bakılmadı · null: yok · nesne: ad → [paket, başlangıç, uzunluk]
@@ -31,13 +33,13 @@ const turu = (ad) => (ad.endsWith('.png') ? 'image/png' : 'image/webp');
 
 async function baytlar(k, bas, uz) {
 	if (TAM.has(k)) return (await TAM.get(k)).slice(bas, bas + uz);
-	const r = await fetch(`${PAKET_KLASORU}${k}.bin`, { headers: { Range: `bytes=${bas}-${bas + uz - 1}` } });
+	const r = await fetch(`${PAKET_KLASORU}${k}.webp`, { headers: { Range: `bytes=${bas}-${bas + uz - 1}` } });
 	if (!r.ok) throw new Error(`görsel paketi ${k}: ${r.status}`);
 	if (r.status === 206) {
 		const b = await r.arrayBuffer();
 		if (b.byteLength === uz) return b;
 		// beklenmedik aralık: güvenli yol, paketin tamamı
-		const t = fetch(`${PAKET_KLASORU}${k}.bin`).then((x) => (x.ok ? x.arrayBuffer() : Promise.reject(new Error(`görsel paketi ${k}: ${x.status}`))));
+		const t = fetch(`${PAKET_KLASORU}${k}.webp`).then((x) => (x.ok ? x.arrayBuffer() : Promise.reject(new Error(`görsel paketi ${k}: ${x.status}`))));
 		TAM.set(k, t);
 		return (await t).slice(bas, bas + uz);
 	}
