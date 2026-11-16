@@ -19,7 +19,9 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
        - eski webp'ler (`dist/gk/GK-*.webp`) aynı çıktı klasörüne kopyalanır;
        - `python3 -I tools/gozkarari/kur.py <çıktı>` çalıştırılır.
      - Sonra görseller tek tek denetlenir, testler koşulur, yayın yapılır.
-  2. **Bu akşam ya da sonra: 1000 yeni görsel.** Komut dosyaları `GORSEL-1000.md` (özet) ve `GORSEL-1000-K*.md` (ChatGPT'ye verilecek parçalar).
+  2. **Bu akşam ya da sonra: 1250 yeni görsel (tek dosya `GORSEL-1000-TEK.md`, 7 grup, grup başına ZIP `Gorsel-1000-K1…K7.zip`).**
+     - 1000 görsel + 250 ünlü kişi portresi (GK-1311–1560; kullanıcı kararı, KARARLAR.md: yalnız en geç 1955'te ölmüşler, telifsiz kaynak).
+     - Portreler gelince her biri kişiye benziyor mu tek tek bakılacak; benzemeyen maç dışı. Komut dosyaları `GORSEL-1000.md` (özet) ve `GORSEL-1000-K*.md` (ChatGPT'ye verilecek parçalar).
      - Göz Kararı: GK-511 ve sonrası.
      - Yapı görselleri (Kazı Kazan + Gölge Oyunu): YP-101 ve sonrası.
      - Kaynak listeler (soru, şık, bilgi): `tools/gozkarari/P9.md`… ve `tools/yapi/Y1.md`…

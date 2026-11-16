@@ -13,7 +13,7 @@ Bu dosya senin için: her görselin numarası, oyunda hangi soru tipine gideceğ
 | `GORSEL-1000-K4.md` | GK-1111 – GK-1310 | 200 | Göz Kararı | `Gorsel-1000-K4.zip` |
 | `GORSEL-1000-K5.md` | YP-101 – YP-300 | 200 | Kazı Kazan + Gölge Oyunu | `Gorsel-1000-K5.zip` |
 | `GORSEL-1000-K6.md` | GK-1311 – GK-1410 | 100 | Göz Kararı (ünlü kişi portreleri) | `Gorsel-1000-K6.zip` |
-| `GORSEL-1000-K7.md` | GK-1411 – GK-1560 | 150 | Göz Kararı (ünlü kişi portreleri) | hazırlanıyor |
+| `GORSEL-1000-K7.md` | GK-1411 – GK-1560 | 150 | Göz Kararı (ünlü kişi portreleri) | `Gorsel-1000-K7.zip` |
 
 **Kullanım:** ChatGPT'de yeni bir sohbet aç, `GORSEL-1000-TEK.md` dosyasını ekle ve "Talimatı uygula, başla" yaz. Durursa "devam" yaz. Sohbet dolarsa yeni sohbet aç, aynı dosyayı ver ve kaldığın numarayı yaz ("GK-731'den başla"). Gelen her ZIP'i bana gönder.
 
@@ -1147,6 +1147,186 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-1408 | 2 · bulanık | Paul Nadar'ın 1886'da çektiği, omuzlarına dökülen beyaz saçlı piyanist ve besteci kim? | **Franz Liszt** |
 | GK-1409 | 3 · bulanık | Franz Hanfstaengl'in 1871'de çektiği, kadife bereli ve çene sakallı Alman besteci kim? | **Richard Wagner** |
 | GK-1410 | 3 · bulanık | C. Brasch'ın 1889 dolaylarında Berlin'de çektiği bu uzun ak sakallı besteci hangisi? | **Johannes Brahms** |
+
+### Devlet adamları
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1411 | 1 · bulanık | Vatikan Müzeleri'ndeki Prima Porta heykelinde zırhlı ve sağ kolu havada görülen Romalı kim? | **Augustus** |
+| GK-1412 | 1 · bulanık | Kapıdağlı Konstantin'in 1803'te saray için yaptığı bu portrede oturan sakallı padişah hangisi? | **III. Selim** |
+| GK-1413 | 2 · bulanık | Winterhalter'in 1855'te resmettiği, sivri bıyıklı ve keçi sakallı Fransız imparator kimdir? | **III. Napolyon** |
+| GK-1414 | 2 · bulanık | Rembrandt Peale'in 1800'de kürk yakalı paltoyla resmettiği bu devlet adamı ABD'nin kaçıncı başkanıydı? | **Üçüncü** |
+| GK-1415 | 1 · bulanık | 1839 tarihli bu Schlesinger portresinde fesli ve kapkara sakallı görülen padişah kimdir? | **II. Mahmud** |
+| GK-1416 | 3 · bulanık | Van Dyck'in aynı yüzü üç ayrı açıdan resmettiği bu tuvaldeki İngiliz kralının adı ne? | **I. Charles** |
+| GK-1417 | 1 · bulanık | Borovikovski'nin 1794'te, parkta köpeğiyle yürürken resmettiği tablo hangi Rus imparatoriçesini gösterir? | **Büyük Katerina** |
+| GK-1418 | 2 · bulanık | Pascal Sébah'ın 1870'lerde İstanbul'da fotoğrafladığı fesli, kır sakallı sadrazam kim? | **Mithat Paşa** |
+| GK-1419 | 3 · bulanık | Tiziano'nun 1548'de kara giysiler içinde, oturur hâlde resmettiği Habsburg imparatoru hangisidir? | **Şarlken** |
+| GK-1420 | 2 · bulanık | Anton Graff'ın 1781'de resmettiği, iri mavi gözlü bu yaşlı Prusya kralının adı ne? | **Büyük Friedrich** |
+| GK-1421 | 1 · bulanık | İskoç ressam David Wilkie'nin 1840'ta İstanbul'da resmettiği genç padişah hangisi? | **Abdülmecid** |
+| GK-1422 | 1 · bulanık | José Gil de Castro'nun 1825'te resmettiği görseldeki generalin adı hangi ülkeye verildi? | **Bolivya** |
+| GK-1423 | 3 · bulanık | Wilkie'nin 1841'de İskenderiye'de resmettiği, fesli ve ak sakallı Osmanlı paşası kim? | **Kavalalı Mehmed Ali Paşa** |
+| GK-1424 | 2 · bulanık | Callet'nin 1779'da zambak işlemeli mavi kadife pelerinle resmettiği genç Fransız kralı hangisi? | **XVI. Louis** |
+| GK-1425 | 2 · bulanık | David von Krafft'ın resmettiği, perukasız ve sade asker ceketli genç İsveç kralı kimdir? | **Demirbaş Şarl** |
+| GK-1426 | 3 · bulanık | 1840'larda basılan bu taş baskıda süslü fesi ve nişanlarıyla görülen Osmanlı devlet adamının adı ne? | **Mustafa Reşid Paşa** |
+| GK-1427 | 1 · bulanık | Pach Brothers stüdyosunun 1904'te çektiği, kelebek gözlüklü ve gür bıyıklı ABD başkanı kim? | **Theodore Roosevelt** |
+| GK-1428 | 3 · bulanık | Cornelius Jabez Hughes'un 1878'de çektiği, çenesinde küçük bir sakal olan İngiliz başbakanı hangisi? | **Benjamin Disraeli** |
+| GK-1429 | 3 · bulanık | 1880'lerde İstanbul'da çekilen bu fotoğraftaki ak sakallı Osmanlı hukukçusu ve tarihçisi kimdir? | **Ahmet Cevdet Paşa** |
+| GK-1430 | 1 · bulanık | Saray fotoğrafçısı T. H. Voigt'un 1902'de çektiği, bıyıkları yukarı kıvrık Alman imparatoru kim? | **II. Wilhelm** |
+| GK-1431 | 3 · bulanık | İtalyan ressam Edoardo Chiossone'nin 1888'de çizdiği resmî portre hangi Japon imparatorunu gösterir? | **İmparator Meiji** |
+| GK-1432 | 2 · bulanık | 1910 dolaylarında çekilen bu fotoğraftaki ak favorili, yaşlı Avusturya imparatoru kimdir? | **Franz Joseph** |
+| GK-1433 | 3 · bulanık | Abdullah Biraderler'in 1869 dolaylarında çektiği görseldeki şehzade, hangi adla tahta çıktı? | **V. Murad** |
+| GK-1434 | 2 · bulanık | Valentin Serov'un 1900'de sade bir askerî ceketle resmettiği görseldeki çar hangi yıl tahttan çekildi? | **1917** |
+| GK-1435 | 1 · bulanık | Philadelphialı fotoğrafçı Elias Goldensky'nin 1933'te çektiği portredeki ABD başkanı kim? | **Franklin D. Roosevelt** |
+
+### Komutanlar ve kâşifler
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1436 | 1 · bulanık | Goya'nın 1812–1814 yıllarında resmettiği, kırmızı üniformalı ve nişanlı İngiliz komutan kim? | **Wellington Dükü** |
+| GK-1437 | 1 · bulanık | Lemuel Francis Abbott'un resmettiği, boş sağ kolu ceketine iğnelenmiş İngiliz amiral kimdir? | **Horatio Nelson** |
+| GK-1438 | 1 · bulanık | Abdullah Biraderler'in 1895 dolaylarında çektiği ak sakallı mareşal hangi kentin savunmasıyla anılır? | **Plevne** |
+| GK-1439 | 2 · bulanık | Roman Volkov'un 1813'te resmettiği, beyaz saçlı ve iri yapılı Rus mareşali kimdir? | **Mihail Kutuzov** |
+| GK-1440 | 3 · bulanık | Viyanalı saray ressamı Kreutzinger'in 1799'da resmettiği, alnında perçemi olan Rus komutan kim? | **Aleksandr Suvorov** |
+| GK-1441 | 3 · bulanık | Roger Fenton'ın 1855'te Kırım'da çektiği, kılıcını dizlerine dayamış Osmanlı serdarı kimdir? | **Ömer Paşa** |
+| GK-1442 | 3 · bulanık | Mathew Brady'nin 1864'te bir ordugâhta, ağaca yaslanmış hâlde çektiği Amerikalı general kim? | **Ulysses S. Grant** |
+| GK-1443 | 3 · bulanık | Kolları kavuşturulmuş, kolunda yas bandıyla 1865'te Brady'ye poz veren Amerikalı general hangisi? | **William T. Sherman** |
+| GK-1444 | 2 · bulanık | Gustave Le Gray'in 1860'ta çektiği görseldeki uzun saçlı, gür sakallı İtalyan önderin adı ne? | **Giuseppe Garibaldi** |
+| GK-1445 | 3 · bulanık | 1912 dolaylarında İstanbul'da çekilen bu fotoğraftaki ak sakallı Osmanlı mareşali kimdir? | **Gazi Ahmed Muhtar Paşa** |
+| GK-1446 | 3 · bulanık | 1905 dolaylarında çekilen fotoğrafta görülen, kır sakallı ve madalyalı Japon amiralin adı ne? | **Togo Heihaçiro** |
+| GK-1447 | 1 · bulanık | 1915'te çekilip Harp Mecmuası'nda yayımlanan bu fotoğraftaki bıyıklı Türk askeri kim? | **Seyit Onbaşı** |
+| GK-1448 | 3 · bulanık | 1918'de çekilen bu fotoğrafta meşe yaprağı işlemeli kepisiyle görülen Fransız komutanın adı nedir? | **Ferdinand Foch** |
+| GK-1449 | 2 · bulanık | Nicola Perscheid'in 1917'de fotoğrafladığı, boynunda nişan taşıyan genç Alman pilot kimdir? | **Manfred von Richthofen** |
+| GK-1450 | 1 · bulanık | 1920 dolaylarında çekilen bu fotoğrafta kalpaklı ve kalın bıyıklı görülen Türk komutanın adı ne? | **Kâzım Karabekir** |
+| GK-1451 | 1 · bulanık | 1922 dolaylarında çekilmiş bu fotoğraf, kalpağıyla hangi Türk komutanını gösteriyor? | **Fevzi Çakmak** |
+| GK-1452 | 2 · bulanık | Marcus Gheeraerts'ın 1591'de elini bir küreye dayamış hâlde resmettiği İngiliz denizci kim? | **Francis Drake** |
+| GK-1453 | 2 · bulanık | Thomas Annan'ın 1864'te fotoğrafladığı, masasında kasketi duran İskoç kâşif hangisi? | **David Livingstone** |
+| GK-1454 | 3 · bulanık | Frederic Leighton'ın resmettiği, yanağında derin bir yara izi olan İngiliz kâşif kimdir? | **Richard Burton** |
+| GK-1455 | 2 · bulanık | Londralı fotoğrafçı Henry Van der Weyde'nin kürk giysiler içinde çektiği bu kâşifin adı ne? | **Fridtjof Nansen** |
+| GK-1456 | 2 · bulanık | 1909'da kürk başlıkla fotoğraflanan görseldeki Amerikalı kâşif, nereye ilk ulaştığını öne sürdü? | **Kuzey Kutbu** |
+| GK-1457 | 1 · bulanık | 1912 tarihli kitabının başında yer alan bu fotoğrafta kalın kürk giysili kutup kâşifi kim? | **Roald Amundsen** |
+| GK-1458 | 1 · bulanık | Herbert Ponting'in 1911'de Antarktika'daki kulübede, günlüğünü yazarken çektiği kâşif kim? | **Robert Falcon Scott** |
+| GK-1459 | 2 · bulanık | George Charles Beresford'ın 1909 dolaylarında çektiği bu İrlanda doğumlu kutup kâşifi kimdir? | **Ernest Shackleton** |
+| GK-1460 | 1 · bulanık | 1928'de deri pilot başlığıyla fotoğraflanan görseldeki Amerikalı havacı, 1937'de hangi okyanusta kayboldu? | **Pasifik Okyanusu** |
+
+### Bilim insanları II
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1461 | 1 · bulanık | Louvre'daki Roma dönemi mermer kopyada görülen basık burunlu Atinalı filozof kim? | **Sokrates** |
+| GK-1462 | 2 · bulanık | Christoph Bernhard Francke'nin resmettiği, omuzlarını aşan iri peruklu Alman bilgin hangisi? | **Gottfried Leibniz** |
+| GK-1463 | 3 · bulanık | Skokloster Şatosu'ndaki 1596 tarihli portrede altın zincir takan Danimarkalı gökbilimcinin adı nedir? | **Tycho Brahe** |
+| GK-1464 | 1 · bulanık | Roma'daki Capitolini Müzeleri'nde, Silanion'un eserinden kopyalanan büst hangi filozofu gösterir? | **Platon** |
+| GK-1465 | 2 · bulanık | Greenock'lu fotoğrafçı Fergus'un 1870'lerde çektiği sakallı İskoç fizikçi hangisidir? | **James Clerk Maxwell** |
+| GK-1466 | 3 · bulanık | 1890'ların başında Bonn'da fotoğraflanan görseldeki Alman fizikçinin adı hangi birime verildi? | **hertz** |
+| GK-1467 | 1 · bulanık | Frans Hals'ın eserinden kopyalanan, Louvre'daki beyaz yakalı portre hangi Fransız filozofa ait? | **René Descartes** |
+| GK-1468 | 2 · bulanık | Roslin'in 1775'te resmettiği, pudralı peruklu yaşlı İsveçli doğa bilimcinin adı ne? | **Carl Linnaeus** |
+| GK-1469 | 3 · bulanık | Jan Verkolje'nin yazı masası başında oturur hâlde resmettiği uzun peruklu Delftli bilgin kim? | **Antonie van Leeuwenhoek** |
+| GK-1470 | 1 · bulanık | Roma'daki Palazzo Altemps'te sergilenen, kısa sakallı antik Yunan filozofu kim? | **Aristoteles** |
+| GK-1471 | 2 · bulanık | Yarım yüzyıl Glasgow'da ders veren görseldeki fizikçinin soyluluk unvanı hangi birime ad oldu? | **kelvin** |
+| GK-1472 | 3 · bulanık | Henri Manuel'in Paris stüdyosunda fotoğrafladığı kelebek gözlüklü Fransız matematikçi kim? | **Henri Poincaré** |
+| GK-1473 | 1 · bulanık | Johann Gottlieb Becker'in 1768'de resmettiği pudralı peruklu Alman filozof hangisi? | **Immanuel Kant** |
+| GK-1474 | 2 · bulanık | Johann Schäfer'in 1859'da Frankfurt'ta çektiği, yanlardaki ak saçları kabarık Alman filozof kim? | **Arthur Schopenhauer** |
+| GK-1475 | 3 · bulanık | 1900 dolaylarında fotoğraflanan gür sakallı İspanyol hekim ve bilim insanının adı ne? | **Ramón y Cajal** |
+| GK-1476 | 1 · bulanık | Jakob Schlesinger'in 1831'de, ölümünden kısa süre önce resmettiği Alman filozofun adı ne? | **Georg W. F. Hegel** |
+| GK-1477 | 2 · bulanık | Paşa üniformasıyla fotoğraflanan görseldeki Osmanlı kadın doğum uzmanı kimdir? | **Besim Ömer Akalın** |
+| GK-1478 | 3 · bulanık | 1912'de Göttingen profesörleri kartpostalı için çekilen fotoğraftaki şapkalı matematikçi kim? | **David Hilbert** |
+| GK-1479 | 1 · bulanık | Gustav Schultze'nin 1882'de Naumburg'da fotoğrafladığı kocaman bıyıklı Alman filozof kimdir? | **Friedrich Nietzsche** |
+| GK-1480 | 2 · bulanık | Hangi Hintli matematikçi, 1910'larda çekilen ve sonradan çok ünlenen bu fotoğrafta görülüyor? | **Srinivasa Ramanujan** |
+| GK-1481 | 3 · bulanık | 1890'larda fotoğraflanan, ak favorili ve sakalsız çeneli İngiliz cerrah kimdir? | **Joseph Lister** |
+| GK-1482 | 1 · bulanık | Dujardin'in 1906 dolaylarında Paris'te fotoğrafladığı sakallı Fransız fizikçi kimdir? | **Pierre Curie** |
+| GK-1483 | 2 · bulanık | Wolfenbüttel'deki 1665 dolaylarına tarihlenen portrede görülen Hollandalı filozof hangisi? | **Baruch Spinoza** |
+| GK-1484 | 3 · bulanık | 1920'lerin sonunda çekilen fotoğraftaki Türk farmakoloji profesörünün adı ne? | **Akil Muhtar Özden** |
+| GK-1485 | 2 · bulanık | 1923 dolaylarında fotoğraflanan, saçı yandan ayrılmış genç Kanadalı hekimin adı nedir? | **Frederick Banting** |
+
+### Mucitler ve öncüler
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1486 | 1 · bulanık | Nadar'ın 1888'de Paris'te fotoğrafladığı kısa sakallı Fransız mühendis kimdir? | **Gustave Eiffel** |
+| GK-1487 | 2 · bulanık | 1883'te, yirmili yaşlarındayken fotoğraflanan kalın bıyıklı Alman mühendis hangisi? | **Rudolf Diesel** |
+| GK-1488 | 3 · bulanık | Gür sakalı ve papyonuyla 1890'larda fotoğraflanan Alman motor mühendisinin adı ne? | **Gottlieb Daimler** |
+| GK-1489 | 1 · bulanık | 1895 dolaylarında yan yana poz veren, ikisi de bıyıklı Fransız kardeşler kimlerdir? | **Lumière kardeşler** |
+| GK-1490 | 2 · bulanık | Amerikalı Charles Meade'in 1848'de fotoğrafladığı Fransız ressam ve mucit hangisi? | **Louis Daguerre** |
+| GK-1491 | 3 · bulanık | Hangi Fransız sihirbaz ve film öncüsü, 1890 dolaylarında sivri sakalıyla bu pozu verdi? | **Georges Méliès** |
+| GK-1492 | 1 · bulanık | 1905 dolaylarında fotoğraflanan, ortadan ayrılmış kıvırcık saçlı Amerikalı sihirbaz kim? | **Harry Houdini** |
+| GK-1493 | 2 · bulanık | 1910'larda fotoğraflanan, gür bıyıklı Fransız baron ve eğitimcinin adı ne? | **Pierre de Coubertin** |
+| GK-1494 | 3 · bulanık | Hangi Fransız havacı, 1909'da çekilen bu basın fotoğrafında iri bıyığıyla görülüyor? | **Louis Blériot** |
+| GK-1495 | 1 · bulanık | Pau Audouard'ın 1878'de, mezuniyet gününde fotoğrafladığı Katalan mimar kimdir? | **Antoni Gaudí** |
+| GK-1496 | 2 · bulanık | 1860'ta fotoğraflanan, ak saçlı ve sert bakışlı yaşlı İngiliz matematikçinin adı nedir? | **Charles Babbage** |
+| GK-1497 | 3 · bulanık | 1902 dolaylarında Paris'te fotoğraflanan, hasır şapkalı ve yüksek yakalı havacı kimdir? | **Santos-Dumont** |
+| GK-1498 | 1 · bulanık | Fes ve uzun ceketle fotoğraflanan bu iri yapılı Osmanlı pehlivanı kimdir? | **Koca Yusuf** |
+| GK-1499 | 2 · bulanık | Kalpaklı görseldeki Osmanlı havacısının adı, 1934'te hangi ilçemize verildi? | **Fethiye** |
+| GK-1500 | 3 · bulanık | Kıspetiyle fotoğraflanan görseldeki, Balkanlardan göçmüş Osmanlı başpehlivanı kim? | **Kurtdereli Mehmet Pehlivan** |
+| GK-1501 | 1 · bulanık | 1919 dolaylarında fotoğraflanan, zayıf yüzlü Amerikalı otomobil sanayicisi hangisi? | **Henry Ford** |
+| GK-1502 | 2 · bulanık | 1913 dolaylarında oturur hâlde fotoğraflanan ak sakallı İskoç asıllı sanayicinin adı ne? | **Andrew Carnegie** |
+| GK-1503 | 3 · bulanık | 1900 dolaylarında fotoğraflanan, iri pala bıyıklı Amerikalı mucit ve sanayici kim? | **George Westinghouse** |
+| GK-1504 | 1 · bulanık | 1920 dolaylarında fotoğraflanan, beyaz bıyıklı yaşlı Alman otomobil öncüsü hangisidir? | **Carl Benz** |
+| GK-1505 | 2 · bulanık | Robert Howlett'ın 1857'de dev zincirlerin önünde fotoğrafladığı İngiliz mühendis kim? | **Isambard Kingdom Brunel** |
+| GK-1506 | 3 · bulanık | 1910'larda fesiyle fotoğraflanan, Birinci Ulusal Mimarlık akımının öncüsü Türk mimar kim? | **Mimar Kemaleddin** |
+| GK-1507 | 1 · bulanık | Beyaz kaptan kasketi ve gür beyaz bıyığıyla fotoğraflanan Alman kont kimdir? | **Ferdinand von Zeppelin** |
+| GK-1508 | 2 · bulanık | Fesli görseldeki genç Osmanlı spor öncüsü, hangi futbol kulübünün kurucusudur? | **Galatasaray** |
+| GK-1509 | 3 · bulanık | 1890'larda fotoğraflanan, sakallı Alman mühendis ve uçuş öncüsünün adı ne? | **Otto Lilienthal** |
+| GK-1510 | 1 · bulanık | Yaşlılığında fotoğraflanan, zayıf yüzlü ve kel Amerikalı petrol iş insanı kim? | **John D. Rockefeller** |
+
+### Yazarlar ve şairler II
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1511 | 1 · bulanık | British Museum'da duran, gözleri kapalı bu antik büst hangi Yunan ozanını canlandırır? | **Homeros** |
+| GK-1512 | 1 · bulanık | Pierre Mignard'ın fırçasından çıkan, uzun kıvırcık saçlı ve ince bıyıklı Fransız oyun yazarı kim? | **Molière** |
+| GK-1513 | 1 · bulanık | Largillière'in 1718'de, 24 yaşındaki hâliyle resmettiği alaycı gülümsemeli Fransız yazar kim? | **Voltaire** |
+| GK-1514 | 2 · bulanık | Allan Ramsay'in 1766'da kürk kalpak ve Ermeni kaftanıyla resmettiği düşünür kimdir? | **Jean-Jacques Rousseau** |
+| GK-1515 | 2 · bulanık | Thomas Phillips'in Arnavut kıyafetiyle resmettiği, başı sarılı İngiliz romantik şair kimdir? | **Lord Byron** |
+| GK-1516 | 3 · bulanık | Félix Nadar'ın objektifinden, açık alınlı ve sarkık kalın bıyıklı Fransız romancı hangisi? | **Gustave Flaubert** |
+| GK-1517 | 3 · bulanık | Nadar'ın 1888'de çektiği, gür bıyıklı ve dalgalı saçlı Fransız öykücünün adı nedir? | **Guy de Maupassant** |
+| GK-1518 | 2 · bulanık | Étienne Carjat'nın 1862 dolaylarında çektiği, delici bakışlı Fransız şair kimdir? | **Charles Baudelaire** |
+| GK-1519 | 2 · bulanık | Henüz 17 yaşındayken Carjat'ya poz veren, dağınık saçlı ve dalgın bakışlı şair hangisi? | **Arthur Rimbaud** |
+| GK-1520 | 2 · bulanık | Gustav Borgen'in 1898 dolaylarında çektiği, gür ak favorili ünlü oyun yazarı kim? | **Henrik Ibsen** |
+| GK-1521 | 1 · bulanık | Osip Braz'ın 1898'de resmettiği, burun gözlüklü ve kısa sakallı Rus öykücü kimdir? | **Anton Çehov** |
+| GK-1522 | 1 · bulanık | Beresford'un 1902'de profilden çektiği 20 yaşındaki genç kadın, sonradan hangi yazar oldu? | **Virginia Woolf** |
+| GK-1523 | 3 · bulanık | Philip Burne-Jones'un 1899'da yazı masasında resmettiği bıyıklı, gözlüklü yazar kim? | **Rudyard Kipling** |
+| GK-1524 | 1 · bulanık | Herbert Rose Barraud'nun 1893'te çektiği, gür pala bıyıklı İskoç yazarın adı ne? | **Arthur Conan Doyle** |
+| GK-1525 | 1 · bulanık | Thora Hallager'ın 1869'da fotoğrafladığı, uzun yüzlü ve iri burunlu masalcı kimdir? | **Hans Christian Andersen** |
+| GK-1526 | 3 · bulanık | 1847 dolaylarında çekilen dagerreyotipte, boynunda kadife kurdele olan 16 yaşındaki kız kimdir? | **Emily Dickinson** |
+| GK-1527 | 3 · bulanık | Thomas Eakins'in 1887'de resmettiği, gür ak sakallı ve neşeli bakışlı Amerikalı şair kim? | **Walt Whitman** |
+| GK-1528 | 3 · bulanık | Joseph Eaton'ın 1870'te resmettiği görseldeki yazarın en ünlü romanı hangisidir? | **Moby Dick** |
+| GK-1529 | 1 · bulanık | 1910'larda çekilen bu fotoğraftaki gür bıyıklı düşünür ve şair hangi kentte doğdu? | **Diyarbakır** |
+| GK-1530 | 1 · bulanık | Fotoğraftaki bıyıklı genç yazarın "Yeni Lisan" makalesi hangi dergide yayımlandı? | **Genç Kalemler** |
+| GK-1531 | 2 · bulanık | Servet-i Fünun yıllarından kalma fotoğraftaki fesli, bıyıklı romancı hangisidir? | **Halit Ziya Uşaklıgil** |
+| GK-1532 | 2 · bulanık | Mizahi romanlarıyla tanınan, 1910 dolaylarında çekilmiş fotoğraftaki fesli yazar kim? | **Hüseyin Rahmi Gürpınar** |
+| GK-1533 | 2 · bulanık | 1920'lerde çekilen portrede hüzünlü bakışlarıyla görülen sembolist şairimiz kimdir? | **Ahmet Haşim** |
+| GK-1534 | 3 · bulanık | Eski bir İstanbul fotoğrafında görülen, iri bıyıklı ve fesli Tanzimat şairi hangisi? | **Abdülhak Hâmid Tarhan** |
+| GK-1535 | 3 · bulanık | 1890'larda çekilen fotoğrafta sakallı ve fesli görülen Tanzimat edebiyatçısı hangisidir? | **Recaizade Mahmut Ekrem** |
+
+### Sanatçılar ve besteciler II
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1536 | 1 · bulanık | Ottavio Leoni'nin tebeşirle çizdiği, siyah kıvırcık saçlı ve keskin bakışlı İtalyan ressam kim? | **Caravaggio** |
+| GK-1537 | 2 · bulanık | Nadar'ın 1899'da fotoğrafladığı görseldeki ressamın nilüferli bahçesi hangi köydedir? | **Giverny** |
+| GK-1538 | 3 · bulanık | Arkadaşı Bazille'in 1867'de sandalyede dizlerini kucaklarken resmettiği ressam kimdir? | **Pierre-Auguste Renoir** |
+| GK-1539 | 2 · bulanık | Melon şapkalı otoportresinde yan gözle bakan bu ressamın defalarca resmettiği dağ hangisi? | **Sainte-Victoire Dağı** |
+| GK-1540 | 3 · bulanık | Daha 21 yaşındayken kendini resmeden bu Fransız ressam en çok hangi konuyu resmetti? | **Balerinler** |
+| GK-1541 | 2 · bulanık | Fantin-Latour'un 1867'de silindir şapka ve bastonla resmettiği şık Parisli ressam kim? | **Édouard Manet** |
+| GK-1542 | 1 · bulanık | Moriz Nähr'in 1911'de bahçede, kucağında kediyle fotoğrafladığı Viyanalı ressam hangisi? | **Gustav Klimt** |
+| GK-1543 | 1 · bulanık | Paul Sescau'nun objektifine poz veren, burun gözlüklü ve sakallı bu Fransız ressam kim? | **Henri de Toulouse-Lautrec** |
+| GK-1544 | 3 · bulanık | Görseldeki ressamın "Dans" adlı ünlü tablosunda kaç figür el ele dans eder? | **5** |
+| GK-1545 | 2 · bulanık | Oslo'daki 1895 tarihli otoportresinde mavi bir dumanın içinden bakan ressam hangisi? | **Edvard Munch** |
+| GK-1546 | 1 · bulanık | Uzun saplı sazını kucağında tutan, fesli Osmanlı icracısı ve bestecisi kimdir? | **Tanburi Cemil Bey** |
+| GK-1547 | 3 · bulanık | 1880 dolaylarında İstanbul'da çekilen fotoğraftaki sakallı şarkı bestecisi kimdir? | **Hacı Arif Bey** |
+| GK-1548 | 3 · bulanık | 1890 dolaylarında çekilen bu fotoğraftaki fesli, sakallı Osmanlı ressamı hangisidir? | **Şeker Ahmed Paşa** |
+| GK-1549 | 2 · bulanık | Askerî okullarda yıllarca resim hocalığı yapan, fotoğraftaki ak sakallı ressam kimdir? | **Hoca Ali Rıza** |
+| GK-1550 | 1 · bulanık | Thomas Hudson'ın 1756'da resmettiği, büyük peruklu ve iri yapılı Barok besteci hangisidir? | **Georg Friedrich Händel** |
+| GK-1551 | 1 · bulanık | Thomas Hardy'nin 1791'de Londra'da resmettiği, beyaz peruklu Avusturyalı besteci kim? | **Joseph Haydn** |
+| GK-1552 | 1 · bulanık | Fritz Luckhardt'ın 1876'da çektiği fotoğraftaki Viyanalı besteci kimdir? | **Johann Strauss II** |
+| GK-1553 | 1 · bulanık | Carjat'nın 1865'te Paris'te çektiği, tombul yüzlü ve peruklu İtalyan besteci hangisi? | **Gioachino Rossini** |
+| GK-1554 | 2 · bulanık | 1875'te çekilen fotoğraftaki kıvırcık saçlı, sakallı Fransız opera bestecisinin adı ne? | **Georges Bizet** |
+| GK-1555 | 1 · bulanık | Nadar'ın 1908'de çektiği, geniş alnı ve kısa sakalıyla dikkat çeken Fransız besteci kim? | **Claude Debussy** |
+| GK-1556 | 2 · bulanık | Elliott & Fry stüdyosunun 1888'de çektiği fotoğraftaki Norveçli besteci hangisi? | **Edvard Grieg** |
+| GK-1557 | 3 · bulanık | Pierre Petit'nin 1863'te çektiği, kabarık saçlı ve kartal burunlu Fransız besteci hangisi? | **Hector Berlioz** |
+| GK-1558 | 2 · bulanık | James Warren Childe'ın 1839'da suluboyayla resmettiği genç Alman bestecinin adı nedir? | **Felix Mendelssohn** |
+| GK-1559 | 3 · bulanık | İlya Repin'in 1881'de, ölümünden günler önce resmettiği dağınık saçlı Rus besteci kim? | **Modest Musorgski** |
+| GK-1560 | 3 · bulanık | 1907'de Viyana'da çekilen fotoğraftaki gözlüklü, tıraşlı besteci ve orkestra şefinin adı ne? | **Gustav Mahler** |
 
 ## Yapı görselleri
 
