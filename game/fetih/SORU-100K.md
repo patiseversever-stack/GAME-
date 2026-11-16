@@ -8,7 +8,8 @@
   - Oyun, galeri ve defter yayında. Soru paketi (`fl-banka`, 1.160.316 bayt) yayında birebir doğrulandı.
 - Aşama 1 pilotu kullanıcı onayından geçti.
 - **Aşama 2 başladı.**
-  - Aile 1 (Türkiye derin): altyapı hazır (`tools/veri/aile/`).
+  - Aile 1 (Türkiye derin) oyunda: 70 hangi ilde/hangi nehirde + 16 haritada bul. Bağımsız denetim 92 soruda 1 hata
+    (düzeltildi); tam test 42/42. Banka 20.901.
   - İlk ölçüm: seçilen 52 dağ/gölün 20'si bankada zaten var; ünlüler önceki büyütmelerde girmiş.
   - Tahmin 5–8 bin gerçekçi değil; bu aile birkaç yüz soru verir (antik kent, kale, baraj eklenince).
 - Anlatım çeşitliliği: ilçe (108 ipucu, 10 kalıp) ve doğum yılı (259 tanım, 6 kalıp) yenilendi. Kural: `tools/soru/BRIF.md` §12.
