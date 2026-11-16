@@ -71,7 +71,15 @@ KURAL_YP = '''**Her görselde geçerli kurallar:**
 - Bütün görseller aynı üslupta: komutun sonundaki 3D mimari maket üslubu.'''
 
 
-PORTRE = {'Bilim insanları', 'Tarihî kişiler', 'Yazarlar ve şairler', 'Ressamlar ve besteciler'}
+PORTRE = {'Bilim insanları', 'Tarihî kişiler', 'Yazarlar ve şairler', 'Ressamlar ve besteciler', 'Devlet adamları',
+          'Komutanlar ve kâşifler', 'Bilim insanları II', 'Mucitler ve öncüler', 'Yazarlar ve şairler II', 'Sanatçılar ve besteciler II'}
+# Gruplar (parça no, tür, ilk, son, başlık): her grup kendi ZIP'i. K6–K7 ünlü kişi portreleri (kullanıcı, 16 Kasım:
+# önce 100, sonra "150 tane daha ... toplam 1250 olsun").
+GRUPLAR = [(1, 'gk', 511, 710, 'GÖZ KARARI'), (2, 'gk', 711, 910, 'GÖZ KARARI'), (3, 'gk', 911, 1110, 'GÖZ KARARI'),
+           (4, 'gk', 1111, 1310, 'GÖZ KARARI'), (5, 'yp', 101, 300, 'YAPI GÖRSELLERİ (Kazı Kazan + Gölge Oyunu)'),
+           (6, 'gk', 1311, 1410, 'GÖZ KARARI · ÜNLÜ KİŞİ PORTRELERİ'), (7, 'gk', 1411, 1560, 'GÖZ KARARI · ÜNLÜ KİŞİ PORTRELERİ II')]
+TIP = {1: 'Göz Kararı', 2: 'Göz Kararı', 3: 'Göz Kararı', 4: 'Göz Kararı', 5: 'Kazı Kazan + Gölge Oyunu', 6: 'Göz Kararı (ünlü kişi portreleri)', 7: 'Göz Kararı (ünlü kişi portreleri)'}
+GK_TOPLAM = sum(son - ilk + 1 for _, t, ilk, son, _ in GRUPLAR if t == 'gk')
 
 
 def parca(k, ad, liste, tur):
@@ -100,28 +108,24 @@ def parca(k, ad, liste, tur):
     return md, zipad, ilk, son
 
 
-# Parça numarası sabit: Göz Kararı K1 = GK-511–710, K2 = 711–910, K3 = 911–1110, K4 = 1111–1310; yapı K5. Hazır olan
-# parça (200 maddesi tam) yazılır; gelmeyen parça özette "hazırlanıyor" görünür (parçalar ayrı ayrı teslim edilebilsin).
+# Parça numarası sabit (GRUPLAR); grubun bütün maddeleri hazırsa parça yazılır, değilse özette "hazırlanıyor" görünür.
 parcalar = []
-for k in range(4):
-    bas = 511 + 200 * k
-    dilim = [x for x in gk if bas <= no(x['id']) < bas + 200]
-    if len(dilim) == 200:
-        parcalar.append(parca(k + 1, 'GÖZ KARARI', dilim, 'gk'))
-if len(yp) == 200:
-    parcalar.append(parca(5, 'YAPI GÖRSELLERİ (Kazı Kazan + Gölge Oyunu)', yp, 'yp'))
-# K6: ünlü kişi portreleri (kullanıcı, 16 Kasım: "herhangi bir kişinin resim tahmini de olsun"), GK-1311–1410
-portre = [x for x in gk if 1311 <= no(x['id']) <= 1410]
-if len(portre) == 100:
-    parcalar.append(parca(6, 'GÖZ KARARI · ÜNLÜ KİŞİ PORTRELERİ', portre, 'gk'))
+dilimler = {}
+for k, tur, ilk, son, baslik in GRUPLAR:
+    kaynak = gk if tur == 'gk' else yp
+    dilim = [x for x in kaynak if ilk <= no(x['id']) <= son]
+    dilimler[k] = dilim
+    if len(dilim) == son - ilk + 1:
+        parcalar.append(parca(k, baslik, dilim, tur))
 
 # TEK DOSYA (kullanıcı isteği: "tek md"): 1000 komutun hepsi, tek talimatla. Yalnız 1000'in hepsi hazırsa yazılır.
 # ChatGPT'ye tek dosya verilir; görseller 200'lük gruplar hâlinde üretilip her grup kendi ZIP'inde verilir (bir sohbette
 # 1000 görsel sınıra takılır: "devam" ile sürer, yeni sohbette dosya yeniden verilip kalınan numaradan başlanır).
-if len(gk) == 900 and len(yp) == 200:
-    t = ['# 1100 GÖRSEL · TEK DOSYA (GK-511 – GK-1410 ve YP-101 – YP-300)', '', '## ChatGPT için talimat (önce bunu oku, sonra hemen başla)', '',
-         'Bu dosyada bir bilgi yarışması oyunu için 1100 görsel komutu var: 900 tanesi yatay 4:3 görsel (GK-…; bunların 100\'ü ünlü kişi '
-         'portresi), 200 tanesi beyaz zeminde kare yapı görseli (YP-…). Görevin:', '',
+if len(gk) == GK_TOPLAM and len(yp) == 200:
+    top = GK_TOPLAM + 200
+    t = [f'# {top} GÖRSEL · TEK DOSYA (GK-511 – GK-{510 + GK_TOPLAM} ve YP-101 – YP-300)', '', '## ChatGPT için talimat (önce bunu oku, sonra hemen başla)', '',
+         f'Bu dosyada bir bilgi yarışması oyunu için {top} görsel komutu var: {GK_TOPLAM} tanesi yatay 4:3 görsel (GK-…; bunların '
+         f'{GK_TOPLAM - 800}\'ü ünlü kişi portresi), 200 tanesi beyaz zeminde kare yapı görseli (YP-…). Görevin:', '',
          '1. Komutların HEPSİNİ, dosyadaki sırayla, her komut için ayrı bir görsel olarak üret.',
          '2. Bana hiçbir soru sorma, onay bekleme, ara özet yazma. Bir görsel bitince hemen sıradakine geç. Sınıra takılıp durursan, '
          'ben "devam" yazınca kaldığın numaradan sürdür. Ben "GK-731\'den başla" gibi bir numara yazarsam o numaradan devam et.',
@@ -129,41 +133,40 @@ if len(gk) == 900 and len(yp) == 200:
          '4. Her 200 görsel bitince o grubu TEK bir ZIP dosyasında ver (aşağıdaki tabloda grubun ZIP adı yazıyor). Üretemediğin numara '
          'olursa ZIP\'ten sonra listesini yaz, sonra sıradaki gruba geç.', '',
          '| Grup | Numaralar | ZIP adı |', '|---|---|---|']
-    gruplar = [(f'GK-{511 + 200 * k}', f'GK-{710 + 200 * k}', f'Gorsel-1000-K{k + 1}.zip') for k in range(4)] + [('YP-101', 'YP-300', 'Gorsel-1000-K5.zip'), ('GK-1311', 'GK-1410', 'Gorsel-1000-K6.zip')]
+    gruplar = [(f"{'GK' if tur == 'gk' else 'YP'}-{ilk}", f"{'GK' if tur == 'gk' else 'YP'}-{son}", f'Gorsel-1000-K{k}.zip') for k, tur, ilk, son, _ in GRUPLAR]
     for i, (a, b, z) in enumerate(gruplar):
         t.append(f'| {i + 1} | {a} – {b} | **{z}** |')
     t += ['', '### GK görsellerinde (GK-511 – GK-1310) geçerli kurallar', '', KURAL_GK.split('\n', 1)[1]]
     tab = [x for x in gk if x['konu'].startswith('Tablolar')]
     if tab:
         t += ['', KURAL_TABLO.format(ilk=tab[0]['id'], son=tab[-1]['id'])]
-    t += ['', KURAL_PORTRE.format(ilk='GK-1311', son='GK-1410')]
+    t += ['', KURAL_PORTRE.format(ilk='GK-1311', son=f'GK-{510 + GK_TOPLAM}')]
     t += ['', '### YP görsellerinde (YP-101 – YP-300) geçerli kurallar', '', KURAL_YP.split('\n', 1)[1], '', '## Komutlar', '']
     for k, (a, b, z) in enumerate(gruplar):
-        liste = gk[200 * k:200 * (k + 1)] if k < 4 else yp if k == 4 else portre
+        liste = dilimler[k + 1]
         t += [f'### Grup {k + 1}: {a} – {b} (bitince {z})', '']
         for x in liste:
             us = '3D yapı · kare · beyaz zemin' if k == 4 else x['us']
             t += [f"**{x['id']}** · {us}  ", x['cmd'], '']
     open(os.path.join(ROOT, 'GORSEL-1000-TEK.md'), 'w').write('\n'.join(t).rstrip() + '\n')
-    print('yazıldı: GORSEL-1000-TEK.md (1100 komut)')
+    print(f'yazıldı: GORSEL-1000-TEK.md ({top} komut)')
 else:
-    print(f'tek dosya bekliyor: Göz Kararı {len(gk)}/900, yapı {len(yp)}/200')
+    print(f'tek dosya bekliyor: Göz Kararı {len(gk)}/{GK_TOPLAM}, yapı {len(yp)}/200')
 
 # özet (kullanıcı için)
-o = ['# 1100 YENİ GÖRSEL · özet (1000 + 100 ünlü kişi portresi)', '',
+o = [f'# {GK_TOPLAM + 200} YENİ GÖRSEL · özet (1000 + {GK_TOPLAM - 800} ünlü kişi portresi)', '',
      'Bu dosya senin için: her görselin numarası, oyunda hangi soru tipine gideceği, sorusu ve doğru cevabı.',
-     '**ChatGPT\'ye bu dosyayı DEĞİL, `GORSEL-1000-TEK.md` dosyasını ver**: 1100 komutun hepsi tek dosyada, en başta tek talimat; '
-     'ChatGPT görselleri sırayla üretir ve her grup bitince o grubun ZIP\'ini verir (6 ZIP). Talimatlı dosyada soru ve cevap yoktur '
+     f'**ChatGPT\'ye bu dosyayı DEĞİL, `GORSEL-1000-TEK.md` dosyasını ver**: {GK_TOPLAM + 200} komutun hepsi tek dosyada, en başta tek talimat; '
+     f'ChatGPT görselleri sırayla üretir ve her grup bitince o grubun ZIP\'ini verir ({len(GRUPLAR)} ZIP). Talimatlı dosyada soru ve cevap yoktur '
      '(görsele yazı sızmasın). Aşağıdaki parça dosyaları aynı komutların gruplara bölünmüş hâlidir; istersen onları da kullanabilirsin.', '',
      '## Parçalar', '', '| Parça | Numaralar | Görsel | Soru tipi | ZIP adı |', '|---|---|---|---|---|']
 satir = {}
 for md, zipad, ilk, son in parcalar:
     k = int(md.split('-K')[1][0])
-    satir[k] = f"| `{md}` | {ilk} – {son} | {no(son) - no(ilk) + 1} | {'Göz Kararı' if k < 5 else 'Kazı Kazan + Gölge Oyunu' if k == 5 else 'Göz Kararı (ünlü kişi portreleri)'} | `{zipad}` |"
-for k in range(1, 7):
-    ara = f'GK-{511 + 200 * (k - 1)} – GK-{710 + 200 * (k - 1)}' if k < 5 else 'YP-101 – YP-300' if k == 5 else 'GK-1311 – GK-1410'
-    tip = 'Göz Kararı' if k < 5 else 'Kazı Kazan + Gölge Oyunu' if k == 5 else 'Göz Kararı (ünlü kişi portreleri)'
-    o.append(satir.get(k, f"| `GORSEL-1000-K{k}.md` | {ara} | {100 if k == 6 else 200} | {tip} | hazırlanıyor |"))
+    satir[k] = f"| `{md}` | {ilk} – {son} | {no(son) - no(ilk) + 1} | {TIP[k]} | `{zipad}` |"
+for k, tur, ilk, son, _ in GRUPLAR:
+    on = 'GK' if tur == 'gk' else 'YP'
+    o.append(satir.get(k, f"| `GORSEL-1000-K{k}.md` | {on}-{ilk} – {on}-{son} | {son - ilk + 1} | {TIP[k]} | hazırlanıyor |"))
 o += ['', '**Kullanım:** ChatGPT\'de yeni bir sohbet aç, `GORSEL-1000-TEK.md` dosyasını ekle ve "Talimatı uygula, başla" yaz. Durursa '
       '"devam" yaz. Sohbet dolarsa yeni sohbet aç, aynı dosyayı ver ve kaldığın numarayı yaz ("GK-731\'den başla"). Gelen her ZIP\'i bana gönder.', '',
       'Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görseli gelmeyen numara maçta çıkmaz.', '',

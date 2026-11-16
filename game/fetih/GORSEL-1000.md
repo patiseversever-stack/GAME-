@@ -1,7 +1,7 @@
-# 1100 YENİ GÖRSEL · özet (1000 + 100 ünlü kişi portresi)
+# 1250 YENİ GÖRSEL · özet (1000 + 250 ünlü kişi portresi)
 
 Bu dosya senin için: her görselin numarası, oyunda hangi soru tipine gideceği, sorusu ve doğru cevabı.
-**ChatGPT'ye bu dosyayı DEĞİL, `GORSEL-1000-TEK.md` dosyasını ver**: 1100 komutun hepsi tek dosyada, en başta tek talimat; ChatGPT görselleri sırayla üretir ve her grup bitince o grubun ZIP'ini verir (6 ZIP). Talimatlı dosyada soru ve cevap yoktur (görsele yazı sızmasın). Aşağıdaki parça dosyaları aynı komutların gruplara bölünmüş hâlidir; istersen onları da kullanabilirsin.
+**ChatGPT'ye bu dosyayı DEĞİL, `GORSEL-1000-TEK.md` dosyasını ver**: 1250 komutun hepsi tek dosyada, en başta tek talimat; ChatGPT görselleri sırayla üretir ve her grup bitince o grubun ZIP'ini verir (7 ZIP). Talimatlı dosyada soru ve cevap yoktur (görsele yazı sızmasın). Aşağıdaki parça dosyaları aynı komutların gruplara bölünmüş hâlidir; istersen onları da kullanabilirsin.
 
 ## Parçalar
 
@@ -13,6 +13,7 @@ Bu dosya senin için: her görselin numarası, oyunda hangi soru tipine gideceğ
 | `GORSEL-1000-K4.md` | GK-1111 – GK-1310 | 200 | Göz Kararı | `Gorsel-1000-K4.zip` |
 | `GORSEL-1000-K5.md` | YP-101 – YP-300 | 200 | Kazı Kazan + Gölge Oyunu | `Gorsel-1000-K5.zip` |
 | `GORSEL-1000-K6.md` | GK-1311 – GK-1410 | 100 | Göz Kararı (ünlü kişi portreleri) | `Gorsel-1000-K6.zip` |
+| `GORSEL-1000-K7.md` | GK-1411 – GK-1560 | 150 | Göz Kararı (ünlü kişi portreleri) | hazırlanıyor |
 
 **Kullanım:** ChatGPT'de yeni bir sohbet aç, `GORSEL-1000-TEK.md` dosyasını ekle ve "Talimatı uygula, başla" yaz. Durursa "devam" yaz. Sohbet dolarsa yeni sohbet aç, aynı dosyayı ver ve kaldığın numarayı yaz ("GK-731'den başla"). Gelen her ZIP'i bana gönder.
 

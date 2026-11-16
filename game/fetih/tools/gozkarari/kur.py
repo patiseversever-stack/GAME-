@@ -66,6 +66,9 @@ CAT = {
     'Müzik aletleri II': 'sanat', 'Olimpiyat branşları ve ekipmanları': 'spor', 'Dünya sporları ve oyun alanları': 'spor',
     # ünlü kişi portreleri (GK-1311–1410; kullanıcı kararı 16 Kasım: yalnız en geç 1955'te ölmüş kişiler, telifsiz kaynak)
     'Bilim insanları': 'bilim', 'Tarihî kişiler': 'tarih', 'Yazarlar ve şairler': 'sanat', 'Ressamlar ve besteciler': 'sanat',
+    # ünlü kişi portreleri II (GK-1411–1560; kullanıcı: "150 tane daha … toplam 1250 olsun")
+    'Devlet adamları': 'tarih', 'Komutanlar ve kâşifler': 'tarih', 'Bilim insanları II': 'bilim', 'Mucitler ve öncüler': 'eglence',
+    'Yazarlar ve şairler II': 'sanat', 'Sanatçılar ve besteciler II': 'sanat',
 }
 KONU = {k: i for i, k in enumerate(CAT)}
 MODE = {'bulanık': 'blur', 'yakın çekim': 'zoom', 'siluet': 'sil', 'ayrıntı': 'detail'}
