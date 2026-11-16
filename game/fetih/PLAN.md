@@ -24,6 +24,12 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
        - eski webp'ler (`dist/gk/GK-*.webp`) aynı çıktı klasörüne kopyalanır;
        - `python3 -I tools/gozkarari/kur.py <çıktı>` çalıştırılır;
        - temas sayfası, siluet maskesi ve ilk kadraj gözle denetlenir.
+  - **Görsel kalitesi ve dosya sınırı (16 Kasım):**
+    - Kullanıcının gönderdiği görsellerin hepsi ~19 KB'a sıkıştırılmış geldi, çoğu küçültülmüş (224–640 px): pikselleşme buradan.
+    - Ölçüm: 510 görselin 158'i çok kötü (yakın çekim/ayrıntı ≤512 px: 112; bulanık ≤320 px: 46), liste `ornek_gorsel/cok_kotu_gorseller.md`.
+    - Kullanıcıya verilen kayıt ayarı: WebP kalite 75; bulanık/siluet 640×480, yakın çekim/ayrıntı 1024×768, yapı 768×576; KB hedefi yok.
+    - Yayın sürümü en çok 511 dosya alır: Göz Kararı görselleri onarlı paketlerde (`gkp/<k>.webp`, `src/quiz/gorsel_paket.js`),
+      oyun her görseli bayt aralığıyla tek tek ister. Yayında eski `gk/` dosyaları kaldırıldı.
   2. **Bu akşam ya da sonra: 1250 yeni görsel (tek dosya `GORSEL-1000-TEK.md`, 7 grup, grup başına ZIP `Gorsel-1000-K1…K7.zip`).**
      - 1000 görsel + 250 ünlü kişi portresi (GK-1311–1560; kullanıcı kararı, KARARLAR.md: yalnız en geç 1955'te ölmüşler, telifsiz kaynak).
      - Portreler gelince her biri kişiye benziyor mu tek tek bakılacak; benzemeyen maç dışı. Komut dosyaları `GORSEL-1000.md` (özet) ve `GORSEL-1000-K*.md` (ChatGPT'ye verilecek parçalar).
