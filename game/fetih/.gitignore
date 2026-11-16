@@ -2,3 +2,5 @@ node_modules/
 verify-out/
 raw/
 package-lock.json
+dist/gkp/
+ornek_gorsel/

@@ -120,6 +120,44 @@ const HTML_GOMULU = DIZE;
 const bankaBlok = HTML_GOMULU ? '' : `<script type="application/octet-stream" id="fl-banka">${BANKA.b64}</script>`;
 console.log(`soru paketi: ${BANKA.sayi} soru · ham ${kb(BANKA.ham)} · gzip ${kb(BANKA.gz)} · base64 ${kb(BANKA.b64.length)}`);
 
+// Göz Kararı görsel paketleri (src/quiz/gorsel_paket.js): yayın ortamında bir sürüm en çok 511 dosya alır; görseller
+// (dist/gk/GK-xxx.webp + siluet maskeleri .m.png) onarlı paketlere toplanır: <çıktı>/gkp/<k>.bin. Görsel numarası paketi
+// belirler (GK-001…010 → 0), yeni görsel eklenince eski paketlerin içeriği değişmez. Dizin sayfaya çalışmayan veri bloğu
+// olarak gömülür; oyun görseli bayt aralığıyla ister.
+const GKP_BOY = 10;
+function gorselPaketle() {
+	const kaynak = join(root, 'dist/gk');
+	const dizin = {};
+	const paket = new Map();
+	let ad = 0;
+	for (const f of readdirSync(kaynak).sort()) {
+		const m = /^GK-(\d+)\.(webp|m\.png)$/.exec(f);
+		if (!m) continue;
+		const k = Math.floor((Number(m[1]) - 1) / GKP_BOY);
+		if (!paket.has(k)) paket.set(k, []);
+		paket.get(k).push(f);
+	}
+	mkdirSync(join(dist, 'gkp'), { recursive: true });
+	let toplam = 0;
+	for (const [k, fs] of paket) {
+		const parca = [];
+		let bas = 0;
+		for (const f of fs) {
+			const b = readFileSync(join(kaynak, f));
+			dizin[f] = [k, bas, b.length];
+			parca.push(b);
+			bas += b.length;
+			ad++;
+		}
+		writeFileSync(join(dist, 'gkp', `${k}.bin`), Buffer.concat(parca));
+		toplam += bas;
+	}
+	return { dizin, paket: paket.size, ad, toplam };
+}
+const GKP = gorselPaketle();
+const gkpBlok = `<script type="application/json" id="fl-gkp">${JSON.stringify(GKP.dizin)}</script>`;
+console.log(`görsel paketleri: ${GKP.ad} dosya → ${GKP.paket} paket (gkp/), ${kb(GKP.toplam)} · dizin ${kb(gkpBlok.length)}`);
+
 // İşçiler (Web Worker): ayrı derlenir, ana pakete metin olarak gömülür (tek dosya; blob: adresinden çalışır)
 async function workerCode(entry) {
 	const r = await build({ ...base, entryPoints: [join(root, entry)], format: 'iife', write: false, sourcemap: false });
@@ -164,7 +202,7 @@ const tpl = readFileSync(join(root, 'test/template.html'), 'utf8');
 const html = tpl
 	.replace('/*__FONTS__*/', () => fontFaces())
 	.replace('/*__APP__*/', () => js)
-	.replace('</body>', () => bankaBlok + '\n</body>');
+	.replace('</body>', () => bankaBlok + gkpBlok + '\n</body>');
 writeFileSync(join(dist, 'FetihLigi.html'), html);
 
 // 1b) İsteğe bağlı: paylaşılabilir sayfa sürümü (iskeletsiz; yayın ortamı doctype/head/body ekler)
@@ -184,7 +222,7 @@ body{position:fixed;inset:0}
 </style>
 <div id="uk-boot"><b>Fetih Ligi</b><span>Harita hazırlanıyor</span></div>
 <script>${js}</script>
-${bankaBlok}`;
+${bankaBlok}${gkpBlok}`;
 	writeFileSync(out, page);
 	console.log(`paylaşım sayfası: ${out} ${kb(Buffer.byteLength(page))}`);
 }
@@ -208,7 +246,7 @@ body{position:fixed;inset:0}
 </style>
 <div id="uk-boot"><b>Soru Galerisi</b><span>Harita ve sorular hazırlanıyor</span></div>
 <script>${gjs}</script>
-${bankaBlok}`;
+${bankaBlok}${gkpBlok}`;
 	writeFileSync(join(dist, 'SoruGalerisi.html'), gpage);
 	console.log(`SoruGalerisi.html ${kb(Buffer.byteLength(gpage))}`);
 }

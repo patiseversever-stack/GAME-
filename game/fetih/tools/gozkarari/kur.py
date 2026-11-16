@@ -118,6 +118,8 @@ for it in items:
         else:
             mode = 'blur'; switched.append(it['id'] + ' ' + it['dogru'])
     im = Image.open(src).convert('RGB')
+    # odak ve tablo kutusu 448×336 ölçeğinde (eşikler o ölçekte ayarlandı; görseller artık gelen çözünürlükte)
+    if im.size != (448, 336): im = im.resize((448, 336), Image.LANCZOS)
     w, h = im.size
     row = dict(id='gk-' + it['id'][3:], img=it['id'], cat=CAT[it['konu']], konu=KONU[it['konu']], diff=it['z'], mode=mode, q=it['q'], a=it['a'], b=it['b'])
     if mode in ('zoom', 'detail'): row['f'] = ODAK_EL.get(it['id']) or focus(im)

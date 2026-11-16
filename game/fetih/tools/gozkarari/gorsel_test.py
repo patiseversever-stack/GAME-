@@ -1,5 +1,7 @@
 # Göz Kararı görsel testi: python3 -I gorsel_test.py <görsel_klasörü> <items.json> [maske_çıkış_klasörü]
-#  - 310 dosya var mı, açılıyor mu, 4:3 mü, boyut 12–24 KB arası mı
+#  - dosyalar var mı, açılıyor mu, 4:3 mü, boyut makul mü (6–200 KB; görseller gelen çözünürlükte, en çok 1024×768)
+#  Bütün çözümlemeler (boşluk, imza, benzerlik, siluet) 448×336 kopyada yapılır: eşikler o ölçekte ayarlandı, kaynağın
+#  çözünürlüğü sonucu değiştirmesin.
 #  - boş/tek renk görsel (düşük ayrıntı) var mı
 #  - birbirine çok benzeyen çift (algısal özet, dHash 64 bit, Hamming ≤ 6) var mı
 #  - kenar yazısı/imza izi şüphesi: köşelerde yoğun ince kontrast (yalnız uyarı)
@@ -23,11 +25,12 @@ for it in items:
     sz = os.path.getsize(p)
     try:
         im = Image.open(p); im.load(); im = im.convert('RGB')
+        if im.size != (448, 336) and abs(im.size[0] / im.size[1] - 4 / 3) <= 0.01: im = im.resize((448, 336), Image.LANCZOS)
     except Exception as e:
         err.append(f"{it['id']}: açılmıyor ({e})"); continue
     w, h = im.size
     if abs(w / h - 4 / 3) > 0.01: err.append(f"{it['id']}: oran {w}x{h}")
-    if not 12000 <= sz <= 24000: warn.append(f"{it['id']}: boyut {sz} B")
+    if not 6000 <= sz <= 200000: warn.append(f"{it['id']}: boyut {sz // 1024} KB")
     a = np.asarray(im.convert('L'), dtype=np.float32)
     if a.std() < 12:
         # düz zeminde ince nesne (çekiç teli) de düşük std verir: gözle bakılıp onaylananlar yalnız uyarı
@@ -51,7 +54,7 @@ if OUT:
     os.makedirs(OUT, exist_ok=True)
     for it in items:
         if it['g'] != 'siluet': continue
-        im = Image.open(os.path.join(D, it['id'] + '.webp')).convert('RGB')
+        im = Image.open(os.path.join(D, it['id'] + '.webp')).convert('RGB').resize((448, 336), Image.LANCZOS)
         sm = np.asarray(im.filter(ImageFilter.GaussianBlur(2.2)), dtype=np.float32)
         hh, ww, _ = sm.shape
         bd = np.concatenate([sm[0], sm[-1], sm[:, 0], sm[:, -1]])

@@ -7,8 +7,9 @@
 // Düelloda ikisi de bilirse hızlı olan kazanır (mac.js HIZLI). Cevaptan sonra görsel tamamen netleşir, üstünden ışık
 // geçer, çerçevenin altına cevap kurdelesi, altına tek satır ilginç bilgi gelir.
 //
-// Görseller ayrı dosyadan, tembel yüklenir: gk/<img>.webp (siluette gk/<img>.m.png). Görseller sayfanın yanında yoksa
-// (gkHazir() false) tip maçta hiç seçilmez (match.askable); yedek çizim gösterilmez.
+// Görseller ayrı dosyadan, tembel yüklenir: gk/<img>.webp (siluette gk/<img>.m.png); yayın derlemesinde onarlı
+// paketlerden bayt aralığıyla (gorsel_paket.js). Görseller sayfanın yanında yoksa (gkHazir() false) tip maçta hiç
+// seçilmez (match.askable); yedek çizim gösterilmez.
 
 import { css, esc, shuffle, pCorrect, mountChoice, clamp, chips } from './util.js';
 import { botTime, secOf } from './timing.js';
@@ -17,6 +18,7 @@ import { playSfx } from './appref.js';
 import { frameOf, frameSVG, hashStr } from './gk_cerceve.js';
 import { KONULAR } from '../data/gozkarari.js';
 import { clock } from '../core/clock.js';
+import { gorselUrl, gorselUrlHemen, paketli } from './gorsel_paket.js';
 
 export const GK_BASE = 'gk/';
 const MODE = { blur: 'Netleşiyor', zoom: 'Uzaklaşıyor', sil: 'Siluet', detail: 'Ayrıntıdan bütüne' };
@@ -29,9 +31,12 @@ let OK = typeof Image === 'undefined' ? true : null; // node (sunucu, testler): 
 export function gkHazir() {
 	if (OK === null) {
 		OK = true;
-		const im = new Image();
-		im.onerror = () => (OK = false);
-		im.src = GK_BASE + 'GK-001.webp';
+		if (paketli()) gorselUrl(GK_BASE, 'GK-001.webp').catch(() => (OK = false));
+		else {
+			const im = new Image();
+			im.onerror = () => (OK = false);
+			im.src = GK_BASE + 'GK-001.webp';
+		}
 	}
 	return OK;
 }
@@ -43,8 +48,11 @@ export function gkOnyukle(q) {
 		if (!u || cache.has(u)) continue;
 		const im = new Image();
 		im.decoding = 'async';
-		im.src = GK_BASE + u;
 		cache.set(u, im);
+		gorselUrl(GK_BASE, u).then(
+			(a) => (im.src = a),
+			() => cache.delete(u),
+		);
 	}
 }
 
@@ -154,7 +162,10 @@ export const gozkarari = {
 		const f0 = q.f || [0.5, 0.5];
 		const box = q.box || null;
 		const fr = frameSVG(v.frame || frameOf(q), k, hashStr(q.id || ''), box);
-		const src = GK_BASE + q.img + '.webp';
+		// adres önden indirildiyse hemen (blob: ya da düz yol), değilse href hiç yazılmaz (boş href sayfanın kendisini
+		// istetebilir): çözülünce aşağıda yerine konur
+		const src = gorselUrlHemen(GK_BASE, q.img + '.webp') || '';
+		const msrc = gorselUrlHemen(GK_BASE, q.img + '.m.png') || '';
 		const sil = q.mode === 'sil';
 		const konu = KONULAR[q.konu] || 'Göz Kararı';
 		// siluet zemini: sahne ışığı (çerçevenin rengine yakın sıcak ton)
@@ -166,7 +177,7 @@ export const gozkarari = {
 			<div class="gk-sw"><div class="gk-st"><svg class="sd" viewBox="0 0 400 300" aria-hidden="true"><path d="${fr.d}" fill="#02040c"/></svg><svg viewBox="0 0 400 300" role="img" aria-label="Göz Kararı görseli">
 				<defs>${fr.defs}<clipPath id="c${k}"><path d="${fr.d}"/></clipPath>
 					<filter id="b${k}" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="0" edgeMode="duplicate"/></filter>
-					${sil ? `${silBg}<mask id="m${k}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="300"><image href="${GK_BASE + q.img}.m.png" width="400" height="300" preserveAspectRatio="none"/></mask>` : ''}
+					${sil ? `${silBg}<mask id="m${k}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="300"><image class="mk"${msrc ? ` href="${msrc}"` : ''} width="400" height="300" preserveAspectRatio="none"/></mask>` : ''}
 					<linearGradient id="l${k}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
 					<radialGradient id="v${k}" cx=".5" cy=".5" r=".72"><stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></radialGradient>
 					<linearGradient id="w${k}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1b2550"/><stop offset=".5" stop-color="#2d3c78"/><stop offset="1" stop-color="#1b2550"/></linearGradient>
@@ -174,7 +185,7 @@ export const gozkarari = {
 				<g clip-path="url(#c${k})">
 					<rect width="400" height="300" fill="#141c3c"/>
 					<rect class="ld" x="-200" width="200" height="300" fill="url(#w${k})"/>
-					<g class="zm"><image class="im${sil ? ' nv' : ''}" href="${src}" width="400" height="300" preserveAspectRatio="xMidYMid slice"${sil ? ' opacity="0"' : ` filter="url(#b${k})"`}/></g>
+					<g class="zm"><image class="im${sil ? ' nv' : ''}"${src ? ` href="${src}"` : ''} width="400" height="300" preserveAspectRatio="xMidYMid slice"${sil ? ' opacity="0"' : ` filter="url(#b${k})"`}/></g>
 					${sil ? `<g class="sl nv"><rect width="400" height="300" fill="url(#sg${k})"/><rect width="400" height="300" fill="#121830" mask="url(#m${k})"/></g>` : ''}
 					<rect width="400" height="300" fill="url(#v${k})" pointer-events="none"/>
 					<rect class="sh" x="-60" width="90" height="300" fill="url(#l${k})" pointer-events="none"/>
@@ -193,7 +204,20 @@ export const gozkarari = {
 		// yüklenince yükleme ışıltısı kalkar; yüklenemezse çerçeve boş kalır (soru yine cevaplanır)
 		const probe = new Image();
 		probe.onload = () => st.classList.add('ok');
-		probe.src = src;
+		gorselUrl(GK_BASE, q.img + '.webp').then(
+			(a) => {
+				if (im.getAttribute('href') !== a) im.setAttribute('href', a);
+				probe.src = a;
+			},
+			() => {},
+		);
+		if (sil) {
+			const mk = el.querySelector('image.mk');
+			gorselUrl(GK_BASE, q.img + '.m.png').then(
+				(a) => mk && mk.getAttribute('href') !== a && mk.setAttribute('href', a),
+				() => {},
+			);
+		}
 		gkOnyukle(q);
 
 		const t0 = clock.now();
