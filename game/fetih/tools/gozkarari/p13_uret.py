@@ -3,8 +3,9 @@ SON = '4:3 landscape, no text, no letters, no numbers, no watermark, no logo'
 def tablo(eser, d):
     return (f'A faithful full reproduction of {eser}, entire composition exactly as the original, accurate colors and details, '
             f'public domain artwork, no frame, centered on a plain dark museum wall to fill the 4:3 frame. {d}, {SON}')
-def foto(kaynak, d, renk='black-and-white archival photograph with fine film grain'):
-    return f'{kaynak}, accurate likeness of this real historical person, {d}, plain studio background, {renk}, {SON}'
+def foto(kaynak, d, renk='black-and-white archival photograph with fine film grain', sahne=False):
+    # sahne: laboratuvar, kara tahta, teleskop gibi ortamı tarif eden fotoğraf ("plain studio background" çelişmesin)
+    return f'{kaynak}, accurate likeness of this real historical person, {d}, {"" if sahne else "plain studio background, "}{renk}, {SON}'
 T, F = 'Tablo (aslına sadık)', 'Arşiv fotoğrafı (aslına sadık)'
 M = [
  (T,1,'bulanık', tablo('the portrait painting of Sir Isaac Newton by Godfrey Kneller (1689)', 'A man in his mid-forties shown half-length and turned slightly to one side, long wavy shoulder-length grey-brown hair parted in the middle, a long straight nose, thin lips and intense dark eyes, wearing a dark brown gown over a white shirt with a plain open white collar, warm dark brown background'),
@@ -79,7 +80,7 @@ M = [
  (F,2,'bulanık', foto('A realistic color portrait photograph of the Turkish Sumerologist Muazzez İlmiye Çığ (1914–2024) in her old age', 'an elderly woman seen from the chest up, short white hair, glasses, a warm gentle smile, wearing a simple cardigan', 'natural color photograph'),
   "Sümer uygarlığı üzerine çalışmalarıyla tanınan bu Türk bilim insanı kim?", ['Muazzez İlmiye Çığ','Halet Çambel','Afet İnan','Jale İnan'],
   "Muazzez İlmiye Çığ, 2024'te 110 yaşında hayatını kaybetti."),
- (F,2,'bulanık', foto('A realistic archival photograph of the Scottish bacteriologist Alexander Fleming (1881–1955) in his laboratory', 'an older man with combed-back grey hair and a long face, wearing a bow tie and a dark suit, holding a glass petri dish up to the light, shelves of laboratory glassware behind'),
+ (F,2,'bulanık', foto('A realistic archival photograph of the Scottish bacteriologist Alexander Fleming (1881–1955) in his laboratory', 'an older man with combed-back grey hair and a long face, wearing a bow tie and a dark suit, holding a glass petri dish up to the light, shelves of laboratory glassware behind', sahne=True),
   "Laboratuvarında bir petri kabını ışığa tutan bu bakteriyolog hangisi?", ['Alexander Fleming','Louis Pasteur','Robert Koch','Joseph Lister'],
   "Fleming, penisilini 1928'de, unuttuğu bir kültür kabında üreyen küfü fark edince buldu."),
  (T,2,'bulanık', tablo('the posthumous portrait painting of Alfred Nobel by Emil Österman (1915)', 'A middle-aged man shown half-length, dark hair, a full dark beard and moustache, a calm gaze, wearing a dark suit with a white shirt collar, dark background'),
@@ -112,19 +113,19 @@ M = [
  (F,3,'bulanık', foto('A realistic archival photograph of the American physicist Richard Feynman (1918–1988) from the 1960s', 'a man with thick wavy grey-brown hair and a broad grin, wearing a white shirt, playing a pair of bongo drums'),
   "Bongo çalmayı çok seven, Nobel ödüllü bu Amerikalı fizikçi kimdir?", ['Richard Feynman','Robert Oppenheimer','Murray Gell-Mann','Enrico Fermi'],
   "Feynman, 1986'daki Challenger kazasının nedenini bir bardak buzlu suyla gösterdi."),
- (F,3,'bulanık', foto('A faithful recreation of a public-domain archival photograph of the Italian physicist Enrico Fermi from the 1940s', 'a balding man with dark receding hair and a gentle smile, wearing a dark suit, standing in front of a completely blank blackboard'),
+ (F,3,'bulanık', foto('A faithful recreation of a public-domain archival photograph of the Italian physicist Enrico Fermi from the 1940s', 'a balding man with dark receding hair and a gentle smile, wearing a dark suit, standing in front of a completely blank blackboard', sahne=True),
   "Boş bir kara tahtanın önünde görülen bu İtalyan fizikçi kim?", ['Enrico Fermi','Guglielmo Marconi','Alessandro Volta','Amedeo Avogadro'],
   "Fermi'nin ekibi ilk kontrollü nükleer zincirleme tepkimeyi 1942'de Chicago'da gerçekleştirdi."),
  (F,3,'bulanık', foto('A realistic archival photograph of the British chemist Rosalind Franklin (1920–1958) from the mid-1950s', 'a young woman with short dark wavy hair and a calm face, wearing a dark cardigan, looking into a laboratory microscope'),
   "DNA üzerine çalışmış, mikroskop başındaki bu İngiliz kimyager hangisi?", ['Rosalind Franklin','Dorothy Hodgkin','Marie Curie','Lise Meitner'],
   "Franklin'in X ışını fotoğrafları, DNA'nın çift sarmal yapısının anlaşılmasında belirleyici oldu."),
- (F,3,'bulanık', foto('A faithful recreation of a public-domain archival photograph of Guglielmo Marconi from the early 1900s', 'a young man with dark hair combed back and a moustache, wearing a dark suit, seated beside early wireless telegraph apparatus with coils, brass terminals and wires'),
+ (F,3,'bulanık', foto('A faithful recreation of a public-domain archival photograph of Guglielmo Marconi from the early 1900s', 'a young man with dark hair combed back and a moustache, wearing a dark suit, seated beside early wireless telegraph apparatus with coils, brass terminals and wires', sahne=True),
   "Kablosuz telgraf aygıtlarının yanında görülen bu İtalyan mucidin adı ne?", ['Guglielmo Marconi','Alessandro Volta','Enrico Fermi','Antonio Meucci'],
   "Marconi, 1901'de Atlantik'i aşan ilk radyo sinyalini aldı."),
  (F,3,'bulanık', foto('A faithful recreation of a public-domain archival photograph of the German physician Robert Koch from around 1900', 'an older man seen from the chest up, a bald head, rimless glasses, a full grey beard, wearing a dark suit'),
   "Gözlüklü ve ak sakallı bu Alman hekim ve mikrobiyolog kimdir?", ['Robert Koch','Rudolf Virchow','Paul Ehrlich','Emil von Behring'],
   "Koch, verem basilini 24 Mart 1882'de duyurdu; bu gün Dünya Tüberküloz Günü'dür."),
- (F,3,'bulanık', foto('A faithful recreation of a public-domain archival photograph of the American astronomer Edwin Hubble from the 1930s', 'a man with short combed hair smoking a pipe, wearing a dark suit, seated at the eyepiece of a large observatory telescope'),
+ (F,3,'bulanık', foto('A faithful recreation of a public-domain archival photograph of the American astronomer Edwin Hubble from the 1930s', 'a man with short combed hair smoking a pipe, wearing a dark suit, seated at the eyepiece of a large observatory telescope', sahne=True),
   "Dev bir teleskobun başında piposuyla görülen bu Amerikalı gökbilimci kim?", ['Edwin Hubble','Carl Sagan','George Hale','Percival Lowell'],
   "Uzay teleskobuna adını veren Hubble, evrenin genişlediğini gösteren gözlemleri yaptı."),
 ]
@@ -148,9 +149,9 @@ YENI = [
  (F,1,'bulanık', foto('A faithful recreation of a public-domain photograph of the brothers Wilbur and Orville Wright from 1909', 'two men standing side by side in dark suits, the taller one bald and clean-shaven, the other with a neat moustache, both with serious faces'),
   "1909 tarihli bu fotoğraftaki havacılık öncüsü kardeşler kimdir?", ['Wright kardeşler','Montgolfier kardeşler','Lumière kardeşler','Grimm kardeşler'],
   "Wright kardeşler ilk motorlu ve denetimli uçuşu 1903'te Kitty Hawk'ta yaptı."),
- (F,2,'bulanık', foto('A faithful recreation of a public-domain portrait photograph of Henry Ford from around 1919', 'a slim man in his fifties seen from the chest up, grey hair parted at the side, a lean face, wearing a dark suit, a white shirt and a tie'),
-  "1919'da fotoğraflanan bu Amerikalı otomobil sanayicisinin adı ne?", ['Henry Ford','Walter Chrysler','William Durant','Ransom Olds'],
-  "Ford'un Model T otomobili 1908–1927 arasında 15 milyondan fazla üretildi."),
+ (F,2,'bulanık', foto('A realistic archival portrait photograph of the Turkish physician Hulusi Behçet (1889–1948)', 'a middle-aged man seen from the chest up, dark hair combed back from a high forehead, a neat dark moustache, a calm serious face, wearing a dark suit, a white shirt and a tie'),
+  "Adı dünyaca bilinen bir hastalığa verilmiş bu Türk dermatoloğun adı ne?", ['Hulusi Behçet','Cemil Topuzlu','Besim Ömer Akalın','Akil Muhtar Özden'],
+  "Hulusi Behçet, adını taşıyan hastalığı 1937'de tanımladı; hastalık bugün dünyada Behçet hastalığı diye bilinir."),
  (F,2,'bulanık', foto('A faithful recreation of a public-domain portrait photograph of the Russian physiologist Ivan Pavlov from around 1904', 'an elderly man seen from the chest up, a full white beard and white hair, a stern gaze, wearing a dark suit'),
   "1904 Nobel Tıp Ödülü'nü alan bu ak sakallı Rus fizyolog kim?", ['Ivan Pavlov','Ilya Mechnikov','Ivan Sechenov','Dmitri Mendeleyev'],
   "Pavlov, köpeklerle yaptığı deneylerle koşullu refleksi açıkladı."),

@@ -2,44 +2,11 @@
 // seçimi tools/veri/aile/derin_secim.txt'de değiştirip yeniden üret. Koordinat Wikidata'dan (CC0), il elle doğrulandı.
 export default [
 	{
-		"id": "cog-wd-dagpin-Q1953975",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "pin",
-		"q": "Musa Dağı'nı haritada bulabilir misin?",
-		"lat": 36.26,
-		"lon": 35.9,
-		"r": 12,
-		"kaynak": "Q1953975"
-	},
-	{
-		"id": "cog-wd-dagpin-Q2388359",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "pin",
-		"q": "Tahtalı Dağı Türkiye haritasında nerede?",
-		"lat": 36.54,
-		"lon": 30.44,
-		"r": 12,
-		"kaynak": "Q2388359"
-	},
-	{
-		"id": "cog-wd-dagpin-Q6056994",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "pin",
-		"q": "Kayış Dağı Türkiye haritasında nerede?",
-		"lat": 40.97,
-		"lon": 29.16,
-		"r": 12,
-		"kaynak": "Q6056994"
-	},
-	{
 		"id": "cog-wd-golpin-Q305501",
 		"cat": "cografya",
 		"diff": 2,
 		"type": "pin",
-		"q": "Abant Gölü Türkiye haritasında nerede?",
+		"q": "Abant Gölü'nü haritada bulabilir misin?",
 		"lat": 40.61,
 		"lon": 31.28,
 		"r": 12,
@@ -57,17 +24,6 @@ export default [
 		"kaynak": "Q1891954"
 	},
 	{
-		"id": "cog-wd-golpin-Q1797436",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "pin",
-		"q": "Küçükçekmece Gölü'nü haritada bulabilir misin?",
-		"lat": 41.01,
-		"lon": 28.75,
-		"r": 12,
-		"kaynak": "Q1797436"
-	},
-	{
 		"id": "cog-wd-golpin-Q1021881",
 		"cat": "cografya",
 		"diff": 2,
@@ -83,7 +39,7 @@ export default [
 		"cat": "cografya",
 		"diff": 3,
 		"type": "pin",
-		"q": "Akyatan Gölü'nü haritada bulabilir misin?",
+		"q": "Akyatan Gölü Türkiye haritasında nerede?",
 		"lat": 36.64,
 		"lon": 35.26,
 		"r": 12,
@@ -127,7 +83,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "pin",
-		"q": "\"Bin bir kilise şehri\" denen Ani Ören Yeri haritada nerede?",
+		"q": "\"Binbir kilise şehri\" denen Ani Ören Yeri haritada nerede?",
 		"lat": 40.51,
 		"lon": 43.57,
 		"r": 12,
@@ -138,7 +94,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "pin",
-		"q": "Hierapolis Antik Kenti'ni haritada bulabilir misin?",
+		"q": "Hierapolis Antik Kenti Türkiye haritasında nerede?",
 		"lat": 37.92,
 		"lon": 29.13,
 		"r": 12,
@@ -178,17 +134,6 @@ export default [
 		"kaynak": "Q595329"
 	},
 	{
-		"id": "cog-wd-antikpin-Q1393407",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "pin",
-		"q": "Alexandria Troas Antik Kenti Türkiye haritasında nerede?",
-		"lat": 39.75,
-		"lon": 26.16,
-		"r": 12,
-		"kaynak": "Q1393407"
-	},
-	{
 		"id": "cog-wd-antikpin-Q615449",
 		"cat": "cografya",
 		"diff": 3,
@@ -215,7 +160,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "pin",
-		"q": "Karkamış Antik Kenti Türkiye haritasında nerede?",
+		"q": "Karkamış Antik Kenti'ni haritada bulabilir misin?",
 		"lat": 36.83,
 		"lon": 38.02,
 		"r": 12,

@@ -30,25 +30,11 @@ export default [
 		"kaynak": "Q1143135"
 	},
 	{
-		"id": "cog-wd-dag-Q1953975",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Musa Dağı hangi ilin sınırları içinde yükselir?",
-		"a": [
-			"Hatay",
-			"Adana",
-			"Antalya",
-			"Kahramanmaraş"
-		],
-		"kaynak": "Q1953975"
-	},
-	{
 		"id": "cog-wd-dag-Q3022142",
 		"cat": "cografya",
 		"diff": 3,
 		"type": "choice",
-		"q": "Aladağlar'ın en yüksek zirvesi Demirkazık Dağı hangi ilin sınırları içinde?",
+		"q": "Aladağlar'ın ünlü zirvelerinden Demirkazık Dağı hangi ilin sınırları içinde?",
 		"a": [
 			"Niğde",
 			"Mersin",
@@ -76,7 +62,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Kayış Dağı'na tırmanmak isteyen biri hangi ile gitmeli?",
+		"q": "Kayış Dağı hangi ilin sınırları içinde yükselir?",
 		"a": [
 			"İstanbul",
 			"Tekirdağ",
@@ -132,7 +118,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Kuş Cenneti Milli Parkı'nın bulunduğu Manyas Kuşgölü hangi ilde bulunur?",
+		"q": "Kuşcenneti Millî Parkı'nın bulunduğu Manyas Kuşgölü hangi ilde bulunur?",
 		"a": [
 			"Balıkesir",
 			"Manisa",
@@ -160,7 +146,7 @@ export default [
 		"cat": "cografya",
 		"diff": 2,
 		"type": "choice",
-		"q": "Antik adı Apolyont olan Uluabat Gölü hangi ilimizde yer alır?",
+		"q": "Eski adı Apolyont olan Uluabat Gölü hangi ilimizde yer alır?",
 		"a": [
 			"Bursa",
 			"Sakarya",
@@ -258,7 +244,7 @@ export default [
 		"cat": "cografya",
 		"diff": 1,
 		"type": "choice",
-		"q": "\"Bin bir kilise şehri\" denen Ani Ören Yeri hangi ilimizde yer alır?",
+		"q": "\"Binbir kilise şehri\" denen Ani Ören Yeri hangi ilimizde yer alır?",
 		"a": [
 			"Kars",
 			"Iğdır",

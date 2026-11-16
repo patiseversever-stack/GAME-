@@ -202,6 +202,10 @@ const KALIP_IP = [(a, h) => `${h} ${a} hangi ilimizde yer alır?`, (a, h) => `${
 // Haritada bul: en az 4 kelime, çıplak "X nerede?" yok (test/harita.test.mjs)
 const PIN = [(a) => `${a} Türkiye haritasında nerede?`, (a) => `${ekle(a, 'i')} haritada bulabilir misin?`];
 const PIN_IP = [(a, h) => `${h} ${a} haritada nerede?`];
+// Haritada bul yapılmaz (bağımsız denetim, 16 Kasım): doğru sayılma eşiği ~27 km. Kayış Dağı'nda bu bütün İstanbul'u kapsar;
+// Küçükçekmece–Büyükçekmece (18 km) ve Troya–Alexandria Troas (24 km) birbirinin yerine doğru sayılır (birini bırak); Tahtalı
+// Dağı adını Kayseri–Adana'daki Tahtalı Dağları da taşır.
+const PIN_YOK = new Set(['Q6056994', 'Q1797436', 'Q1393407', 'Q2388359']);
 
 const secimOf = new Map();
 const dagit = (liste, kaliplarOf, ipKaliplar) => {
@@ -284,7 +288,7 @@ for (const s of secim) {
 	else test.push(q), rapor.zorluk[s.diff]++, (rapor.tur[s.tur] = (rapor.tur[s.tur] || 0) + 1);
 	// haritada bul: koordinat oyun haritasında kendi ilinde olmalı; bankada aynı yeri soran harita sorusu varsa yapılmaz;
 	// iç bölgede çapasız 2–3'lük yer yapılmaz (ilçe pilotu kuralı)
-	if (o.lat == null) continue;
+	if (o.lat == null || PIN_YOK.has(s.qid)) continue;
 	const ilde = haritadaIlde(o.lat, o.lon, s.il);
 	if (!ilde) {
 		rapor.atlanan.push(`${s.ad} (harita): nokta oyun haritasında ${s.il} çokgeninin dışında`);

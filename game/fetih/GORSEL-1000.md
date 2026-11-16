@@ -113,7 +113,7 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-575 | 1 · bulanık | Neredeyse hiç tüyü olmayan, kırışık derili, iri kulaklı bu kedi ırkının adı nedir? | **Sfenks** |
 | GK-576 | 1 · yakın çekim | Basık yüzü, kısa burnu ve yerlere değen kabarık tüyleriyle tanınan kedi ırkının adı ne? | **İran kedisi** |
 | GK-577 | 1 · siluet | İskoçya'nın kuzeyindeki adalardan çıkan, kısa bacaklı ama boyuna göre çok güçlü at ırkı hangisidir? | **Shetland midillisi** |
-| GK-578 | 2 · siluet | Uzun gövdeli, kısacık bacaklı bu Alman köpeği önce hangi hayvanı yuvasında avlamak için yetiştirildi? | **Porsuk** |
+| GK-578 | 2 · siluet | Uzun gövdeli, kısacık bacaklı bu Alman köpeği aslen hangi hayvanı yuvasında avlamak için yetiştirildi? | **Porsuk** |
 | GK-579 | 2 · yakın çekim | Aslan yelesini andıran tüyleri ve mavi-siyah diliyle tanınan Çin kökenli köpek hangisidir? | **Chow chow** |
 | GK-580 | 2 · bulanık | Anadolu'da tavşan avında kullanılan, ince uzun bacaklı, kulakları püsküllü av köpeği hangisi? | **Türk tazısı** |
 | GK-581 | 2 · bulanık | Adını Türkiye'nin başkentinden alan, ipek gibi beyaz tüylü, zarif kedi ırkına ne ad verilir? | **Ankara kedisi** |
@@ -266,7 +266,7 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-698 | 2 · bulanık | Kuru buzun hiç sıvılaşmadan doğrudan gaza dönüşmesini sağlayan bu hâl değişimine ne denir? | **Süblimleşme** |
 | GK-699 | 2 · bulanık | Suyun ince cam borularda kendiliğinden yükselip en dar boruda en yükseğe çıkması hangi olaydır? | **Kılcallık** |
 | GK-700 | 2 · yakın çekim | Sudan ağır çelik ataşın batmadan su yüzeyinde durabilmesini sağlayan olay hangisidir? | **Yüzey gerilimi** |
-| GK-701 | 2 · bulanık | Suyun elektrikle ayrıştırıldığı bu deneyde, hacmi öbüründen iki kat fazla toplanan gaz hangisidir? | **Hidrojen** |
+| GK-701 | 2 · bulanık | Suyun elektrikle ayrıştırıldığı bu deneyde, hacmi öbürünün iki katı olan gaz hangisidir? | **Hidrojen** |
 | GK-702 | 2 · bulanık | Cam kürenin içinde dallanan bu renkli ışık iplikleri, maddenin hangi hâline örnektir? | **Plazma** |
 | GK-703 | 2 · siluet | Tepesindeki halkadan havaya yıldırım gibi kıvılcımlar saçan, yüksek gerilim üreten bu düzeneğin adı ne? | **Tesla bobini** |
 | GK-704 | 2 · yakın çekim | Sabun köpüğünün ince zarında dönen bu gökkuşağı renkleri hangi ışık olayından kaynaklanır? | **Girişim** |
@@ -566,7 +566,7 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-1343 | 3 · bulanık | James Northcote'un 1803'te resmettiği bu İngiliz hekim hangisi? | **Edward Jenner** |
 | GK-1344 | 2 · bulanık | Viktorya dönemi İngiltere'sinden bu hemşire ve istatistikçinin adı ne? | **Florence Nightingale** |
 | GK-1345 | 1 · bulanık | 1909 tarihli bu fotoğraftaki havacılık öncüsü kardeşler kimdir? | **Wright kardeşler** |
-| GK-1346 | 2 · bulanık | 1919'da fotoğraflanan bu Amerikalı otomobil sanayicisinin adı ne? | **Henry Ford** |
+| GK-1346 | 2 · bulanık | Adı dünyaca bilinen bir hastalığa verilmiş bu Türk dermatoloğun adı ne? | **Hulusi Behçet** |
 | GK-1347 | 2 · bulanık | 1904 Nobel Tıp Ödülü'nü alan bu ak sakallı Rus fizyolog kim? | **Ivan Pavlov** |
 | GK-1348 | 3 · bulanık | Mathew Brady'nin fotoğrafını çektiği bu Amerikalı ressam ve mucit kimdir? | **Samuel Morse** |
 | GK-1349 | 3 · bulanık | Joseph Stieler'in 1843'te resmettiği bu Alman doğa bilimci ve gezgin kim? | **Alexander von Humboldt** |
@@ -622,7 +622,7 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | YP-144 | Kazı + Gölge | İnce Minareli Medrese · Konya (42) | Bu medrese hangisi? | **İnce Minareli Medrese** |
 | YP-145 | Kazı | Nasreddin Hoca Türbesi · Konya (42) | Bu türbe kime ait? | **Nasreddin Hoca** |
 | YP-146 | Kazı + Gölge | Gök Medrese · Sivas (58) | Bu Selçuklu medresesi hangisi? | **Gök Medrese** |
-| YP-147 | Kazı | Midas Anıtı · Eskişehir (26) | Bu kaya anıtı hangi uygarlığın? | **Frigler** |
+| YP-147 | Kazı | Midas Anıtı · Eskişehir (26) | Bu kaya anıtı hangi uygarlığa ait? | **Frigler** |
 | YP-148 | Kazı + Gölge | Trabzon Ayasofya · Trabzon (61) | Karadeniz’deki bu yapı hangisi? | **Trabzon Ayasofya** |
 | YP-149 | Kazı + Gölge | Zilkale · Rize (53) | Bu kalenin adı ne? | **Zilkale** |
 | YP-150 | Kazı | Şenyuva Köprüsü · Rize (53) | Bu köprü hangi derenin üzerinde? | **Fırtına Deresi** |

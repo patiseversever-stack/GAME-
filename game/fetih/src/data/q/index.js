@@ -50,9 +50,13 @@ import veri from './veri.js'; // il verisinden üretilen sorular (tools/soru/ver
 import wdIlce from './wd/ilce.js';
 import wdDogum from './wd/dogum.js';
 import wdIlcePin from './wd/ilce_pin.js';
+// Aşama 2, aile 1: Türkiye derin (dağ, göl, antik kent → hangi ilde; baraj → hangi nehirde; haritada bul). Bağımsız denetim
+// 16 Kasım 2026: 92 soruda 1 hata (düzeltildi). Üretici: tools/veri/aile/derin.mjs.
+import wdDerin from './wd/derin.js';
+import wdDerinPin from './wd/derin_pin.js';
 
-export const ALL = [...tarih, ...cografya, ...spor, ...bilim, ...sanat, ...eglence, ...ekTarih, ...ekCografya, ...ekSpor, ...ekBilim, ...ekSanat, ...ekEglence, ...ek2Tarih, ...ek2Cografya, ...ek2Spor, ...ek2Bilim, ...ek2Sanat, ...ek2Eglence, ...ek3Tarih, ...ek3Cografya, ...ek3Spor, ...ek3Bilim, ...ek3Sanat, ...ek3Eglence, ...ek4Tarih, ...ek4Cografya, ...ek4Spor, ...ek4Bilim, ...ek4Sanat, ...ek4Eglence, ...ek5Tarih, ...ek5Cografya, ...ek5Spor, ...ek5Bilim, ...ek5Sanat, ...ek5Eglence, ...ek6Tarih, ...ek6Cografya, ...ek6Spor, ...ek6Bilim, ...ek6Sanat, ...ek6Eglence, ...ekTahmin, ...veri, ...wdIlce, ...wdDogum];
+export const ALL = [...tarih, ...cografya, ...spor, ...bilim, ...sanat, ...eglence, ...ekTarih, ...ekCografya, ...ekSpor, ...ekBilim, ...ekSanat, ...ekEglence, ...ek2Tarih, ...ek2Cografya, ...ek2Spor, ...ek2Bilim, ...ek2Sanat, ...ek2Eglence, ...ek3Tarih, ...ek3Cografya, ...ek3Spor, ...ek3Bilim, ...ek3Sanat, ...ek3Eglence, ...ek4Tarih, ...ek4Cografya, ...ek4Spor, ...ek4Bilim, ...ek4Sanat, ...ek4Eglence, ...ek5Tarih, ...ek5Cografya, ...ek5Spor, ...ek5Bilim, ...ek5Sanat, ...ek5Eglence, ...ek6Tarih, ...ek6Cografya, ...ek6Spor, ...ek6Bilim, ...ek6Sanat, ...ek6Eglence, ...ekTahmin, ...veri, ...wdIlce, ...wdDogum, ...wdDerin];
 /** Harita dışı dosyalardan gelen haritada bul (pin) soruları: bank.js q/harita.js ile birlikte alır. */
-export const PIN_EK = [...wdIlcePin];
+export const PIN_EK = [...wdIlcePin, ...wdDerinPin];
 export { tarih, cografya, spor, bilim, sanat, eglence };
 export default ALL;
