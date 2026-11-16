@@ -177,7 +177,27 @@ const KALIP = {
 		(a) => `${ekle(a, 'in')} kalıntıları hangi ilimizde?`,
 		(a) => `Haritada ${ekle(a, 'i')} hangi ilde bulursun?`,
 	],
+	baraj: [
+		(a) => `${a} hangi nehir üzerinde kurulu?`,
+		(a) => `${a} hangi nehrin suyunu biriktirir?`,
+		(a) => `${ekle(a, 'in')} kurulduğu nehir hangisi?`,
+		(a) => `${a} hangi akarsu üzerindedir?`,
+	],
 };
+// Baraj sorusunun cevabı nehirdir; çeldirici yakın havzalardan (sırayla denenir, kararlı karışık)
+const NEHIR_YAKIN = {
+	Fırat: ['Dicle', 'Ceyhan', 'Seyhan', 'Aras', 'Kızılırmak'],
+	Dicle: ['Fırat', 'Aras', 'Ceyhan', 'Seyhan'],
+	Kızılırmak: ['Yeşilırmak', 'Sakarya', 'Seyhan', 'Fırat'],
+	Yeşilırmak: ['Kızılırmak', 'Çoruh', 'Sakarya', 'Fırat'],
+	Çoruh: ['Aras', 'Yeşilırmak', 'Fırat', 'Kızılırmak'],
+	Sakarya: ['Kızılırmak', 'Gediz', 'Yeşilırmak', 'Büyük Menderes'],
+	Seyhan: ['Ceyhan', 'Göksu', 'Kızılırmak', 'Fırat'],
+	Ceyhan: ['Seyhan', 'Fırat', 'Göksu', 'Dicle'],
+	Gediz: ['Büyük Menderes', 'Sakarya', 'Küçük Menderes', 'Göksu'],
+	'Büyük Menderes': ['Gediz', 'Küçük Menderes', 'Sakarya', 'Göksu'],
+};
+const KALIP_IP_BARAJ = [(a, h) => `${h} ${a} hangi nehir üzerinde?`];
 const KALIP_IP = [(a, h) => `${h} ${a} hangi ilimizde yer alır?`, (a, h) => `${h} ${a} hangi ilin sınırları içinde?`, (a, h) => `${h} ${a} hangi ilde bulunur?`];
 // Haritada bul: en az 4 kelime, çıplak "X nerede?" yok (test/harita.test.mjs)
 const PIN = [(a) => `${a} Türkiye haritasında nerede?`, (a) => `${ekle(a, 'i')} haritada bulabilir misin?`];
@@ -198,7 +218,8 @@ const dagit = (liste, kaliplarOf, ipKaliplar) => {
 		grup.forEach((q, i) => {
 			const s = secimOf.get(q);
 			const duz = kaliplarOf(s.tur);
-			const ana = k.startsWith('ip:') ? ipKaliplar.map((f) => f(s.ad, s.ipucu)) : duz.map((f) => f(s.ad));
+			const ipK = s.tur === 'baraj' ? KALIP_IP_BARAJ : ipKaliplar;
+			const ana = k.startsWith('ip:') ? ipK.map((f) => f(s.ad, s.ipucu)) : duz.map((f) => f(s.ad));
 			const adaylar = [...ana.map((_, j) => ana[(i + j) % ana.length]), ...duz.map((f) => f(s.ad))];
 			q.q = adaylar.find((m) => !ihlaller({ ...q, q: m }).length) || q.q;
 		});
@@ -217,6 +238,25 @@ for (const s of secim) {
 	if (!o) {
 		rapor.atlanan.push(`${s.ad} (${s.qid}): ham/derin.json'da yok`);
 		continue;
+	}
+	if (s.tur === 'baraj') {
+		const yakin = NEHIR_YAKIN[s.il];
+		if (!yakin || ![1, 2, 3].includes(s.diff)) {
+			rapor.atlanan.push(`${s.ad}: nehir ya da zorluk geçersiz (${s.il}, ${s.diff})`);
+			continue;
+		}
+		const yanlis = karistir(yakin.slice(0, 3), h32(s.qid)).filter((n) => !s.yasak.includes(n));
+		const arama = cekirdek(s.ad);
+		const bankaNehir = bankadaIl(arama, s.il);
+		const q = { id: `cog-wd-baraj-${s.qid}`, cat: 'cografya', diff: s.diff, type: 'choice', q: KALIP.baraj[0](s.ad), a: [s.il, ...yanlis], kaynak: s.qid };
+		if (ihlaller(q).length || q.a.length !== 4) {
+			rapor.atlanan.push(`${s.ad}: ${q.a.length !== 4 ? 'çeldirici yetmedi' : 'uzunluk'}`);
+			continue;
+		}
+		secimOf.set(q, s);
+		if (bankaNehir) rapor.bankada.push(`${s.ad}: ${bankaNehir}`);
+		else test.push(q), rapor.zorluk[s.diff]++, (rapor.tur[s.tur] = (rapor.tur[s.tur] || 0) + 1);
+		continue; // baraj haritada bul sorusu yok (gövde çoğu kez il sınırında)
 	}
 	const p = ilOf.get(s.il);
 	if (!p || ![1, 2, 3].includes(s.diff)) {
@@ -275,7 +315,7 @@ mkdirSync('src/data/q/wd', { recursive: true });
 const bas = (ne) =>
 	`// ${ne} (SORU-100K.md Aşama 2, aile 1: Türkiye derin). ÜRETİLDİ: tools/veri/aile/derin.mjs — elle düzeltme yapma,\n` +
 	`// seçimi tools/veri/aile/derin_secim.txt'de değiştirip yeniden üret. Koordinat Wikidata'dan (CC0), il elle doğrulandı.\n`;
-writeFileSync('src/data/q/wd/derin.js', bas('Dağ, göl ve antik kent hangi ilde') + 'export default ' + JSON.stringify(test, null, '\t') + ';\n');
+writeFileSync('src/data/q/wd/derin.js', bas('Dağ, göl ve antik kent hangi ilde; baraj hangi nehirde') + 'export default ' + JSON.stringify(test, null, '\t') + ';\n');
 writeFileSync('src/data/q/wd/derin_pin.js', bas('Dağ, göl ve antik kent haritada bul') + 'export default ' + JSON.stringify(harita, null, '\t') + ';\n');
 console.log(JSON.stringify({ ...rapor, atlanan: rapor.atlanan.length, bankada: rapor.bankada.length, bankadaHarita: rapor.bankadaHarita.length }, null, 1));
 console.log('  bankada ili zaten sorulan/açılan: ' + rapor.bankada.join('; '));

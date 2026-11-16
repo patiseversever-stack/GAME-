@@ -9,7 +9,7 @@
 # - Yükseklik sorusu yok: kaynaklar arasında 5–55 m fark var (Kaçkar 3932/3937, Erciyes 3916/3917, Nemrut 2150/2206).
 # - İpucu kesin bilgi, sıfat öbeği; ilin adını içermez, bankadaki başka sorunun cevabını açmaz (tools/soru/ipucu_acik.mjs).
 # denge (16 Kasım): zor payı %50 çıktı (sınır %30); yalnız yöresinin bileceği 25 yer çıkarıldı (pilotun kuralı):
-#   Artos Dağı, Göllü Dağ, Yamanlar Dağı, Erek Dağı, Nif Dağı, Işıklar Dağı, Aktaş Gölü, Akdoğan Gölü, Erçek Gölü, Boraboy Gölü, Eber Gölü, Suğla Gölü, Arin Gölü, Seyfe Gölü, Gölcük Gölü, Narlıgöl, Keşiş Gölü, Arykanda Antik Kenti, Limyra Antik Kenti, Selge Antik Kenti, Klazomenai Antik Kenti, Erythrai Antik Kenti, Şapinuva, Hacılar Höyük, Anemurium Antik Kenti
+#   (barajlardan da Çatalan, Kesikköprü, Gökçekaya) Artos Dağı, Göllü Dağ, Yamanlar Dağı, Erek Dağı, Nif Dağı, Işıklar Dağı, Aktaş Gölü, Akdoğan Gölü, Erçek Gölü, Boraboy Gölü, Eber Gölü, Suğla Gölü, Arin Gölü, Seyfe Gölü, Gölcük Gölü, Narlıgöl, Keşiş Gölü, Arykanda Antik Kenti, Limyra Antik Kenti, Selge Antik Kenti, Klazomenai Antik Kenti, Erythrai Antik Kenti, Şapinuva, Hacılar Höyük, Anemurium Antik Kenti
 # --- dağ
 Q126804 | dag | Erciyes Dağı | Kayseri | 1 | Kayak merkezi olan sönmüş yanardağ
 Q925688 | dag | Uludağ | Bursa | 1 | Eski adı Keşiş Dağı olan
@@ -102,3 +102,24 @@ Q447212 | antik | Altıntepe | Erzincan | 3 | Urartu kalıntılarıyla bilinen
 Q272699 | antik | Çavuştepe | Van | 3 | Urartu sarayının bulunduğu
 Q794830 | antik | Aşıklı Höyük | Aksaray | 3
 Q579468 | antik | Pisidia Antiokheia Antik Kenti | Isparta | 3 |  | Hatay
+# --- baraj: il yerine NEHİR sorulur (4. alan nehirdir; büyük barajların çoğu iki il sınırında). Nehir elle doğrulandı:
+#     Wikidata'da çoğu barajın nehir bağı (P206) boş. Adında nehir geçen baraj (Seyhan, Dicle, Batman) alınmaz.
+Q753776 | baraj | Atatürk Barajı | Fırat | 1
+Q1737672 | baraj | Keban Barajı | Fırat | 1
+Q152556 | baraj | Karakaya Barajı | Fırat | 2
+Q1374176 | baraj | Birecik Barajı | Fırat | 2
+Q1927376 | baraj | Karkamış Barajı | Fırat | 2
+Q1659316 | baraj | Ilısu Barajı | Dicle | 2
+Q2260764 | baraj | Hirfanlı Barajı | Kızılırmak | 2
+Q447172 | baraj | Altınkaya Barajı | Kızılırmak | 2
+Q738309 | baraj | Derbent Barajı | Kızılırmak | 3
+Q8062008 | baraj | Yusufeli Barajı | Çoruh | 2 | Türkiye'nin en yüksek gövdeli barajı olan
+Q1200190 | baraj | Deriner Barajı | Çoruh | 2
+Q256099 | baraj | Borçka Barajı | Çoruh | 2
+Q1089596 | baraj | Sarıyar Barajı | Sakarya | 2
+Q1588084 | baraj | Hasan Uğurlu Barajı | Yeşilırmak | 2
+Q2885305 | baraj | Suat Uğurlu Barajı | Yeşilırmak | 3
+Q1090378 | baraj | Aslantaş Barajı | Ceyhan | 2
+Q1548059 | baraj | Menzelet Barajı | Ceyhan | 3
+Q1090380 | baraj | Adıgüzel Barajı | Büyük Menderes | 3
+Q1089508 | baraj | Demirköprü Barajı | Gediz | 3

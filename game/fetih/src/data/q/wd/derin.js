@@ -1,4 +1,4 @@
-// Dağ, göl ve antik kent hangi ilde (SORU-100K.md Aşama 2, aile 1: Türkiye derin). ÜRETİLDİ: tools/veri/aile/derin.mjs — elle düzeltme yapma,
+// Dağ, göl ve antik kent hangi ilde; baraj hangi nehirde (SORU-100K.md Aşama 2, aile 1: Türkiye derin). ÜRETİLDİ: tools/veri/aile/derin.mjs — elle düzeltme yapma,
 // seçimi tools/veri/aile/derin_secim.txt'de değiştirip yeniden üret. Koordinat Wikidata'dan (CC0), il elle doğrulandı.
 export default [
 	{
@@ -854,5 +854,145 @@ export default [
 			"Mersin"
 		],
 		"kaynak": "Q579468"
+	},
+	{
+		"id": "cog-wd-baraj-Q1374176",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "choice",
+		"q": "Birecik Barajı hangi nehir üzerinde kurulu?",
+		"a": [
+			"Fırat",
+			"Ceyhan",
+			"Dicle",
+			"Seyhan"
+		],
+		"kaynak": "Q1374176"
+	},
+	{
+		"id": "cog-wd-baraj-Q1927376",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "choice",
+		"q": "Karkamış Barajı hangi nehrin suyunu biriktirir?",
+		"a": [
+			"Fırat",
+			"Ceyhan",
+			"Seyhan",
+			"Dicle"
+		],
+		"kaynak": "Q1927376"
+	},
+	{
+		"id": "cog-wd-baraj-Q2260764",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "choice",
+		"q": "Hirfanlı Barajı hangi nehir üzerinde kurulu?",
+		"a": [
+			"Kızılırmak",
+			"Sakarya",
+			"Seyhan",
+			"Yeşilırmak"
+		],
+		"kaynak": "Q2260764"
+	},
+	{
+		"id": "cog-wd-baraj-Q447172",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "choice",
+		"q": "Altınkaya Barajı hangi akarsu üzerindedir?",
+		"a": [
+			"Kızılırmak",
+			"Sakarya",
+			"Yeşilırmak",
+			"Seyhan"
+		],
+		"kaynak": "Q447172"
+	},
+	{
+		"id": "cog-wd-baraj-Q738309",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "choice",
+		"q": "Derbent Barajı hangi nehir üzerinde kurulu?",
+		"a": [
+			"Kızılırmak",
+			"Seyhan",
+			"Sakarya",
+			"Yeşilırmak"
+		],
+		"kaynak": "Q738309"
+	},
+	{
+		"id": "cog-wd-baraj-Q256099",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "choice",
+		"q": "Borçka Barajı hangi akarsu üzerindedir?",
+		"a": [
+			"Çoruh",
+			"Yeşilırmak",
+			"Aras",
+			"Fırat"
+		],
+		"kaynak": "Q256099"
+	},
+	{
+		"id": "cog-wd-baraj-Q1089596",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "choice",
+		"q": "Sarıyar Barajı'nın kurulduğu nehir hangisi?",
+		"a": [
+			"Sakarya",
+			"Gediz",
+			"Yeşilırmak",
+			"Kızılırmak"
+		],
+		"kaynak": "Q1089596"
+	},
+	{
+		"id": "cog-wd-baraj-Q1090378",
+		"cat": "cografya",
+		"diff": 2,
+		"type": "choice",
+		"q": "Aslantaş Barajı'nın kurulduğu nehir hangisi?",
+		"a": [
+			"Ceyhan",
+			"Seyhan",
+			"Göksu",
+			"Fırat"
+		],
+		"kaynak": "Q1090378"
+	},
+	{
+		"id": "cog-wd-baraj-Q1090380",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "choice",
+		"q": "Adıgüzel Barajı hangi nehrin suyunu biriktirir?",
+		"a": [
+			"Büyük Menderes",
+			"Küçük Menderes",
+			"Sakarya",
+			"Gediz"
+		],
+		"kaynak": "Q1090380"
+	},
+	{
+		"id": "cog-wd-baraj-Q1089508",
+		"cat": "cografya",
+		"diff": 3,
+		"type": "choice",
+		"q": "Demirköprü Barajı hangi nehrin suyunu biriktirir?",
+		"a": [
+			"Gediz",
+			"Sakarya",
+			"Küçük Menderes",
+			"Büyük Menderes"
+		],
+		"kaynak": "Q1089508"
 	}
 ];
