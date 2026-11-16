@@ -1285,7 +1285,7 @@ export const SAMPLES = {
 		]),
 		KA('yn-kelimeavi-14', 'spor', 2, 'Türk sporunun yıldızları', [
 			['NAİM', '“Cep Herkülü” lakaplı halterci'],
-			['TÜRKOĞLU', 'NBA’de “Hedo” diye bilinen Hidayet …'],
+			['TÜRKOĞLU', 'NBA’da “Hedo” diye bilinen Hidayet …'],
 			['GAZOZ', 'Tokyo’da okçuluk altını alan Mete …'],
 		]),
 		KA('yn-kelimeavi-15', 'spor', 3, 'Olimpiyat branşları', [

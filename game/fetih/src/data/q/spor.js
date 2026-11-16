@@ -50,7 +50,7 @@ export default [
 	{ id: "spo-ch-055", cat: "spor", diff: 3, type: "choice", q: "1963'te Altın Top'u kazanan efsanevi kaleci Lev Yaşin hangi ülkenin oyuncusuydu?", a: ["Sovyetler Birliği", "Yugoslavya", "Çekoslovakya", "Macaristan"] },
 	{ id: "spo-ch-056", cat: "spor", diff: 3, type: "choice", q: "'Rumble in the Jungle' boks maçı 1974'te hangi ülkede yapıldı?", a: ["Zaire", "ABD", "Mısır", "Nijerya"] },
 	{ id: "spo-ch-095", cat: "spor", diff: 1, type: "choice", q: "Türkiye olimpiyatlarda en çok madalyayı hangi spor dalında kazanmıştır?", a: ["Güreş", "Halter", "Boks", "Atletizm"] },
-	{ id: "spo-ch-058", cat: "spor", diff: 3, type: "choice", q: "Hidayet Türkoğlu 2008'de NBA'de hangi ödülü aldı?", a: ["En Çok Gelişen Oyuncu", "En Değerli Oyuncu", "Yılın Savunmacısı", "Yılın Çaylağı"] },
+	{ id: "spo-ch-058", cat: "spor", diff: 3, type: "choice", q: "Hidayet Türkoğlu 2008'de NBA'da hangi ödülü aldı?", a: ["En Çok Gelişen Oyuncu", "En Değerli Oyuncu", "Yılın Savunmacısı", "Yılın Çaylağı"] },
 	{ id: "spo-ch-059", cat: "spor", diff: 3, type: "choice", q: "Türkiye, 2010 FIBA Dünya Şampiyonası finalinde hangi takıma yenildi?", a: ["ABD", "İspanya", "Litvanya", "Sırbistan"] },
 	{ id: "spo-ch-060", cat: "spor", diff: 3, type: "choice", q: "Anadolu Efes, 2021'de EuroLeague finalinde hangi takımı yendi?", a: ["Barcelona", "Real Madrid", "CSKA Moskova", "Olympiakos"] },
 	{ id: "spo-ch-061", cat: "spor", diff: 3, type: "choice", q: "Kenan Sofuoğlu hangi dalda dünya şampiyonluğu kazandı?", a: ["Motosiklet yarışı", "Otomobil rallisi", "Formula 1", "Jet ski"] },

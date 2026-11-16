@@ -108,7 +108,7 @@ export default [
 		f: [
 			{ t: 'Basketbolda smaç, oyunun icadından beri her ligde serbestti.', n: 'Yalan: ABD üniversite liginde 1967’den 1976’ya kadar yasaktı; kural dev Lew Alcindor’u frenlemek için konmuş sayılır.' },
 			{ t: 'Voleybol, basketboldan daha az yorucu bir oyun olsun diye icat edildi.', n: 'William Morgan 1895’te YMCA’daki yaşça büyük iş insanları için daha az temaslı, sakin bir oyun tasarladı.', k: ['Volleyball Hall of Fame: William G. Morgan', 'Britannica: Volleyball'] },
-			{ t: 'NBA’deki 24 saniye kuralı, sıkıcı maçları bitirmek için 1954’te geldi.', n: 'Önde olan takımlar topu oyalayıp maçı donduruyordu; kuralın ilk sezonunda maç başına sayı ortalaması belirgin arttı.', k: ['NBA.com: The shot clock', 'Wikipedia: Shot clock'] },
+			{ t: 'NBA’daki 24 saniye kuralı, sıkıcı maçları bitirmek için 1954’te geldi.', n: 'Önde olan takımlar topu oyalayıp maçı donduruyordu; kuralın ilk sezonunda maç başına sayı ortalaması belirgin arttı.', k: ['NBA.com: The shot clock', 'Wikipedia: Shot clock'] },
 		],
 		lie: 0,
 	},

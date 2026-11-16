@@ -87,10 +87,10 @@ export default [
 	{ id: "spo-ek-ch-2078", cat: "spor", diff: 2, type: "choice", q: "Fenerbahçe'yi 2007-08'de Şampiyonlar Ligi çeyrek finaline taşıyan Brezilyalı teknik direktör?", a: ["Zico", "Carlos Alberto Parreira", "Luis Felipe Scolari", "Roberto Carlos"] },
 	// ---------------------------------------------------------------- test: basketbol, tenis, golf
 	{ id: "spo-ek-ch-2079", cat: "spor", diff: 1, type: "choice", q: "Türk basketbolunun ilk Avrupa kupasını 1996'da Koraç Kupası'yla kazanan takım hangisidir?", a: ["Efes Pilsen", "Fenerbahçe", "Galatasaray", "Ülkerspor"] },
-	{ id: "spo-ek-ch-2080", cat: "spor", diff: 2, type: "choice", q: "NBA'de forma giyen ilk Türk basketbolcu kimdir?", a: ["Mirsad Türkcan", "Hidayet Türkoğlu", "Mehmet Okur", "İbrahim Kutluay"] },
+	{ id: "spo-ek-ch-2080", cat: "spor", diff: 2, type: "choice", q: "NBA'da forma giyen ilk Türk basketbolcu kimdir?", a: ["Mirsad Türkcan", "Hidayet Türkoğlu", "Mehmet Okur", "İbrahim Kutluay"] },
 	{ id: "spo-ek-ch-2081", cat: "spor", diff: 3, type: "choice", q: "NBA efsanesi Kareem Abdul-Jabbar'ın doğum adı nedir?", a: ["Lew Alcindor", "Chris Jackson", "Earl Monroe", "Lloyd Free"] },
 	{ id: "spo-ek-ch-2082", cat: "spor", diff: 2, type: "choice", q: "NBA Finalleri'nin en değerli oyuncusuna verilen ödül hangi efsanenin adını taşır?", a: ["Bill Russell", "Michael Jordan", "Larry Bird", "Magic Johnson"] },
-	{ id: "spo-ek-ch-2083", cat: "spor", diff: 2, type: "choice", q: "Michael Jordan 1995'te NBA'e döndüğünde ilk olarak hangi forma numarasını giydi?", a: ["45", "12", "33", "32"] },
+	{ id: "spo-ek-ch-2083", cat: "spor", diff: 2, type: "choice", q: "Michael Jordan 1995'te NBA'ya döndüğünde ilk olarak hangi forma numarasını giydi?", a: ["45", "12", "33", "32"] },
 	{ id: "spo-ek-ch-2084", cat: "spor", diff: 2, type: "choice", q: "1973'teki 'Cinsiyetler Savaşı' maçında Bobby Riggs'i yenen tenisçi kimdir?", a: ["Billie Jean King", "Margaret Court", "Chris Evert", "Martina Navratilova"] },
 	{ id: "spo-ek-ch-2085", cat: "spor", diff: 2, type: "choice", q: "Bir yılda dört Grand Slam'i kazanmayı 1962 ve 1969'da iki kez başaran tenisçi kimdir?", a: ["Rod Laver", "Roy Emerson", "Ken Rosewall", "Björn Borg"] },
 	{ id: "spo-ek-ch-2086", cat: "spor", diff: 2, type: "choice", q: "Golfte top birine çarpabilecekse uyarmak için ne diye bağırılır?", a: ["Fore", "Tee", "Par", "Eagle"] },
