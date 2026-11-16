@@ -59,7 +59,8 @@ const CSS = /* css */ `
 .gk-hd .kn svg{flex:none;width:20px;height:20px}
 /* konu adı ("Dinozor ve deniz canlıları") dar ekranda iki satıra iner: eskiden tek satırda sıkışıp puan sayacını
    ekrandan itiyor ("PUAN" kesiliyordu), cevapta oyuncu çipleri üstüne biniyordu */
-.gk-hd .kn{flex:1 1 auto;max-width:max-content}
+.gk-hd .kn{flex:1 1 auto;max-width:max-content;margin-left:3px}
+/* eğik kutunun (skewX -8°) alt sol köşesi iki satırlık etikette ~3 px sola taşar, atanın kırpmasına girer: 3 px pay */
 .gk-hd .kn b{min-width:0;white-space:normal;overflow-wrap:normal;font:italic 800 13px/1.08 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#fff}
 .gk-hd .md{flex:none;font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
 /* sayaç içeriğinden (çubuğun en az 22 px'i + sayı + PUAN) dar olmaz: konu adı daralıp iki satıra iner; eskiden sayaç
@@ -158,8 +159,9 @@ export const gozkarari = {
 		const konu = KONULAR[q.konu] || 'Göz Kararı';
 		// siluet zemini: sahne ışığı (çerçevenin rengine yakın sıcak ton)
 		const silBg = `<radialGradient id="sg${k}" cx=".5" cy=".45" r=".7"><stop offset="0" stop-color="#fff6dc"/><stop offset=".7" stop-color="#e9d6a8"/><stop offset="1" stop-color="#b99a62"/></radialGradient>`;
+		// konu adının "II" eki dar ekranda tek başına alt satıra düşmesin (BİLİM VE TEKNOLOJİ / II): bölünmez boşluk
 		el.innerHTML = `<div class="dn-gk">
-			<div class="gk-hd"><span class="kn">${EYE}<b>${esc(konu)}</b></span><span class="md">${MODE[q.mode] || ''}</span>
+			<div class="gk-hd"><span class="kn">${EYE}<b>${esc(konu).replace(/ (I{2,3})$/, '&nbsp;$1')}</b></span><span class="md">${MODE[q.mode] || ''}</span>
 				<span class="gk-pt"><i></i><b>100</b><small>PUAN</small></span></div>
 			<div class="gk-sw"><div class="gk-st"><svg class="sd" viewBox="0 0 400 300" aria-hidden="true"><path d="${fr.d}" fill="#02040c"/></svg><svg viewBox="0 0 400 300" role="img" aria-label="Göz Kararı görseli">
 				<defs>${fr.defs}<clipPath id="c${k}"><path d="${fr.d}"/></clipPath>
