@@ -129,3 +129,18 @@ oynayacak... kullanıcı önceki soruları tek tek çözmemeli, sürekli sorular
 | Seçim | En taze katman: maçtaki hiçbir insanın görmediği ve bilgisi bu maçta sorulmamış sorular; tükenen tip sırasını başka tipe verir; hepsi görülmüşse en eski görülen. Mancınık ile kaynak tahmin sorusu tek soru sayılır |
 | Çevrimiçi | İstemci 'hello' alınca `hafiza` eylemiyle özet gönderir (son 6000 kimlik); sunucu odadaki bütün insanların görmediğinden seçer |
 | Banka | Yeni sorular ek dosyalarda (`src/data/q/ek`, `src/data/ek`); ajanlar yazarken ara derleme `node build.mjs --ek-yok` |
+
+## Göz Kararı: ünlü kişi portreleri (16 Kasım 2026)
+
+Kullanıcı: "Bilim insanları resmi de olsa çok bilinen eski ve yeni", "bilim insanı da değil herhangi bir kişinin resim
+tahmini de olsun", "telifsiz sıkıntı olmayacak şekilde herkesin resmi olabilir".
+
+| Konu | Karar |
+|---|---|
+| Ne | Göz Kararı'nda "bu kim?" portre soruları; 100 madde, GK-1311–1410 (P13: Bilim insanları 40, P14: Tarihî kişiler, Yazarlar ve şairler, Ressamlar ve besteciler 20'şer) |
+| Kimler | Yalnız en geç 1955'te ölmüş kişiler (kişilik hakkı riski yok). Yaşayan ve yakın zamanda ölen yok (Hawking, Sagan, Cahit Arf gibi isimler bu yüzden çıkarıldı) |
+| Görsel kaynağı | Telifi dolmuş ünlü bir tablonun ya da fotoğrafın aslına sadık yeniden üretimi (ressam/fotoğrafçı en geç 1955'te ölmüş ya da 1930 öncesi yayın) |
+| Kimler yok | Otantik portresi olmayanlar (Mimar Sinan, Yunus Emre, Kleopatra…), Atatürk (hassasiyet), peygamberler ve din önderleri |
+| Soru | İpucu yüzü tanımayı gerektirir; kişiyi tek başına ele veren buluş ya da eser yazılmaz (ressam, yıl, dönem, meslek yazılabilir) |
+| Denetim | Görseller gelince her portre kişiye benziyor mu tek tek bakılır; benzemeyen maç dışı kalır |
+

@@ -64,6 +64,8 @@ CAT = {
     'Tablolar III': 'sanat', 'Tablolar IV': 'sanat', 'Ünlü heykeller': 'sanat', 'Mitoloji ve efsane yaratıkları': 'sanat',
     'Edebiyat ve masal sahneleri': 'sanat', 'Dans, tiyatro ve sahne sanatları': 'sanat', 'Dünya el sanatları': 'sanat',
     'Müzik aletleri II': 'sanat', 'Olimpiyat branşları ve ekipmanları': 'spor', 'Dünya sporları ve oyun alanları': 'spor',
+    # ünlü kişi portreleri (GK-1311–1410; kullanıcı kararı 16 Kasım: yalnız en geç 1955'te ölmüş kişiler, telifsiz kaynak)
+    'Bilim insanları': 'bilim', 'Tarihî kişiler': 'tarih', 'Yazarlar ve şairler': 'sanat', 'Ressamlar ve besteciler': 'sanat',
 }
 KONU = {k: i for i, k in enumerate(CAT)}
 MODE = {'bulanık': 'blur', 'yakın çekim': 'zoom', 'siluet': 'sil', 'ayrıntı': 'detail'}

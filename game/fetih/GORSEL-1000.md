@@ -1,4 +1,4 @@
-# 1000 YENİ GÖRSEL · özet
+# 1100 YENİ GÖRSEL · özet (1000 + 100 ünlü kişi portresi)
 
 Bu dosya senin için: her görselin numarası, oyunda hangi soru tipine gideceği, sorusu ve doğru cevabı.
 ChatGPT'ye bu dosyayı DEĞİL, aşağıdaki parça dosyalarını ver (her biri kendi içinde talimatlı; soru ve cevap yazmaz ki görsele yazı sızmasın).
@@ -12,6 +12,7 @@ ChatGPT'ye bu dosyayı DEĞİL, aşağıdaki parça dosyalarını ver (her biri 
 | `GORSEL-1000-K3.md` | GK-911 – GK-1110 | 200 | Göz Kararı | hazırlanıyor |
 | `GORSEL-1000-K4.md` | GK-1111 – GK-1310 | 200 | Göz Kararı | hazırlanıyor |
 | `GORSEL-1000-K5.md` | YP-101 – YP-300 | 200 | Kazı Kazan + Gölge Oyunu | `Gorsel-1000-K5.zip` |
+| `GORSEL-1000-K6.md` | GK-1311 – GK-1410 | 100 | Göz Kararı (ünlü kişi portreleri) | hazırlanıyor |
 
 **Kullanım:** her parça için ChatGPT'de yeni bir sohbet aç, parça dosyasını ekle ve "Talimatı uygula, başla" yaz. Durursa "devam" yaz. Bitince verdiği ZIP'i bana gönder.
 
@@ -23,6 +24,53 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 - **Kazı Kazan:** yapı folyonun altındadır; kazıdıkça görünür, 4 şıktan biri seçilir.
 - **Gölge Oyunu:** yapının yalnız gölgesi Karagöz perdesine düşer; üç ipucu sırayla açılır. Gölgesi ayırt edilemeyen yapı yalnız Kazı Kazan'a gider.
 
+## Göz Kararı
+
+
+### Bilim insanları
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1311 | 1 · bulanık | 1689'da Godfrey Kneller'ın resmettiği bu İngiliz bilginin adı ne? | **Isaac Newton** |
+| GK-1312 | 1 · bulanık | Floransa saray ressamı Sustermans'ın 1636'da resmettiği yaşlı gökbilimci kimdir? | **Galileo Galilei** |
+| GK-1313 | 1 · bulanık | Otoportresi olduğu kabul edilen bu kırmızı tebeşir çizim hangi Rönesans dehasının? | **Leonardo da Vinci** |
+| GK-1314 | 1 · bulanık | John Collier'ın 1881'de resmettiği bu ak sakallı doğa bilimci kim? | **Charles Darwin** |
+| GK-1315 | 2 · bulanık | Doğduğu kent Toruń'da saklanan bu eski portredeki gökbilimci hangisi? | **Nicolaus Copernicus** |
+| GK-1316 | 3 · bulanık | 1610 tarihli bu portredeki kırmalı yakalı Alman gökbilimci kimdir? | **Johannes Kepler** |
+| GK-1317 | 2 · bulanık | Görseldeki 17. yüzyıl Fransız bilgininin adı hangi birime verilmiştir? | **pascal** |
+| GK-1318 | 3 · ayrıntı | Jacques-Louis David'in eşiyle birlikte resmettiği bu kimyager kimdir? | **Antoine Lavoisier** |
+| GK-1319 | 3 · bulanık | Thomas Phillips'in resmettiği bu İngiliz bilim insanının adı hangi birime verilmiştir? | **farad** |
+| GK-1320 | 1 · bulanık | Portresi 100 dolarlık banknotta da yer alan bu Amerikalı devlet adamı ve bilgin kim? | **Benjamin Franklin** |
+| GK-1321 | 2 · bulanık | Brno'daki manastırda yaşamış bu keşiş ve bilim insanının adı ne? | **Gregor Mendel** |
+| GK-1322 | 2 · ayrıntı | Albert Edelfelt'in 1885'te laboratuvarında resmettiği bilim insanı hangisi? | **Louis Pasteur** |
+| GK-1323 | 2 · bulanık | İlya Repin'in akademik cüppeyle resmettiği bu Rus kimyager kimdir? | **Dmitri Mendeleyev** |
+| GK-1324 | 3 · bulanık | Eski 10 Alman markında da portresi bulunan, takkeli bu matematikçi kim? | **Carl Friedrich Gauss** |
+| GK-1325 | 1 · bulanık | Paris'te çalışmış Polonya doğumlu bu bilim insanı kimdir? | **Marie Curie** |
+| GK-1326 | 1 · bulanık | Menlo Park'taki laboratuvarıyla ünlü bu Amerikalı mucidin adı ne? | **Thomas Edison** |
+| GK-1327 | 1 · bulanık | Ferdinand Schmutzer'in 1921'de Viyana'da çektiği fotoğraftaki fizikçi kim? | **Albert Einstein** |
+| GK-1328 | 1 · bulanık | Napoleon Sarony'nin 1890'da fotoğrafını çektiği Sırp asıllı mucit hangisi? | **Nikola Tesla** |
+| GK-1329 | 1 · bulanık | Elinde purosuyla görülen bu Viyanalı hekim ve düşünürün adı ne? | **Sigmund Freud** |
+| GK-1330 | 2 · bulanık | Portresi 50 sterlinlik İngiliz banknotunda yer alan bu matematikçi hangisi? | **Alan Turing** |
+| GK-1331 | 2 · bulanık | Laboratuvarında bir petri kabını ışığa tutan bu bakteriyolog hangisi? | **Alexander Fleming** |
+| GK-1332 | 2 · bulanık | Emil Österman'ın tablosundaki bu sakallı İsveçli mucit kimdir? | **Alfred Nobel** |
+| GK-1333 | 2 · bulanık | İlk Nobel Fizik Ödülü'nü 1901'de alan bu Alman fizikçinin adı ne? | **Wilhelm Röntgen** |
+| GK-1334 | 2 · bulanık | Adı bir doğa sabitine verilmiş, kel ve bıyıklı bu Alman fizikçi kim? | **Max Planck** |
+| GK-1335 | 1 · bulanık | Bu fotoğraftaki ak sakallı, İskoç asıllı mucit kimdir? | **Alexander Graham Bell** |
+| GK-1336 | 3 · bulanık | Bu Yeni Zelanda doğumlu fizikçi Nobel'i hangi dalda aldı? | **Kimya** |
+| GK-1337 | 3 · bulanık | Boş bir kara tahtanın önünde görülen bu İtalyan fizikçi kim? | **Enrico Fermi** |
+| GK-1338 | 3 · bulanık | Kablosuz telgraf aygıtlarının yanında görülen bu İtalyan mucidin adı ne? | **Guglielmo Marconi** |
+| GK-1339 | 3 · bulanık | Gözlüklü ve ak sakallı bu Alman hekim ve mikrobiyolog kimdir? | **Robert Koch** |
+| GK-1340 | 3 · bulanık | Dev bir teleskobun başında piposuyla görülen bu Amerikalı gökbilimci kim? | **Edwin Hubble** |
+| GK-1341 | 3 · bulanık | Jakob Handmann'ın 1753'te resmettiği, sarık benzeri başlıklı bu matematikçi kim? | **Leonhard Euler** |
+| GK-1342 | 3 · bulanık | Caspar Netscher'in 1671'de resmettiği bu Hollandalı bilgin kimdir? | **Christiaan Huygens** |
+| GK-1343 | 3 · bulanık | James Northcote'un 1803'te resmettiği bu İngiliz hekim hangisi? | **Edward Jenner** |
+| GK-1344 | 2 · bulanık | Viktorya dönemi İngiltere'sinden bu hemşire ve istatistikçinin adı ne? | **Florence Nightingale** |
+| GK-1345 | 1 · bulanık | 1909 tarihli bu fotoğraftaki havacılık öncüsü kardeşler kimdir? | **Wright kardeşler** |
+| GK-1346 | 2 · bulanık | 1919'da fotoğraflanan bu Amerikalı otomobil sanayicisinin adı ne? | **Henry Ford** |
+| GK-1347 | 2 · bulanık | 1904 Nobel Tıp Ödülü'nü alan bu ak sakallı Rus fizyolog kim? | **Ivan Pavlov** |
+| GK-1348 | 3 · bulanık | Mathew Brady'nin fotoğrafını çektiği bu Amerikalı ressam ve mucit kimdir? | **Samuel Morse** |
+| GK-1349 | 3 · bulanık | Joseph Stieler'in 1843'te resmettiği bu Alman doğa bilimci ve gezgin kim? | **Alexander von Humboldt** |
+| GK-1350 | 2 · bulanık | Görseldeki İskoç mühendisin adı hangi birime verilmiştir? | **watt** |
 
 ## Yapı görselleri
 
