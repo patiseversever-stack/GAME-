@@ -9,7 +9,7 @@ ChatGPT'ye bu dosyayı DEĞİL, aşağıdaki parça dosyalarını ver (her biri 
 |---|---|---|---|---|
 | `GORSEL-1000-K1.md` | GK-511 – GK-710 | 200 | Göz Kararı | `Gorsel-1000-K1.zip` |
 | `GORSEL-1000-K2.md` | GK-711 – GK-910 | 200 | Göz Kararı | `Gorsel-1000-K2.zip` |
-| `GORSEL-1000-K3.md` | GK-911 – GK-1110 | 200 | Göz Kararı | hazırlanıyor |
+| `GORSEL-1000-K3.md` | GK-911 – GK-1110 | 200 | Göz Kararı | `Gorsel-1000-K3.zip` |
 | `GORSEL-1000-K4.md` | GK-1111 – GK-1310 | 200 | Göz Kararı | hazırlanıyor |
 | `GORSEL-1000-K5.md` | YP-101 – YP-300 | 200 | Kazı Kazan + Gölge Oyunu | `Gorsel-1000-K5.zip` |
 | `GORSEL-1000-K6.md` | GK-1311 – GK-1410 | 100 | Göz Kararı (ünlü kişi portreleri) | `Gorsel-1000-K6.zip` |
@@ -526,6 +526,256 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-908 | 2 · bulanık | Üstü yer yer karamelize olmuş kremalı görseldeki küçük tartlar hangi ülkenin simgesidir? | **Portekiz** |
 | GK-909 | 3 · bulanık | Yapışkan pirincin dövülerek hamur hâline getirildiği, içi tatlı fasulye ezmeli yumuşak tatlıya ne denir? | **Mochi** |
 | GK-910 | 3 · bulanık | Kabaktan oyulmuş kaptan, süzgeç uçlu metal pipetle içilen Güney Amerika bitki çayına ne denir? | **Mate** |
+
+### Osmanlı gündelik hayatı
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-911 | 2 · bulanık | Görseldeki mekânda içilen ve 16. yüzyılda İstanbul'a ulaşan içecek, Osmanlı'ya hangi ülkeden gelmiştir? | **Yemen** |
+| GK-912 | 1 · bulanık | Savaşta orduyu coşturan, barışta saray törenlerinde çalan Osmanlı askerî bandosu hangisi? | **Mehter takımı** |
+| GK-913 | 1 · bulanık | Kubbesindeki küçük camlardan buharın içine ışık süzülen, mermer kurnalı bu yıkanma yeri hangisi? | **Hamam** |
+| GK-914 | 3 · siluet | Uzun sırıklarla omuzlara ya da iki hayvan arasına alınan, Osmanlı'nın kapalı yolcu taşıtına ne denirdi? | **Tahtırevan** |
+| GK-915 | 2 · bulanık | Yangın haberini alınca el pompalarını omuzlayıp yalınayak koşan Osmanlı gönüllülerine ne denirdi? | **Tulumbacı** |
+| GK-916 | 2 · bulanık | Elinde mendil ve sopayla kahvehanede hikâye anlatan, sesleri taklit eden bu sanatçıya ne denir? | **Meddah** |
+| GK-917 | 1 · siluet | Hamamın ıslak ve kaygan mermerinde kaymamak için giyilen, yüksek tabanlı tahta ayakkabı hangisi? | **Nalın** |
+| GK-918 | 2 · bulanık | Sırtına mum dikilmiş kaplumbağaların lale bahçelerinde dolaştırıldığı eğlenceler hangi döneme aittir? | **Lale Devri** |
+| GK-919 | 2 · yakın çekim | Eski İstanbul evlerinin kapısına biri ağır, biri hafif sesli iki tane takılan eşyanın adı ne? | **Kapı tokmağı** |
+| GK-920 | 2 · bulanık | Hayır için yaptırılan bu parmaklıklı pencereli yapıdan yoldan geçenlere bedava ne dağıtılırdı? | **Su** |
+| GK-921 | 1 · bulanık | Geceleri sopasını kaldırıma vurarak mahalleyi dolaşan, yangın görünce halkı uyaran görevli kimdir? | **Bekçi** |
+| GK-922 | 1 · bulanık | Surnamelerde anlatılan şenliklerde iki direk arasına gerili ipte yürüyen gösterici kimdir? | **Cambaz** |
+| GK-923 | 3 · bulanık | Osmanlı'da çocukların okumaya başladığı, genellikle mahalle camisinin yanındaki ilk okul hangisi? | **Sıbyan mektebi** |
+| GK-924 | 2 · bulanık | Minareler arasına gerilen iplere dizilmiş kandillerle yapılan bu ışıklı süsleme hangi ayda asılır? | **Ramazan** |
+| GK-925 | 3 · yakın çekim | Osmanlı camilerinin dış duvarlarına kuşlar için yapılan, minik saray biçimli yuvalara ne ad verilir? | **Kuş köşkü** |
+| GK-926 | 3 · yakın çekim | Osmanlı evlerinde içerisi dışarıdan görünmesin diye pencereye takılan sık ahşap ızgaraya ne denir? | **Kafes** |
+| GK-927 | 3 · bulanık | Osmanlı kadınlarının sokağa çıkarken giydiği, geniş ve uzun yakalı bol dış giysi hangisi? | **Ferace** |
+| GK-928 | 1 · bulanık | Osmanlı odalarında pencerelerin önünde duvar boyunca uzanan, minderli alçak oturma yeri hangisi? | **Sedir** |
+| GK-929 | 1 · bulanık | Alçak bir ayaklık üzerine konup çevresinde yere oturularak yemek yenen büyük bakır tepsiye ne denir? | **Sini** |
+| GK-930 | 3 · bulanık | Değerli kumaş ve mücevherin satıldığı, demir kapılı, çok kubbeli kapalı çarşı yapısına ne ad verilir? | **Bedesten** |
+
+### Antik uygarlıklar
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-931 | 1 · bulanık | Eski Mısırlıların tuzla kurutup keten bezlere sararak sonsuza dek korumaya çalıştığı bedene ne denir? | **Mumya** |
+| GK-932 | 1 · bulanık | 1974'te Çin'de kuyu kazan köylülerin bulduğu, binlerce pişmiş toprak askerden oluşan esere ne ad verilir? | **Terracotta Ordusu** |
+| GK-933 | 1 · siluet | Antik Yunan'da oyuncuların sahnede yüzüne taktığı, gülen ya da ağlayan ifadeli bu nesne neydi? | **Tiyatro maskesi** |
+| GK-934 | 1 · bulanık | Roma vatandaşlarının resmî günlerde gövdeye ve sol omza dolayarak giydiği büyük yünlü örtünün adı ne? | **Toga** |
+| GK-935 | 1 · yakın çekim | Aslan başı damgalı bu sikkeler, madenî parayı ilk basan hangi Anadolu uygarlığına aittir? | **Lidya** |
+| GK-936 | 2 · siluet | Eski Mısır'da tanrıların elinde görülen, "yaşam" anlamına gelen halkalı haç biçimli simge hangisi? | **Ankh** |
+| GK-937 | 2 · yakın çekim | Pythia Oyunları'nın galiplerine ve zafer kazanan Romalı komutanlara hangi bitkiden örülmüş taç verilirdi? | **Defne** |
+| GK-938 | 2 · bulanık | Mavi sırlı tuğlaları boğa ve ejder kabartmalı, Babil'in en görkemli girişi olan kapı hangisi? | **İştar Kapısı** |
+| GK-939 | 1 · bulanık | Alacahöyük'te bulunan, uzun yıllar Ankara'nın simgesi olarak kullanılan tunç tören eseri hangisi? | **Güneş kursu** |
+| GK-940 | 2 · yakın çekim | Gaziantep'te sergilenen ünlü "Çingene Kızı" mozaiği hangi antik kentten çıkarılmıştır? | **Zeugma** |
+| GK-941 | 2 · bulanık | Peru çölünde yalnız havadan bütünüyle görülebilen bu dev hayvan figürlerine ne ad verilir? | **Nazca çizgileri** |
+| GK-942 | 2 · bulanık | Boğa başlı bu tunç kazanlar, başkenti Tuşpa olan hangi Doğu Anadolu uygarlığına aittir? | **Urartu** |
+| GK-943 | 2 · yakın çekim | Harç kullanılmadan kusursuz oturtulan Cusco'daki "on iki köşeli taş" hangi uygarlığın işçiliğidir? | **İnka** |
+| GK-944 | 3 · yakın çekim | Ege'de bir batıkta bulunan, Ay ve Güneş'in hareketlerini hesaplayan dişli düzeneğin adı ne? | **Antikythera düzeneği** |
+| GK-945 | 3 · yakın çekim | Yazısı olmayan İnkalar, sayıları ve kayıtları düğümlü iplerden oluşan hangi düzenekle tutardı? | **Kipu** |
+| GK-946 | 3 · yakın çekim | Mezopotamya'da ıslak kil üzerinde yuvarlanarak kesintisiz resim baskısı bırakan taş araç hangisi? | **Silindir mühür** |
+| GK-947 | 3 · siluet | Kültepe ve Hitit kentlerinde sıkça bulunan, ağzı kuş gagası gibi uzayan bu çömleğe ne denir? | **Gaga ağızlı testi** |
+| GK-948 | 3 · bulanık | Asur saraylarının kapılarını bekleyen, insan başlı, kanatlı boğa heykellerine ne ad verilir? | **Lamassu** |
+| GK-949 | 3 · yakın çekim | Fenikelilerin krallara yaraşır ünlü mor boyayı hangi canlıdan elde ettiği bilinir? | **Deniz salyangozu** |
+| GK-950 | 1 · bulanık | Hangi icadın ilk örnekleri, Sümer arabalarında görüldüğü gibi üç tahta birleştirilerek yapılırdı? | **Tekerlek** |
+
+### Tarihî savaş araçları ve zırhlar
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-951 | 1 · siluet | Uzun kolunun ucundaki sapanla surlara iri taşlar fırlatan, karşı ağırlıklı kuşatma aracı hangisi? | **Mancınık** |
+| GK-952 | 1 · bulanık | Ucuna boynuzlu hayvan başı biçiminde demir takılan, kale kapılarını kırmak için sallanan kütüğe ne denir? | **Koçbaşı** |
+| GK-953 | 1 · siluet | Orta Çağ Avrupa'sında atlı savaşçıları baştan ayağa çelik levhalarla kaplayan donanım hangisi? | **Şövalye zırhı** |
+| GK-954 | 1 · bulanık | Samurayların belinde taşıdığı, hafif kavisli, tek ağızlı uzun Japon kılıcının adı ne? | **Katana** |
+| GK-955 | 1 · siluet | Ucunda dilimli, ağır bir demir baş bulunan, zırhlı düşmana karşı kullanılan kısa savaş sopası hangisi? | **Topuz** |
+| GK-956 | 1 · yakın çekim | İki ipin ortasındaki deri cebe konan taşı döndürüp fırlatan bu çok eski silahın adı ne? | **Sapan** |
+| GK-957 | 1 · bulanık | Lake levhaları renkli ipek kordonlarla birbirine bağlanan, boynuz süslü miğferli bu zırh kimlerindi? | **Samuraylar** |
+| GK-958 | 2 · bulanık | Tekerlekler üzerinde surlara yanaştırılıp tepesindeki köprüyle askerleri burçlara geçiren araç hangisi? | **Kuşatma kulesi** |
+| GK-959 | 2 · bulanık | 1453'te İstanbul surlarını döven dev şahi toplarını Fatih için döken top ustası kimdir? | **Urban** |
+| GK-960 | 2 · yakın çekim | Türk yayının gövdesinde ağaç ve hayvan sinirinin yanında hangi doğal malzeme kullanılır? | **Boynuz** |
+| GK-961 | 3 · siluet | Okçunun oklarını içinde taşıdığı, beline ya da sırtına astığı uzun kılıfa ne ad verilir? | **Sadak** |
+| GK-962 | 2 · bulanık | Filmlerdekinin aksine boynuzsuz olan, gözlük biçimli yüz siperli bu miğfer hangi savaşçılara aitti? | **Vikingler** |
+| GK-963 | 2 · bulanık | MÖ 1274'te Kadeş'te Mısırlılarla bu tür savaş arabalarıyla çarpışan Anadolu devleti hangisiydi? | **Hititler** |
+| GK-964 | 2 · yakın çekim | 1453'te Bizanslıların gemileri durdurmak için gerdiği bu dev zincir hangi su yolunun girişini kapatıyordu? | **Haliç** |
+| GK-965 | 3 · bulanık | Bükülmüş halat demetlerinin gücüyle iri oklar fırlatan, dev bir yaya benzeyen Roma silahının adı ne? | **Balista** |
+| GK-966 | 3 · bulanık | Gövdeyi çember gibi saran yatay demir şeritlerden oluşan bu Roma lejyoner zırhının adı ne? | **Lorica segmentata** |
+| GK-967 | 3 · bulanık | Roma ordusunda, miğferindeki sorguç kulaktan kulağa enine uzanan subaya ne denirdi? | **Centurio** |
+| GK-968 | 2 · bulanık | Ağır süvarilerin atlarını koruyan, başı, boynu ve göğsü çelik levhalarla örten donanım hangisi? | **At zırhı** |
+| GK-969 | 3 · yakın çekim | Küçük metal plakacıkların kiremit gibi üst üste dizilmesiyle yapılan bu zırh türüne ne denir? | **Pul zırh** |
+| GK-970 | 3 · siluet | Osmanlı sarayında tören muhafızlarının taşıdığı, uzun saplı, hilal ağızlı balta hangisi? | **Teber** |
+
+### Tarihî gemiler ve denizcilik
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-971 | 1 · siluet | Yelkenli gemilerde rotayı değiştirmek için çevrilen, kollu tahta tekerlekli düzeneğin adı ne? | **Dümen** |
+| GK-972 | 1 · bulanık | Bodrum'da ustaların elinde yapılan, mavi yolculuklarda kullanılan geniş kıçlı ahşap tekne hangisi? | **Gulet** |
+| GK-973 | 1 · bulanık | Osmanlı'da donanma gemilerinin yapılıp onarıldığı, Haliç kıyısındaki büyük tesislere ne denirdi? | **Tersane** |
+| GK-974 | 1 · bulanık | Polinezyalıların Büyük Okyanus'u aşmak için kullandığı, iki gövdeli tekne tipine ne ad verilir? | **Katamaran** |
+| GK-975 | 1 · bulanık | 1912'de ilk seferinde bir buzdağına çarparak batan ünlü transatlantik yolcu gemisi hangisi? | **Titanik** |
+| GK-976 | 1 · yakın çekim | Dar boğazdan sokulup içeride direkleri iple kaldırılarak kurulan bu minyatür modele ne denir? | **Şişede gemi** |
+| GK-977 | 2 · bulanık | Kolomb'un seferindeki Niña ve Pinta gibi, hafif ve hızlı küçük Portekiz yelkenlisine ne ad verilir? | **Karavela** |
+| GK-978 | 2 · bulanık | Her yanında üç sıra kürek bulunan, tunç mahmuzlu antik Yunan savaş gemisinin adı ne? | **Trireme** |
+| GK-979 | 2 · bulanık | Dünyanın yedi harikasından biri sayılan bu dev antik deniz feneri hangi kentin limanındaydı? | **İskenderiye** |
+| GK-980 | 2 · bulanık | Padişahları Boğaz'da taşıyan, altın yaldızlı, köşklü ve çok kürekli törensel tekneye ne denirdi? | **Saltanat kayığı** |
+| GK-981 | 2 · bulanık | Gemilerde gece yeşil seyir fenerinin yandığı, pruvaya bakarken sağda kalan tarafa ne denir? | **Sancak** |
+| GK-982 | 2 · bulanık | 1890'da Japonya'dan dönerken Kushimoto açıklarında fırtınada batan Osmanlı fırkateyni hangisi? | **Ertuğrul** |
+| GK-983 | 2 · bulanık | Çanakkale'de Erenköy Koyu'na döktüğü 26 mayınla 18 Mart zaferine katkı sağlayan gemi hangisi? | **Nusret** |
+| GK-984 | 3 · bulanık | Kadırgadan küçük, hafif ve hızlı, tek direkli Osmanlı kürekli savaş gemisinin adı ne? | **Çektiri** |
+| GK-985 | 3 · bulanık | 1853'te "kara gemiler"le Edo Körfezi'ne gelip Japonya'yı dış ticarete açtıran Amerikalı komutan kimdir? | **Komodor Perry** |
+| GK-986 | 3 · siluet | Üstü demir dikenli bir kapakla örtülü, pruvası ejder başlı 16. yüzyıl Kore savaş gemisi hangisi? | **Kaplumbağa gemisi** |
+| GK-987 | 3 · bulanık | Kaş açıklarında bulunan, yükü bakır külçeler ve küplerden oluşan Uluburun batığı hangi çağa aittir? | **Tunç Çağı** |
+| GK-988 | 3 · yakın çekim | Eski denizcilerin suyun derinliğini ölçmek için ipe bağlayıp denize sarkıttığı kurşun ağırlığa ne denir? | **İskandil** |
+| GK-989 | 3 · yakın çekim | Düğümlü ipiyle gemi hızını ölçen paraketeden dolayı denizde hız hangi birimle anılır? | **Knot** |
+| GK-990 | 3 · yakın çekim | Yelkenli gemilerde gözcünün ufku taradığı, direğin tepesindeki küçük sepete ne ad verilir? | **Çanaklık** |
+
+### Türk tarihinden semboller ve eşyalar
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-991 | 1 · bulanık | Çin kaynaklarına göre Göktürklerin sancaklarının tepesinde hangi hayvanın altın başı bulunurdu? | **Kurt** |
+| GK-992 | 1 · siluet | Ucuna doğru genişleyen, kısa, ağır ve kavisli Osmanlı kılıcına ne ad verilir? | **Pala** |
+| GK-993 | 1 · yakın çekim | Topkapı Sarayı'nda sergilenen, etrafı 49 pırlantayla çevrili 86 kıratlık armut biçimli elmas hangisi? | **Kaşıkçı Elması** |
+| GK-994 | 1 · siluet | Selçuklu çinilerinde ve kapı süslemelerinde sık görülen bu yıldız kaç köşelidir? | **Sekiz** |
+| GK-995 | 1 · bulanık | Yeniçerilerin isyan ederken bu büyük bakır kapları ters çevirmesinden hangi deyim doğmuştur? | **Kazan kaldırmak** |
+| GK-996 | 1 · siluet | Cami kubbe ve minarelerinin en tepesine konan, hilal biçimli madenî süse ne ad verilir? | **Alem** |
+| GK-997 | 2 · siluet | At kılından yapılıp direğe takılan, sayısı paşaların rütbesini gösteren sancak hangisi? | **Tuğ** |
+| GK-998 | 2 · yakın çekim | İncir dallarının ipek iplikle sarmal örülmesiyle yapılan, ortası çelik göbekli bu Osmanlı eşyası nedir? | **Kalkan** |
+| GK-999 | 2 · yakın çekim | Konya'nın eski kale kapılarını süsleyen bu çift başlı kartal kabartması hangi devletten kalmadır? | **Anadolu Selçuklu** |
+| GK-1000 | 2 · bulanık | Tımar denen toprakların gelirine karşılık savaşa atıyla katılan Osmanlı süvarisine ne denirdi? | **Sipahi** |
+| GK-1001 | 2 · yakın çekim | Odalara güzel koku yaymak için içinde öd ağacı ya da tütsü yakılan, delikli kapaklı kaba ne denir? | **Buhurdan** |
+| GK-1002 | 2 · bulanık | Bayram ve cülus törenlerinde Babüssaade önüne konan, altın kaplı Osmanlı tahtı hangisi? | **Bayram tahtı** |
+| GK-1003 | 2 · bulanık | Eski bozkır halklarının önemli kişileri için yaptığı, üzeri toprak yığılmış büyük mezara ne denir? | **Kurgan** |
+| GK-1004 | 3 · bulanık | Göktürk mezarlarının önüne, ölünün hayattayken öldürdüğü düşman sayısınca dikilen taşlara ne denir? | **Balbal** |
+| GK-1005 | 3 · yakın çekim | Üç benek ve iki dalgalı çizgiden oluşan, Osmanlı kumaş ve çinilerinde sık görülen motif hangisi? | **Çintemani** |
+| GK-1006 | 3 · yakın çekim | Yıldız biçimli, figürlü bu Selçuklu çinileri Beyşehir Gölü kıyısındaki hangi saraydan çıkarıldı? | **Kubadabad Sarayı** |
+| GK-1007 | 3 · yakın çekim | Altın yaldızla kaplanmış bakırdan yapılan bu parlak Osmanlı eşyalarına ne ad verilir? | **Tombak** |
+| GK-1008 | 3 · siluet | Konuklara gül suyu serpmek için kullanılan, uzun ince boyunlu, delikli kapaklı kabın adı ne? | **Gülabdan** |
+| GK-1009 | 3 · bulanık | İki tahtanın X biçiminde birbirine geçtiği, kitabı yerden yüksekte tutan okuma sehpasının adı ne? | **Rahle** |
+| GK-1010 | 3 · yakın çekim | Kabzasında üç iri zümrüt bulunan bu ünlü hançer, I. Mahmud tarafından hangi hükümdar için yaptırılmıştı? | **Nadir Şah** |
+
+### Keşif ve bilim tarihinden sahneler
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1011 | 1 · bulanık | Venedikli Marco Polo'nun 13. yüzyılda kervanlarla Çin'e ulaştığı ünlü ticaret yolu hangisi? | **İpek Yolu** |
+| GK-1012 | 1 · bulanık | 1903'te Kitty Hawk kumullarında ilk kontrollü motorlu uçuşu gerçekleştiren kardeşler kimdir? | **Wright kardeşler** |
+| GK-1013 | 1 · bulanık | Evliya Çelebi'ye göre Galata Kulesi'nden kanat takıp uçarak Üsküdar'a inen kişi kimdir? | **Hezarfen Ahmed Çelebi** |
+| GK-1014 | 1 · bulanık | "Bana bir dayanak noktası verin, Dünya'yı yerinden oynatayım" sözü hangi basit makineyle ilgilidir? | **Kaldıraç** |
+| GK-1015 | 1 · bulanık | Rivayete göre ağaçtan düşen bir elma, Newton'a hangi yasayı düşündürmüştür? | **Kütle çekim yasası** |
+| GK-1016 | 2 · bulanık | Kolomb'un 1492'de Amerika'ya ulaştığı seferdeki üç gemiden en büyüğünün adı ne? | **Santa María** |
+| GK-1017 | 1 · bulanık | Roald Amundsen ve ekibinin 1911'de köpek kızaklarıyla ilk kez ulaştığı yer neresidir? | **Güney Kutbu** |
+| GK-1018 | 2 · bulanık | İlk yolcuları bir koyun, bir ördek ve bir horoz olan 1783 balon gösterisini hangi kardeşler düzenledi? | **Montgolfier kardeşler** |
+| GK-1019 | 2 · bulanık | Afrika'nın güney ucunu dolaşıp 1498'de deniz yoluyla Hindistan'a ulaşan Portekizli kâşifin adı ne? | **Vasco da Gama** |
+| GK-1020 | 2 · yakın çekim | 1610'da kendi yaptığı teleskopla Jüpiter'in dört büyük uydusunu keşfeden bilgin kimdir? | **Galileo Galilei** |
+| GK-1021 | 2 · yakın çekim | Manastır bahçesindeki bezelyelerle kalıtımın yasalarını bulan bilim insanı kimdir? | **Gregor Mendel** |
+| GK-1022 | 2 · yakın çekim | Wilhelm Röntgen'in 1895'te eşinin elinin kemiklerini görüntülediği ışınlara ne ad verilir? | **X ışınları** |
+| GK-1023 | 2 · bulanık | Fırtınada uçurtma uçurarak yıldırımın elektrik olduğunu gösteren Franklin'in icadı hangisi? | **Paratoner** |
+| GK-1024 | 2 · bulanık | Jenner'in 1796'da çiçek aşısını geliştirirken yararlandığı hafif hastalık hangi hayvandan bulaşıyordu? | **İnek** |
+| GK-1025 | 3 · bulanık | Shackleton'ın Antarktika seferinde buzların arasında sıkışıp ezilerek batan gemisi hangisi? | **Endurance** |
+| GK-1026 | 3 · siluet | Pasteur'ün kendiliğinden oluş fikrini çürüttüğü deneyde kullandığı S boyunlu cam kap hangisi? | **Kuğu boyunlu şişe** |
+| GK-1027 | 3 · bulanık | 1577'de İstanbul'da kurduğu rasathanede gökyüzünü gözleyen Osmanlı astronomu kimdir? | **Takiyüddin** |
+| GK-1028 | 3 · bulanık | Uluğ Bey'in 15. yüzyılda dev bir mermer yay kurdurduğu ünlü rasathane hangi kentteydi? | **Semerkant** |
+| GK-1029 | 3 · bulanık | Louis Blériot'nun 1909'da uçakla ilk kez geçtiği su yolu hangisidir? | **Manş Denizi** |
+| GK-1030 | 3 · siluet | 1960'ta iki kişiyi Mariana Çukuru'nun dibine indirerek tarihe geçen dalış aracı hangisi? | **Trieste** |
+
+### Baharatlar, kuruyemişler ve tahıllar
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1031 | 1 · yakın çekim | Bir ağacın iç kabuğu soyulup kurutulunca rulo biçimini alan, sütlaca serpilen baharatın adı ne? | **Tarçın** |
+| GK-1032 | 1 · yakın çekim | Hangi baharat çivi biçimiyle tanınır ve aslında bir ağacın açmamış çiçek tomurcuğudur? | **Karanfil** |
+| GK-1033 | 1 · yakın çekim | Kabuğu olgunlaşınca kendiliğinden hafifçe açılan, içi yeşil bu kuruyemiş hangisi? | **Antep fıstığı** |
+| GK-1034 | 1 · bulanık | Dünya üretiminin yarısından fazlasını Türkiye'nin karşıladığı bu kuruyemiş en çok hangi bölgede yetişir? | **Karadeniz Bölgesi** |
+| GK-1035 | 1 · yakın çekim | Dikenli bir kabuk içinde yetişen bu yemişin şekerlemesiyle ünlü il hangisidir? | **Bursa** |
+| GK-1036 | 1 · yakın çekim | Nohudun kavrulmasıyla yapılan, en ünlüsü Çorum'da üretilen kuruyemiş hangisi? | **Leblebi** |
+| GK-1037 | 1 · yakın çekim | Kapsülleri olgunlaşınca patlayarak açılan, tahinin ve simidin vazgeçilmezi olan tohum hangisi? | **Susam** |
+| GK-1038 | 1 · yakın çekim | Orta Çağ'da "kara altın" denecek kadar değerli olan, salkım meyveleri kurutulan baharatın adı ne? | **Karabiber** |
+| GK-1039 | 2 · yakın çekim | Hangi baharatın kökü kesilince içi turuncu görünür ve köri ile pilavlara sarı renk verir? | **Zerdeçal** |
+| GK-1040 | 2 · bulanık | Ağaçta elma benzeri etli bir meyvenin altından dışarı sarkarak büyüyen bu kuruyemişin anavatanı neresidir? | **Brezilya** |
+| GK-1041 | 2 · bulanık | Fıstık denmesine karşın aslında baklagil olan, meyvesini toprak altında olgunlaştıran bitkiye ne denir? | **Yer fıstığı** |
+| GK-1042 | 2 · yakın çekim | Kozalaklarda saklı duran, iç pilavda ve dolmalarda kullanılan küçük beyaz taneye ne denir? | **Çam fıstığı** |
+| GK-1043 | 2 · siluet | Kolomb'un seferlerinden sonra Avrupa'ya taşınan bu tahılın anavatanı hangi kıtadır? | **Amerika** |
+| GK-1044 | 2 · bulanık | Su basılmış tarlalarda yetişen pirincin, henüz kabuğundan ayrılmamış hâline ne denir? | **Çeltik** |
+| GK-1045 | 3 · siluet | Sekiz kollu bir yıldıza benzeyen, meyankökü kokulu, Çin mutfağının çok sevdiği baharat hangisi? | **Yıldız anason** |
+| GK-1046 | 3 · yakın çekim | Bir ağacın kabuğundan sızan reçineden elde edilen, muhallebi ve dondurmaya koku veren baharata ne denir? | **Damla sakızı** |
+| GK-1047 | 3 · yakın çekim | Kırmızı ağsı zarı da ayrıca baharat olarak satılan, rendelenerek kullanılan bu tohumun adı ne? | **Muskat** |
+| GK-1048 | 3 · yakın çekim | Türk kahvesine de katılan, yeşil kabuğunda küçük siyah tohumlar saklayan baharatın adı ne? | **Kakule** |
+| GK-1049 | 3 · bulanık | And Dağları'nda binlerce yıldır yetiştirilen, İnkaların "tahılların anası" saydığı bitki hangisi? | **Kinoa** |
+| GK-1050 | 3 · yakın çekim | Glutensiz olan, üç köşeli küçük taneleriyle tanınan ve kuzukulağıyla akraba olan bitki hangisi? | **Karabuğday** |
+
+### Oyunlar ve oyuncaklar
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1051 | 1 · siluet | Gövdesine ip sarılıp yere fırlatılınca sivri ucu üstünde fırıl fırıl dönen oyuncağın adı ne? | **Topaç** |
+| GK-1052 | 1 · yakın çekim | Toprağa açılan küçük çukura sokmaya ya da birbirine vurmaya dayanan cam bilyeli oyunun adı ne? | **Misket** |
+| GK-1053 | 1 · bulanık | İç içe geçen boyalı tahta bebeklerden oluşan bu oyuncak hangi ülkenin simgelerindendir? | **Rusya** |
+| GK-1054 | 1 · siluet | Hangi oyuncak, ipe bağlı iki diskin bilek hareketiyle inip yeniden yukarı tırmanmasıyla oynanır? | **Yoyo** |
+| GK-1055 | 1 · bulanık | Yere çizilen karelere taş atıp tek ayak üstünde sekerek oynanan oyunun adı ne? | **Seksek** |
+| GK-1056 | 1 · siluet | Kavisli tahta ayaklar üzerinde ileri geri gidip gelen, binilerek oynanan çocuk oyuncağı hangisi? | **Sallanan at** |
+| GK-1057 | 1 · bulanık | Gözleri bağlanan oyuncunun ötekileri sesten bulup yakalamaya çalıştığı oyuna ne denir? | **Körebe** |
+| GK-1058 | 2 · bulanık | Tavlada iki zarın da altı gelmesine, Farsçadan geçen hangi ad verilir? | **Düşeş** |
+| GK-1059 | 2 · bulanık | Karşılıklı altışar çukurlu tahtada taşların tek tek dağıtılarak oynandığı Türk zekâ oyunu hangisi? | **Mangala** |
+| GK-1060 | 2 · bulanık | Hangi oyunda, iç içe üç kareden oluşan tahtada taşlar üçlü sıra hâlinde dizilmeye çalışılır? | **Dokuz taş** |
+| GK-1061 | 3 · siluet | İki sopa arasına gerili ipte döndürülüp havaya atılan, makara biçimli oyuncağın adı ne? | **Diyabolo** |
+| GK-1062 | 2 · bulanık | Uzun bir sopayla yerdeki kısa çubuğu havaya kaldırıp vurarak uzağa göndermeye dayanan oyun hangisi? | **Çelik çomak** |
+| GK-1063 | 2 · yakın çekim | Bir taşı havaya atıp o düşmeden yerdekileri kapmaya dayanan geleneksel oyuna ne ad verilir? | **Beştaş** |
+| GK-1064 | 2 · yakın çekim | Yanındaki anahtar çevrilince içindeki yayın gücüyle hareket eden teneke oyuncak türü hangisi? | **Kurmalı oyuncak** |
+| GK-1065 | 3 · bulanık | Sapındaki kaplara ve sivri uca ipli bir topu oturtmaya çalışılan bu Japon oyuncağının adı ne? | **Kendama** |
+| GK-1066 | 3 · yakın çekim | Siyah ve beyaz taşlarla 19×19 çizgili tahtada alan kapmaya dayanan Doğu Asya oyunu hangisi? | **Go** |
+| GK-1067 | 3 · bulanık | Otuz kareli tahtası ve makara biçimli taşları olan bu çok eski oyun hangi uygarlığa aittir? | **Eski Mısır** |
+| GK-1068 | 2 · yakın çekim | Çok eski "aşık" oyununda atılan bu küçük bilek kemikleri çoğunlukla hangi hayvandan elde edilir? | **Koyun** |
+| GK-1069 | 3 · bulanık | Hangi Çin bulmacasında, bir kareden kesilmiş yedi parçayla sayısız şekil oluşturulur? | **Tangram** |
+| GK-1070 | 3 · bulanık | Dilek tutulunca bir gözü, dilek gerçekleşince öteki gözü boyanan bu Japon bebeğinin adı ne? | **Daruma** |
+
+### Tarım ve köy hayatı
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1071 | 1 · bulanık | Biçilen ekinin tanesini sapından ayırmak için düzlenmiş açık alana ne denir? | **Harman** |
+| GK-1072 | 1 · siluet | Ayakta durarak geniş yay çizip ot ve ekin biçmeye yarayan, uzun saplı, uzun ağızlı alet hangisi? | **Tırpan** |
+| GK-1073 | 1 · bulanık | Köylerde toprağın derinliklerinden kovayla su çekilen, ağzı taşla örülmüş çukura ne denir? | **Kuyu** |
+| GK-1074 | 1 · siluet | Kuşları ürkütmek için tarlaya dikilen, eski giysilerle insana benzetilmiş samandan figür hangisi? | **Korkuluk** |
+| GK-1075 | 1 · bulanık | Bu iri hayvanın sütünden yapılan kaymağıyla ünlü il hangisidir? | **Afyonkarahisar** |
+| GK-1076 | 1 · bulanık | Sonbaharda üzümlerin toplandığı, köylerde şenlikle kutlanan döneme ne ad verilir? | **Bağ bozumu** |
+| GK-1077 | 1 · yakın çekim | Bu tahıl kaynatılıp güneşte kurutulduktan sonra kırılınca hangi besin elde edilir? | **Bulgur** |
+| GK-1078 | 2 · bulanık | Ağaç gövdesi oyularak yapılan, balı peteğiyle birlikte alınan eski tip arı kovanına ne denir? | **Karakovan** |
+| GK-1079 | 2 · siluet | Harmanda samanı rüzgâra savurup taneden ayırmak için kullanılan, çatallı tahta alet hangisi? | **Yaba** |
+| GK-1080 | 2 · bulanık | Koyun ve keçilerin geceyi geçirdiği, üstü açık, çevresi taş duvarla çevrili alana ne denir? | **Ağıl** |
+| GK-1081 | 2 · bulanık | Çobanları yağmur ve soğuktan koruyan, keçeden yapılmış kolsuz, kalın ve sert pelerinin adı ne? | **Kepenek** |
+| GK-1082 | 2 · bulanık | Köylülerin bir işi karşılık beklemeden el birliğiyle yapmasına ne ad verilir? | **İmece** |
+| GK-1083 | 2 · bulanık | Ege köylerinde iğneyle ipe dizilip güneşte kurutulan bu yapraklar hangi bitkiye aittir? | **Tütün** |
+| GK-1084 | 2 · bulanık | Kapadokya'da kayalara oyulan güvercinliklerde biriken gübre en çok nerede kullanılırdı? | **Bağlarda** |
+| GK-1085 | 3 · bulanık | Harmanda dövülmek üzere bir araya yığılan ekin demetlerinden oluşan büyük yığına ne ad verilir? | **Tınaz** |
+| GK-1086 | 3 · bulanık | Doğu Anadolu köylerinde kurutularak yakıt yapılan hayvan gübresine ne ad verilir? | **Tezek** |
+| GK-1087 | 3 · yakın çekim | Buğday dövmek ya da kahve çekmek için kullanılan, taştan oyulmuş büyük havana ne denir? | **Dibek** |
+| GK-1088 | 3 · bulanık | İlkbaharda koyunların yününün makasla kesilmesine köylerde ne ad verilir? | **Kırkım** |
+| GK-1089 | 3 · yakın çekim | Hayvanların su içmesi için taştan ya da ağaçtan oyulmuş uzun tekneye ne denir? | **Yalak** |
+| GK-1090 | 3 · yakın çekim | Eşek ve katırların sırtına yük taşımak için vurulan, içi dolgulu kalın yastığa ne ad verilir? | **Semer** |
+
+### Teknolojinin eskileri
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1091 | 1 · bulanık | Kasetçalarda dolaşan bandı geri sarmak için çoğu zaman hangi eşyadan yararlanılırdı? | **Kurşun kalem** |
+| GK-1092 | 1 · bulanık | Filmlerin kiralanıp evde oynatıcıyla izlendiği, içinde manyetik bant bulunan bu siyah kasete ne denir? | **Video kaseti** |
+| GK-1093 | 1 · yakın çekim | Gökkuşağı gibi parlayan bu diskteki veriler oynatıcıda hangi yolla okunur? | **Lazer ışını** |
+| GK-1094 | 1 · siluet | Zinciriyle yeleğe takılıp cepte taşınan, kapaklı eski saate ne ad verilir? | **Köstekli saat** |
+| GK-1095 | 1 · siluet | 1980'lerde satışa çıkan, tuğla kadar iri ve antenli bu taşınabilir cihaz neyin ilk örneğidir? | **Cep telefonu** |
+| GK-1096 | 1 · bulanık | Eski oyun konsollarında ekrandaki karakteri yönlendirmek için oynatılan çubuklu kumandanın adı ne? | **Oyun kolu** |
+| GK-1097 | 1 · yakın çekim | Kenarları delikli, çekilen kareleri ters renkli olarak saklayan, makineye takılan rulo hangisi? | **Fotoğraf filmi** |
+| GK-1098 | 2 · bulanık | Saydam asetat yapraklara yazılanları perdeye büyüterek yansıtan, okulların eski cihazı hangisi? | **Tepegöz** |
+| GK-1099 | 2 · bulanık | Hangi cihaz, evde kimse yokken arayanların mesajlarını küçük bir kasete kaydederdi? | **Telesekreter** |
+| GK-1100 | 2 · bulanık | Bağlanırken cızırtılı sesler çıkaran bu cihaz, bilgisayarı internete hangi hat üzerinden bağlardı? | **Telefon hattı** |
+| GK-1101 | 2 · bulanık | Konuşmak için ortası delikli küçük madenî pul atılan eski sokak telefonuna ne denirdi? | **Jetonlu telefon** |
+| GK-1102 | 2 · bulanık | Kasetlerden önce stüdyolarda kullanılan, iki büyük makarası açıkta duran kayıt cihazının adı ne? | **Makaralı teyp** |
+| GK-1103 | 2 · bulanık | Saat başı küçük bir kuşun kapısından çıkıp öttüğü bu duvar saatleri hangi bölgeyle özdeşleşmiştir? | **Kara Orman** |
+| GK-1104 | 2 · yakın çekim | Altındaki lastik kaplı topun dönmesiyle imleci hareket ettiren eski bilgisayar parçası hangisi? | **Bilyeli fare** |
+| GK-1105 | 3 · yakın çekim | İlk bilgisayarlara veri ve komutların, üzerine açılan deliklerle aktarıldığı karta ne denir? | **Delikli kart** |
+| GK-1106 | 3 · siluet | Transistörden önce radyolarda ve ilk bilgisayarlarda kullanılan, havası boşaltılmış cam parça hangisi? | **Vakum tüpü** |
+| GK-1107 | 3 · bulanık | Cam üzerine çizilmiş resimleri ışıkla duvara büyüterek yansıtan 17. yüzyıl aygıtına ne ad verilir? | **Sihirli fener** |
+| GK-1108 | 3 · bulanık | Hangi 19. yüzyıl aygıtı, iki benzer fotoğrafı ayrı merceklerle göstererek derinlik duygusu yaratır? | **Stereoskop** |
+| GK-1109 | 3 · bulanık | Eski telefon görüşmelerinin, görevlilerin kabloları elle takmasıyla bağlandığı merkeze ne ad verilir? | **Santral** |
+| GK-1110 | 3 · yakın çekim | Gümüş kaplı bakır levhaya alınan, ayna gibi parlayan ilk yaygın fotoğraf türü hangisi? | **Dagerreyotip** |
 
 ### Bilim insanları
 
