@@ -3,6 +3,7 @@
 //   blur    bulanıktan netleşir            zoom    çok yakından uzaklaşır (odak: kurulumun bulduğu en ayrıntılı nokta)
 //   sil     siyah siluet (derlemede çıkarılmış maske), cevapta görsel açılır
 //   detail  tablolarda ayrıntıdan bütüne: bir ayrıntıdan başlar, hem uzaklaşır hem ortaya kayar
+//   spot · yapboz · karo · perde · cizim: büyütmesiz deneme kipleri (gk_kipler.js; galeride deneme-gkkip.js)
 // 4 şık, 20 sn, joker yok. Erken bilen çok puan: 100 → 40 (sürenin %85'inde erir; kartın üstünde canlı sayaç).
 // Düelloda ikisi de bilirse hızlı olan kazanır (mac.js HIZLI). Cevaptan sonra görsel tamamen netleşir, üstünden ışık
 // geçer, çerçevenin altına cevap kurdelesi, altına tek satır ilginç bilgi gelir.
@@ -19,6 +20,7 @@ import { frameOf, frameSVG, hashStr } from './gk_cerceve.js';
 import { KONULAR } from '../data/gozkarari.js';
 import { clock } from '../core/clock.js';
 import { gorselUrl, gorselUrlHemen, paketli } from './gorsel_paket.js';
+import { YENI_KIP, KIP_SON, kipSvg, kipKur } from './gk_kipler.js';
 
 export const GK_BASE = 'gk/';
 const MODE = { blur: 'Netleşiyor', zoom: 'Uzaklaşıyor', sil: 'Siluet', detail: 'Ayrıntıdan bütüne' };
@@ -167,15 +169,18 @@ export const gozkarari = {
 		const src = gorselUrlHemen(GK_BASE, q.img + '.webp') || '';
 		const msrc = gorselUrlHemen(GK_BASE, q.img + '.m.png') || '';
 		const sil = q.mode === 'sil';
+		// büyütmesiz yeni kipler (gk_kipler.js): parçaları SVG'ye girer, güncelleyicisi aşağıda kurulur
+		const yeni = !!YENI_KIP[q.mode];
+		const kp = yeni ? kipSvg(q.mode, k, { src }) : null;
 		const konu = KONULAR[q.konu] || 'Göz Kararı';
 		// siluet zemini: sahne ışığı (çerçevenin rengine yakın sıcak ton)
 		const silBg = `<radialGradient id="sg${k}" cx=".5" cy=".45" r=".7"><stop offset="0" stop-color="#fff6dc"/><stop offset=".7" stop-color="#e9d6a8"/><stop offset="1" stop-color="#b99a62"/></radialGradient>`;
 		// konu adının "II" eki dar ekranda tek başına alt satıra düşmesin (BİLİM VE TEKNOLOJİ / II): bölünmez boşluk
 		el.innerHTML = `<div class="dn-gk">
-			<div class="gk-hd"><span class="kn">${EYE}<b>${esc(konu).replace(/ (I{2,3})$/, '&nbsp;$1')}</b></span><span class="md">${MODE[q.mode] || ''}</span>
+			<div class="gk-hd"><span class="kn">${EYE}<b>${esc(konu).replace(/ (I{2,3})$/, '&nbsp;$1')}</b></span><span class="md">${MODE[q.mode] || YENI_KIP[q.mode] || ''}</span>
 				<span class="gk-pt"><i></i><b>100</b><small>PUAN</small></span></div>
 			<div class="gk-sw"><div class="gk-st"><svg class="sd" viewBox="0 0 400 300" aria-hidden="true"><path d="${fr.d}" fill="#02040c"/></svg><svg viewBox="0 0 400 300" role="img" aria-label="Göz Kararı görseli">
-				<defs>${fr.defs}<clipPath id="c${k}"><path d="${fr.d}"/></clipPath>
+				<defs>${fr.defs}${kp ? kp.defs : ''}<clipPath id="c${k}"><path d="${fr.d}"/></clipPath>
 					<filter id="b${k}" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="0" edgeMode="duplicate"/></filter>
 					${sil ? `${silBg}<mask id="m${k}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="300"><image class="mk"${msrc ? ` href="${msrc}"` : ''} width="400" height="300" preserveAspectRatio="none"/></mask>` : ''}
 					<linearGradient id="l${k}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
@@ -185,7 +190,9 @@ export const gozkarari = {
 				<g clip-path="url(#c${k})">
 					<rect width="400" height="300" fill="#141c3c"/>
 					<rect class="ld" x="-200" width="200" height="300" fill="url(#w${k})"/>
-					<g class="zm"><image class="im${sil ? ' nv' : ''}"${src ? ` href="${src}"` : ''} width="400" height="300" preserveAspectRatio="xMidYMid slice"${sil ? ' opacity="0"' : ` filter="url(#b${k})"`}/></g>
+					${kp ? kp.alt : ''}
+					<g class="zm"${kp ? kp.zmAttr : ''}><image class="im gi${sil ? ' nv' : ''}"${src ? ` href="${src}"` : ''} width="400" height="300" preserveAspectRatio="xMidYMid slice"${sil ? ' opacity="0"' : kp ? kp.imAttr : ` filter="url(#b${k})"`}/></g>
+					${kp ? kp.tas + kp.ust : ''}
 					${sil ? `<g class="sl nv"><rect width="400" height="300" fill="url(#sg${k})"/><rect width="400" height="300" fill="#121830" mask="url(#m${k})"/></g>` : ''}
 					<rect width="400" height="300" fill="url(#v${k})" pointer-events="none"/>
 					<rect class="sh" x="-60" width="90" height="300" fill="url(#l${k})" pointer-events="none"/>
@@ -204,10 +211,13 @@ export const gozkarari = {
 		// yüklenince yükleme ışıltısı kalkar; yüklenemezse çerçeve boş kalır (soru yine cevaplanır)
 		const probe = new Image();
 		probe.onload = () => st.classList.add('ok');
+		const kip = yeni ? kipKur(q.mode, el, { f0, seed: hashStr(q.id || q.img || '') }) : null;
 		gorselUrl(GK_BASE, q.img + '.webp').then(
 			(a) => {
-				if (im.getAttribute('href') !== a) im.setAttribute('href', a);
+				// ana görsel ve yapboz parçaları aynı adresi kullanır
+				for (const g of el.querySelectorAll('image.gi')) if (g.getAttribute('href') !== a) g.setAttribute('href', a);
 				probe.src = a;
+				kip?.gorsel(a);
 			},
 			() => {},
 		);
@@ -249,12 +259,16 @@ export const gozkarari = {
 			const ty = clamp(150 - Y * o.s, 300 - 300 * o.s, 0);
 			zm.setAttribute('transform', `translate(${tx.toFixed(1)} ${ty.toFixed(1)}) scale(${o.s.toFixed(4)})`);
 		};
-		apply(view(0));
+		// yeni kipler kendi güncelleyicisiyle açılır (g: 0 → 1, puan aralığının KIP_SON payında); görsel grubu hiç büyümez
+		const kipG = (f) => clamp(f / KIP_SON, 0, 1);
+		if (kip) kip.guncelle(0);
+		else apply(view(0));
 		const tick = () => {
 			if (!alive || !el.isConnected) return;
 			if (!done) {
 				const f = fNow();
-				apply(view(f));
+				if (kip) kip.guncelle(kipG(f));
+				else apply(view(f));
 				bar.style.setProperty('--k', (1 - f).toFixed(3));
 				pts.textContent = String(Math.round(100 - 60 * f));
 			}
@@ -280,12 +294,14 @@ export const gozkarari = {
 				ctl.reveal(results);
 				// kalan açılışı yarım saniyede tamamla, sonra ışık geçsin
 				const from = view(fNow());
+				const g0 = kipG(fNow());
 				const a = clock.now();
 				const step = () => {
 					if (!el.isConnected) return;
 					const t = clamp((clock.now() - a) / 520, 0, 1);
 					const e = ease(t);
-					apply({ b: from.b * (1 - e), s: from.s + (1 - from.s) * e, x: from.x + (0.5 - from.x) * e, y: from.y + (0.5 - from.y) * e });
+					if (kip) kip.guncelle(g0 + (1 - g0) * e);
+					else apply({ b: from.b * (1 - e), s: from.s + (1 - from.s) * e, x: from.x + (0.5 - from.x) * e, y: from.y + (0.5 - from.y) * e });
 					if (t < 1) requestAnimationFrame(step);
 				};
 				requestAnimationFrame(step);
