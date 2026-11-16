@@ -13,8 +13,11 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 - **UNUTMA: kullanıcı görsel gönderecek.**
   1. **Bu akşam: Göz Kararı'nın 200 görseli (GK-311…GK-510).**
      - Komutlar `GOZKARARI-TEK.md`'de, dosya `GozKarari-2.zip`.
-     - Bağlama: zip kendi boş klasörüne açılır. PNG'ler 448×336 webp'ye çevrilir (12–24 KB).
-     - Eski 310 webp (`dist/gk/`) aynı klasöre konur. Ardından `python3 -I tools/gozkarari/kur.py <klasör>`.
+     - Bağlama:
+       - zip kendi boş klasörüne açılır;
+       - `python3 -I tools/gozkarari/donustur.py <zip_klasörü> <çıktı>` çalıştırılır: 448×336 webp, ~18 KB; yanlış oranı kırpıp raporlar;
+       - eski webp'ler (`dist/gk/GK-*.webp`) aynı çıktı klasörüne kopyalanır;
+       - `python3 -I tools/gozkarari/kur.py <çıktı>` çalıştırılır.
      - Sonra görseller tek tek denetlenir, testler koşulur, yayın yapılır.
   2. **Bu akşam ya da sonra: 1000 yeni görsel.** Komut dosyaları `GORSEL-1000.md` (özet) ve `GORSEL-1000-K*.md` (ChatGPT'ye verilecek parçalar).
      - Göz Kararı: GK-511 ve sonrası.
