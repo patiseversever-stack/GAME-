@@ -2,9 +2,16 @@
 
 **Durum (16 Kasım 2026):**
 
-- Aşama 0 bitti (kapının son adımları: tam test, açılış ölçümü, yayın).
+- **Aşama 0 kapısı geçti (16 Kasım):**
+  - Tam test: 23 dosya, 42 test, hata 0.
+  - Açılış (4× yavaş işlemci, ortanca): eski 9,1–9,4 sn → yeni 7,3–8,3 sn.
+  - Oyun, galeri ve defter yayında. Soru paketi (`fl-banka`, 1.160.316 bayt) yayında birebir doğrulandı.
 - Aşama 1 pilotu kullanıcı onayından geçti.
 - **Aşama 2 başladı.**
+  - Aile 1 (Türkiye derin): altyapı hazır (`tools/veri/aile/`).
+  - İlk ölçüm: seçilen 52 dağ/gölün 20'si bankada zaten var; ünlüler önceki büyütmelerde girmiş.
+  - Tahmin 5–8 bin gerçekçi değil; bu aile birkaç yüz soru verir (antik kent, kale, baraj eklenince).
+- Anlatım çeşitliliği: ilçe (108 ipucu, 10 kalıp) ve doğum yılı (259 tanım, 6 kalıp) yenilendi. Kural: `tools/soru/BRIF.md` §12.
 - Kullanıcı ek şartı: soru anlatımı tek kalıp olmayacak (kalıp çeşitliliği + ipucu, karakter sınırı içinde).
 - Bekleyen görseller: Göz Kararı GK-311…510 (bu akşam), 1000 yeni görsel (`GORSEL-1000.md`).
 Banka bugün 20.103 soru (sayım: `tools/soru/sayim/2026-11-15_20103.json`).

@@ -1,0 +1,23 @@
+banka: 72 denetim, 0 hata
+deneme: 3.830.569 denetim, 0 hata
+deneme-akil: 304.607 denetim, 0 hata
+deneme-duello: 23.554 denetim, 0 hata
+deneme-harita: 135.917 denetim, 0 hata
+deneme-icat: 80.801 denetim, 0 hata
+deneme-icat3b: 200.331 denetim, 0 hata
+ek: 2.875 denetim, 0 hata
+hafiza: 2.023 denetim, 0 hata
+harita: geçti (alt testleriyle)
+kahraman: geçti
+kare: geçti (alt testleriyle)
+kurallar: 1.121 denetim, 0 hata
+net: 83.243 denetim, 0 hata
+sinir: 85.103 denetim, 0 hata
+sira: 19 denetim, 0 hata
+timing: 968.208 denetim, 0 hata
+types: 775.373 denetim, 0 hata
+yeni2: 2.219.928 denetim, 0 hata
+yeni3: 48.749 denetim, 0 hata
+yeni4: 15.141 denetim, 0 hata
+yeni5: 1.278.807 denetim, 0 hata
+yildirim: 197 denetim, 0 hata

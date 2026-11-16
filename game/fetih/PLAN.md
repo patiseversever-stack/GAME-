@@ -5,7 +5,7 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 ## Son durum (16 Kasım 2026)
 
 - **Soru bankası:** 20.815 soru. 100 bin planı `SORU-100K.md`'de.
-  - Aşama 0 (altyapı) bitti; kapının son adımları açık: tam test, açılış ölçümü, yayın.
+  - Aşama 0 (altyapı) bitti, kapı geçti (16 Kasım). Ayrıntı `SORU-100K.md` durum satırında.
   - Aşama 1 pilotu (Wikidata: ilçe + doğum yılı, 444 soru + 268 Mancınık ikizi) kullanıcı onayından geçti.
   - **Aşama 2 başladı** (16 Kasım, kullanıcı: "pilot tamam aşama 2ye geç").
 - **Kullanıcı isteği (16 Kasım): Türkçe anlatım tek kalıp olmasın.** "Şurası hangi ildedir" hep aynı. Soru kalıpları
