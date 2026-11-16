@@ -12,7 +12,7 @@ ChatGPT'ye bu dosyayı DEĞİL, aşağıdaki parça dosyalarını ver (her biri 
 | `GORSEL-1000-K3.md` | GK-911 – GK-1110 | 200 | Göz Kararı | hazırlanıyor |
 | `GORSEL-1000-K4.md` | GK-1111 – GK-1310 | 200 | Göz Kararı | hazırlanıyor |
 | `GORSEL-1000-K5.md` | YP-101 – YP-300 | 200 | Kazı Kazan + Gölge Oyunu | `Gorsel-1000-K5.zip` |
-| `GORSEL-1000-K6.md` | GK-1311 – GK-1410 | 100 | Göz Kararı (ünlü kişi portreleri) | hazırlanıyor |
+| `GORSEL-1000-K6.md` | GK-1311 – GK-1410 | 100 | Göz Kararı (ünlü kişi portreleri) | `Gorsel-1000-K6.zip` |
 
 **Kullanım:** her parça için ChatGPT'de yeni bir sohbet aç, parça dosyasını ekle ve "Talimatı uygula, başla" yaz. Durursa "devam" yaz. Bitince verdiği ZIP'i bana gönder.
 
@@ -571,6 +571,81 @@ Hepsi bir gecede yetişmezse sorun değil: gelen parça oyuna bağlanır, görse
 | GK-1348 | 3 · bulanık | Mathew Brady'nin fotoğrafını çektiği bu Amerikalı ressam ve mucit kimdir? | **Samuel Morse** |
 | GK-1349 | 3 · bulanık | Joseph Stieler'in 1843'te resmettiği bu Alman doğa bilimci ve gezgin kim? | **Alexander von Humboldt** |
 | GK-1350 | 2 · bulanık | Görseldeki İskoç mühendisin adı hangi birime verilmiştir? | **watt** |
+
+### Tarihî kişiler
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1351 | 2 · ayrıntı | David'in 1812'de çalışma odasında resmettiği görseldeki imparator hangi adada doğdu? | **Korsika** |
+| GK-1352 | 1 · bulanık | Viyana'daki, Tiziano atölyesine atfedilen bu portrede iri beyaz sarıklı padişah kimdir? | **Kanuni Sultan Süleyman** |
+| GK-1353 | 1 · bulanık | Gilbert Stuart'ın hiç bitirmediği 1796 tarihli bu portredeki Amerikalı devlet adamı kim? | **George Washington** |
+| GK-1354 | 3 · bulanık | Downey stüdyosunda, eli masaya dayalı poz veren bu iri yapılı, sakallı padişah kimdir? | **Abdülaziz** |
+| GK-1355 | 1 · bulanık | Pompeii'deki Faun Evi'nin taban mozaiğinde atının üstünde görülen genç komutan kim? | **Büyük İskender** |
+| GK-1356 | 2 · bulanık | Torino'daki Tusculum büstünde ince yüzü ve açılmış alnıyla görülen Romalı devlet adamının adı ne? | **Jül Sezar** |
+| GK-1357 | 1 · bulanık | Yuan sarayında ölümünden sonra ipeğe çizilen bu portredeki ak bıyıklı Moğol hükümdarı kim? | **Cengiz Han** |
+| GK-1358 | 2 · bulanık | Nigari'nin resmettiği görseldeki kaptan-ı derya, hangi büyük deniz savaşıyla anılır? | **Preveze** |
+| GK-1359 | 1 · ayrıntı | George Gower'a atfedilen, dev dantel yakalı ve incilerle bezeli portredeki kraliçe kimdir? | **I. Elizabeth** |
+| GK-1360 | 3 · bulanık | Nathaniel Dance'in 1776'da resmettiği bu üniformalı İngiliz denizci hangisi? | **James Cook** |
+| GK-1361 | 2 · bulanık | Alexander Gardner'ın 1863'te fotoğrafladığı görseldeki başkan, ABD'nin kaçıncı başkanıydı? | **16. başkan** |
+| GK-1362 | 2 · bulanık | Nakkaş Osman'ın 1579'da Şemailname için çizdiği bu sakalsız, uzun bıyıklı padişah kim? | **Yavuz Sultan Selim** |
+| GK-1363 | 1 · bulanık | Alexander Bassano'nun 1882'de çektiği bu fotoğrafta küçük elmas taç takan kraliçe kim? | **Kraliçe Victoria** |
+| GK-1364 | 3 · bulanık | Amcasının 1867 Avrupa gezisine katılan bu genç şehzade, sonradan hangi adla tahta çıktı? | **II. Abdülhamid** |
+| GK-1365 | 2 · ayrıntı | Hyacinthe Rigaud'nun 1701'de ermin kürklü taç giyme kaftanıyla resmettiği kral hangisi? | **XIV. Louis** |
+| GK-1366 | 1 · bulanık | Heykeltıraş Thutmose'un atölyesinde bulunan bu boyalı kireçtaşı büst hangi kraliçeye ait? | **Nefertiti** |
+| GK-1367 | 3 · bulanık | Franz von Lenbach'ın defalarca resmettiği bu kalın bıyıklı Alman devlet adamı kimdir? | **Otto von Bismarck** |
+| GK-1368 | 2 · bulanık | Vigée Le Brun'ün 1783'te elinde bir gülle resmettiği bu pudralı saçlı kadın kimdir? | **Marie Antoinette** |
+| GK-1369 | 3 · bulanık | Viyanalı saray fotoğrafçısı Carl Pietzner'in çektiği bu ak sakallı padişah kimdir? | **V. Mehmed Reşad** |
+| GK-1370 | 3 · bulanık | Godfrey Kneller'ın 1698'de resmettiği bu zırhlı, ince bıyıklı genç çarın adı ne? | **Büyük Petro** |
+
+### Yazarlar ve şairler
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1371 | 1 · bulanık | Kulağında altın küpe olan, 1600'lerin başından kalma bu portredeki İngiliz oyun yazarı kim? | **William Shakespeare** |
+| GK-1372 | 1 · bulanık | Vasili Perov'un 1872'de, ellerini dizinde kenetlemiş düşünürken resmettiği Rus yazar kimdir? | **Fyodor Dostoyevski** |
+| GK-1373 | 1 · bulanık | İlya Repin'in 1887'de koltukta, elinde kitapla resmettiği uzun sakallı yazar hangisi? | **Lev Tolstoy** |
+| GK-1374 | 1 · bulanık | 1876 tarihli bu Étienne Carjat fotoğrafında başını eline dayamış Fransız yazar kim? | **Victor Hugo** |
+| GK-1375 | 1 · bulanık | 1907'de New York'ta A. F. Bradley'nin çektiği, beyaz takım giyen Amerikalı yazar kimdir? | **Mark Twain** |
+| GK-1376 | 3 · bulanık | Stieler'in 1828'de elinde bir kâğıtla resmettiği görseldeki şair hangi kentte doğdu? | **Frankfurt** |
+| GK-1377 | 2 · bulanık | Orest Kiprenski'nin 1827'de kolları kavuşturulmuş, omzu ekoseli resmettiği şair kimdir? | **Aleksandr Puşkin** |
+| GK-1378 | 2 · bulanık | Botticelli'nin defne taçlı, kırmızı başlıklı çizdiği görseldeki şair hangi kentten sürgün edildi? | **Floransa** |
+| GK-1379 | 2 · bulanık | 1848'de çekilen 'Ultima Thule' dagerreyotipindeki hüzünlü bakışlı Amerikalı yazar kim? | **Edgar Allan Poe** |
+| GK-1380 | 3 · bulanık | Félix Nadar'ın 1878 dolaylarında çektiği görseldeki romancı hangi Fransız kentinde doğdu? | **Nantes** |
+| GK-1381 | 2 · bulanık | 1882'de New York'ta Napoleon Sarony'nin objektifine poz veren uzun saçlı İrlandalı yazar kim? | **Oscar Wilde** |
+| GK-1382 | 3 · bulanık | Fyodor Moller'in 1840 dolaylarında resmettiği, sivri burunlu, kâküllü Rus yazar hangisi? | **Nikolay Gogol** |
+| GK-1383 | 2 · bulanık | 1867'deki Amerika okuma turunda Jeremiah Gurney'nin fotoğrafladığı İngiliz romancı hangisi? | **Charles Dickens** |
+| GK-1384 | 3 · bulanık | Louis-Auguste Bisson'un 1842 dagerreyotipinde eli göğsünde duran Fransız romancı kimdir? | **Honoré de Balzac** |
+| GK-1385 | 3 · bulanık | Kız kardeşi Cassandra'nın kurşun kalemle çizdiği bu küçük taslak hangi romancıyı gösterir? | **Jane Austen** |
+| GK-1386 | 1 · bulanık | 1910'larda İstanbul'da çekilen bu fotoğraftaki kalın bıyıklı, fesli Türk şair hangisi? | **Mehmet Âkif Ersoy** |
+| GK-1387 | 1 · bulanık | 1878'de İstanbul'da çekilen bu fotoğraftaki Tanzimat dönemi yazarı kim? | **Nâmık Kemal** |
+| GK-1388 | 2 · bulanık | Servet-i Fünun kuşağından, bu eski fotoğrafta görülen ince yüzlü, bıyıklı şair kimdir? | **Tevfik Fikret** |
+| GK-1389 | 2 · bulanık | Tanzimat döneminden kalan bu fotoğraftaki uzun sakallı şair ve devlet adamı hangisi? | **Ziya Paşa** |
+| GK-1390 | 3 · bulanık | Kendi matbaasında gazete çıkaran, bu fotoğraftaki ak sakallı Osmanlı romancısı kimdir? | **Ahmet Mithat Efendi** |
+
+### Ressamlar ve besteciler
+
+| No | Zorluk · gösterim | Soru | Cevap |
+|---|---|---|---|
+| GK-1391 | 1 · bulanık | Saint-Rémy'de 1889'da yaptığı, arka planı kıvrım kıvrım mavi bu otoportre hangi ressamın? | **Vincent van Gogh** |
+| GK-1392 | 2 · bulanık | Barbara Krafft'ın 1819'da resmettiği görseldeki besteci hangi şehirde doğdu? | **Salzburg** |
+| GK-1393 | 1 · ayrıntı | Elinde paleti, ardındaki duvarda iki büyük çember olan bu yaşlı ressamın adı ne? | **Rembrandt** |
+| GK-1394 | 1 · bulanık | Joseph Karl Stieler'in 1820'de elinde notalarla resmettiği, dağınık saçlı besteci kimdir? | **Ludwig van Beethoven** |
+| GK-1395 | 2 · bulanık | Tam cepheden, omuzlarına dökülen buklelerle 1500'de kendini çizen Alman usta hangisi? | **Albrecht Dürer** |
+| GK-1396 | 2 · bulanık | Haussmann'ın 1748'de resmettiği görseldeki besteci, hayatının son 27 yılını nerede geçirdi? | **Leipzig** |
+| GK-1397 | 2 · bulanık | Paris'te resim eğitimi alan, bu fotoğraftaki fesli Osmanlı ressamı kimdir? | **Osman Hamdi Bey** |
+| GK-1398 | 1 · bulanık | Nikolay Kuznetsov'un 1893'te nota sehpası başında resmettiği ak sakallı Rus besteci kim? | **Pyotr İlyiç Çaykovski** |
+| GK-1399 | 1 · bulanık | Floransa'daki Uffizi'de duran, siyah bereli bu gençlik otoportresi hangi ustaya ait? | **Rafael** |
+| GK-1400 | 3 · bulanık | Madrid'deki Prado'da duran, elinde fırçayla yandan görünen bu yaşlı Venedikli usta kim? | **Tiziano** |
+| GK-1401 | 1 · bulanık | Bologna'daki bu anonim portrede elinde kemanla görünen Venedikli bestecinin adı ne? | **Antonio Vivaldi** |
+| GK-1402 | 2 · bulanık | Giovanni Boldini'nin 1886'da silindir şapka ve beyaz atkıyla çizdiği besteci kimdir? | **Giuseppe Verdi** |
+| GK-1403 | 1 · bulanık | Gençliğinde bir kavgada kırılan basık burnuyla tanınan bu Rönesans heykeltıraşı kimdir? | **Michelangelo** |
+| GK-1404 | 3 · bulanık | Bisson'un 1849'da çektiği görseldeki bestecinin kalbi hangi kentteki bir kilisede saklanır? | **Varşova** |
+| GK-1405 | 2 · bulanık | Yuvarlak gözlüğü ve kıvırcık saçlarıyla Rieder'in resmettiği Viyanalı genç bestecinin adı nedir? | **Franz Schubert** |
+| GK-1406 | 3 · bulanık | Geniş siyah şapkası ve kıvrık bıyığıyla 1623'te kendini çizen Flaman usta kimdir? | **Peter Paul Rubens** |
+| GK-1407 | 3 · bulanık | Prado'daki 1815 tarihli bu otoportrede dağınık saçlı, açık yakalı İspanyol ressam kim? | **Francisco de Goya** |
+| GK-1408 | 2 · bulanık | Paul Nadar'ın 1886'da çektiği, omuzlarına dökülen beyaz saçlı piyanist ve besteci kim? | **Franz Liszt** |
+| GK-1409 | 3 · bulanık | Franz Hanfstaengl'in 1871'de çektiği, kadife bereli ve çene sakallı Alman besteci kim? | **Richard Wagner** |
+| GK-1410 | 3 · bulanık | C. Brasch'ın 1889 dolaylarında Berlin'de çektiği bu uzun ak sakallı besteci hangisi? | **Johannes Brahms** |
 
 ## Yapı görselleri
 
