@@ -18,16 +18,19 @@ const h32 = (s) => {
 	for (const c of s) h = Math.imul(h ^ c.codePointAt(0), 16777619) >>> 0;
 	return h;
 };
-// bankada doğum yılı zaten sorulmuş kişi (yinelenmesin)
-const sorulmus = BANK.filter((q) => q.type === 'num' && /doğdu|doğum/.test(q.q)).map((q) => q.q);
+// bankada doğum yılı zaten sorulmuş kişi (yinelenmesin). Bu ailenin kendi soruları (kimlikte -wd-) bankaya bağlandığından
+// sayılmaz; sayılırsa yeniden üretimde bütün kişiler "zaten soruluyor" diye atlanır ve dosya boşalır.
+const sorulmus = BANK.filter((q) => q.type === 'num' && !/-wd-/.test(q.id) && /doğdu|doğum/.test(q.q)).map((q) => q.q);
 
 const secim = readFileSync('tools/veri/pilot/kisi_secim.txt', 'utf8')
 	.split('\n')
 	.map((l) => l.trim())
 	.filter((l) => l && !l.startsWith('#'))
 	.map((l) => {
-		const [ad, kat, tanim, z] = l.split('|').map((x) => x.trim());
-		return { ad, kat, tanim, diff: Number(z) };
+		// 5. alan (isteğe bağlı): soruda görünen ad, Wikidata etiketi Türkçede yerleşik ya da TDK yazımından ayrıysa
+		// (Celine Dion → Céline Dion, Katip Çelebi → Kâtip Çelebi); bankadaki yazımla da tutarlı olmalı
+		const [ad, kat, tanim, z, goster] = l.split('|').map((x) => x.trim());
+		return { ad, kat, tanim, diff: Number(z), goster: goster || ad };
 	});
 
 const rapor = { secilen: secim.length, atlanan: [], soru: 0, kat: {}, zorluk: { 1: 0, 2: 0, 3: 0 } };
@@ -60,14 +63,15 @@ for (const s of secim) {
 	const pos = 0.3 + (h32(k.qid) % 41) / 100;
 	let min = Math.round((y - pos * W) / 10) * 10;
 	let max = min + W;
-	if (max > 2030) (max = 2030), (min = max - W);
+	// üst sınır geleceğe taşmaz (2030'da 1894 doğumlu Kruşçev'e 2030'a dek yıl seçtiriyordu): en çok 2025
+	if (max > 2025) (max = 2025), (min = max - W);
 	if (min < 0) (min = 0), (max = W);
 	const q = {
 		id: `${KAT[s.kat]}-wd-dogum-${k.qid}`,
 		cat: s.kat,
 		diff: s.diff,
 		type: 'num',
-		q: `${s.tanim} ${s.ad} hangi yıl doğdu?`,
+		q: `${s.tanim} ${s.goster} hangi yıl doğdu?`,
 		ans: y,
 		unit: '',
 		min,
@@ -83,19 +87,14 @@ for (const s of secim) {
 	rapor.kat[s.kat] = (rapor.kat[s.kat] || 0) + 1;
 	rapor.zorluk[s.diff]++;
 }
-// zorluk dengesi (BRIF §9: kolay ≥ %25, zor ≤ %30): elle verilen zorluk korunur; eşik tutmazsa en tanınanlar (çok dilde
-// maddesi olan: kişilerde tanınırlığın iyi ölçüsü) bir kademe kolaylaşır
-const sl = new Map(K.map((k) => [k.qid, k.sitelinks]));
-const pay = (d) => out.filter((q) => q.diff === d).length / out.length;
+// zorluk dengesi (BRIF §9: kolay ≥ %25, zor ≤ %30). Zorluk yalnız seçim dosyasından gelir. Eskiden eşik tutmazsa en çok dilde
+// maddesi olanlar kendiliğinden bir kademe kolaylaşıyordu (Molière, Martin Luther 3 → 1); bağımsız denetim bunu dürüst bulmadı
+// (16 Kasım 2026): dil sayısı ünü ölçer, doğum yılının bilinirliğini ölçmez. Şimdi eşik tutmazsa yalnız uyarılır.
 rapor.denge = [];
-for (const [d, hedef, kos] of [[3, 0.28, () => pay(3) > 0.28], [2, 0.26, () => pay(1) < 0.26]])
-	for (const q of out.filter((x) => x.diff === d).sort((a, b) => sl.get(b.kaynak) - sl.get(a.kaynak))) {
-		if (!kos()) break;
-		q.diff = d - 1;
-		rapor.denge.push(`${q.q.replace(' hangi yıl doğdu?', '')}: ${d} → ${d - 1}`);
-	}
 rapor.zorluk = { 1: 0, 2: 0, 3: 0 };
 for (const q of out) rapor.zorluk[q.diff]++;
+if (rapor.zorluk[1] < 0.25 * out.length) rapor.denge.push(`kolay %${Math.round((100 * rapor.zorluk[1]) / out.length)} < %25`);
+if (rapor.zorluk[3] > 0.3 * out.length) rapor.denge.push(`zor %${Math.round((100 * rapor.zorluk[3]) / out.length)} > %30`);
 rapor.soru = out.length;
 mkdirSync('src/data/q/wd', { recursive: true });
 writeFileSync(
@@ -106,5 +105,6 @@ writeFileSync(
 		JSON.stringify(out, null, '\t') +
 		';\n',
 );
-console.log(JSON.stringify({ ...rapor, atlanan: rapor.atlanan.length, denge: rapor.denge.length }, null, 1));
+console.log(JSON.stringify({ ...rapor, atlanan: rapor.atlanan.length }, null, 1));
+if (rapor.denge.length) console.log('  UYARI zorluk dağılımı hedef dışında: ' + rapor.denge.join(', '));
 for (const a of rapor.atlanan) console.log('  atlandı: ' + a);

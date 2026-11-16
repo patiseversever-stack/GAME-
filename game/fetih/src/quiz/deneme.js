@@ -46,7 +46,9 @@ export const DENEME_ORDER = [
 const KB = (id, diff, q, site, il, a, extra = {}) => ({ id, cat: 'cografya', diff, type: 'kusbakisi', q, site, il, a, ...extra });
 const IA = (id, diff, il, hints) => ({ id, cat: 'cografya', diff, type: 'ilavi', q: 'Siluetteki gizli ili haritada bul!', il, hints });
 
-export const DENEME_SAMPLES = Object.assign({
+// Örnekler: grupların SAMPLES nesneleri kopyalanır. Erişimciler (Halat, Mancınık: bankadan türer, deneme-duello.js)
+// değer olarak değil erişimci olarak geçer (Object.assign değerini modül yüklenirken okurdu; tarayıcıda banka o an boş).
+export const DENEME_SAMPLES = ornekler({
 	kusbakisi: [
 		KB('dn-kb1', 1, 'Kamera hangi ilin üzerinde?', 'galata', 34, ['İstanbul', 'İzmir', 'Çanakkale', 'Edirne'], { yaw: 0.5 }),
 		KB('dn-kb2', 1, 'Bu bembeyaz teraslar hangi ilde?', 'pamukkale', 20, ['Denizli', 'Aydın', 'Muğla', 'Burdur'], { yaw: -0.4 }),
@@ -206,4 +208,10 @@ export const DENEME_SAMPLES = Object.assign({
 		IA('dn-ia73', 1, 33, ['Akdeniz Bölgesi’nde', 'Kız Kalesi, Anamur muzu ve tantunisiyle ünlü', 'Plakası 33']),
 		IA('dn-ia74', 1, 38, ['İç Anadolu Bölgesi’nde', 'Erciyes Dağı’nın eteğinde; pastırması ve mantısıyla ünlü', 'Plakası 38']),
 	],
-}, ...GROUPS.map((g) => g.SAMPLES));
+}, GROUPS.map((g) => g.SAMPLES));
+
+/** Örnek nesnelerini birleştir (sonraki aynı adı ezer, Object.assign gibi); erişimciler korunur. */
+function ornekler(ilk, gruplar) {
+	for (const g of gruplar) Object.defineProperties(ilk, Object.getOwnPropertyDescriptors(g));
+	return ilk;
+}

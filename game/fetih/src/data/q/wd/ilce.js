@@ -2,62 +2,6 @@
 // tools/veri/pilot/ilce_secim.txt'de değiştirip yeniden üret. Bilgi Wikidata'dan (CC0), kaynak: soru.kaynak.
 export default [
 	{
-		"id": "cog-wd-ilce-Q932886",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Kadıköy ilçesi hangi ildedir?",
-		"a": [
-			"İstanbul",
-			"Yalova",
-			"Edirne",
-			"Sakarya"
-		],
-		"kaynak": "Q932886"
-	},
-	{
-		"id": "cog-wd-ilce-Q459495",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Beşiktaş hangi ilin ilçesidir?",
-		"a": [
-			"İstanbul",
-			"Kırklareli",
-			"Bilecik",
-			"Sakarya"
-		],
-		"kaynak": "Q459495"
-	},
-	{
-		"id": "cog-wd-ilce-Q49110521",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Üsküdar hangi ile bağlı bir ilçedir?",
-		"a": [
-			"İstanbul",
-			"Kırklareli",
-			"Bursa",
-			"Edirne"
-		],
-		"kaynak": "Q49110521"
-	},
-	{
-		"id": "cog-wd-ilce-Q217411",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Beyoğlu ilçesi hangi ildedir?",
-		"a": [
-			"İstanbul",
-			"Kırklareli",
-			"Sakarya",
-			"Edirne"
-		],
-		"kaynak": "Q217411"
-	},
-	{
 		"id": "cog-wd-ilce-Q732923",
 		"cat": "cografya",
 		"diff": 1,
@@ -74,7 +18,7 @@ export default [
 	{
 		"id": "cog-wd-ilce-Q752528",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Bakırköy ilçesi hangi ildedir?",
 		"a": [
@@ -88,7 +32,7 @@ export default [
 	{
 		"id": "cog-wd-ilce-Q857107",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Sarıyer hangi ilin ilçesidir?",
 		"a": [
@@ -100,37 +44,9 @@ export default [
 		"kaynak": "Q857107"
 	},
 	{
-		"id": "cog-wd-ilce-Q141623322",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Şile ilçesi hangi ildedir?",
-		"a": [
-			"İstanbul",
-			"Kocaeli",
-			"Çanakkale",
-			"Bilecik"
-		],
-		"kaynak": "Q141623322"
-	},
-	{
-		"id": "cog-wd-ilce-Q14814766",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Adalar hangi ilin ilçesidir?",
-		"a": [
-			"İstanbul",
-			"Kırklareli",
-			"Bilecik",
-			"Balıkesir"
-		],
-		"kaynak": "Q14814766"
-	},
-	{
 		"id": "cog-wd-ilce-Q1967926",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Silivri ilçesi hangi ildedir?",
 		"a": [
@@ -144,7 +60,7 @@ export default [
 	{
 		"id": "cog-wd-ilce-Q1968049",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Çatalca hangi ilin ilçesidir?",
 		"a": [
@@ -158,7 +74,7 @@ export default [
 	{
 		"id": "cog-wd-ilce-Q794351",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Beykoz hangi ile bağlı bir ilçedir?",
 		"a": [
@@ -172,7 +88,7 @@ export default [
 	{
 		"id": "cog-wd-ilce-Q49103426",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Eyüpsultan hangi ile bağlı bir ilçedir?",
 		"a": [
@@ -186,7 +102,7 @@ export default [
 	{
 		"id": "cog-wd-ilce-Q840258",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Büyükçekmece ilçesi hangi ildedir?",
 		"a": [
@@ -214,7 +130,7 @@ export default [
 	{
 		"id": "cog-wd-ilce-Q3130309",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Gölcük hangi ilin ilçesidir?",
 		"a": [
@@ -224,20 +140,6 @@ export default [
 			"Tekirdağ"
 		],
 		"kaynak": "Q3130309"
-	},
-	{
-		"id": "cog-wd-ilce-Q2248693",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Karamürsel hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Kocaeli",
-			"Bursa",
-			"Kırklareli",
-			"Tekirdağ"
-		],
-		"kaynak": "Q2248693"
 	},
 	{
 		"id": "cog-wd-ilce-Q16468576",
@@ -296,20 +198,6 @@ export default [
 		"kaynak": "Q49108711"
 	},
 	{
-		"id": "cog-wd-ilce-Q2191303",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Karasu hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Sakarya",
-			"Bilecik",
-			"Balıkesir",
-			"Kırklareli"
-		],
-		"kaynak": "Q2191303"
-	},
-	{
 		"id": "cog-wd-ilce-Q1011270",
 		"cat": "cografya",
 		"diff": 3,
@@ -322,76 +210,6 @@ export default [
 			"Edirne"
 		],
 		"kaynak": "Q1011270"
-	},
-	{
-		"id": "cog-wd-ilce-Q2392065",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Gemlik hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Bursa",
-			"Balıkesir",
-			"Tekirdağ",
-			"Çanakkale"
-		],
-		"kaynak": "Q2392065"
-	},
-	{
-		"id": "cog-wd-ilce-Q856171",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Mudanya hangi ilin ilçesidir?",
-		"a": [
-			"Bursa",
-			"Sakarya",
-			"Kırklareli",
-			"Çanakkale"
-		],
-		"kaynak": "Q856171"
-	},
-	{
-		"id": "cog-wd-ilce-Q2083281",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "İnegöl hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Bursa",
-			"Sakarya",
-			"Tekirdağ",
-			"İstanbul"
-		],
-		"kaynak": "Q2083281"
-	},
-	{
-		"id": "cog-wd-ilce-Q1911918",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "İznik ilçesi hangi ildedir?",
-		"a": [
-			"Bursa",
-			"Sakarya",
-			"Edirne",
-			"Çanakkale"
-		],
-		"kaynak": "Q1911918"
-	},
-	{
-		"id": "cog-wd-ilce-Q49106944",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Nilüfer hangi ilin ilçesidir?",
-		"a": [
-			"Bursa",
-			"Balıkesir",
-			"Kırklareli",
-			"Edirne"
-		],
-		"kaynak": "Q49106944"
 	},
 	{
 		"id": "cog-wd-ilce-Q49107396",
@@ -520,20 +338,6 @@ export default [
 		"kaynak": "Q49109198"
 	},
 	{
-		"id": "cog-wd-ilce-Q216907",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Gelibolu ilçesi hangi ildedir?",
-		"a": [
-			"Çanakkale",
-			"Balıkesir",
-			"Yalova",
-			"Kocaeli"
-		],
-		"kaynak": "Q216907"
-	},
-	{
 		"id": "cog-wd-ilce-Q49103159",
 		"cat": "cografya",
 		"diff": 2,
@@ -548,34 +352,6 @@ export default [
 		"kaynak": "Q49103159"
 	},
 	{
-		"id": "cog-wd-ilce-Q10259759",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Bozcaada ilçesi hangi ildedir?",
-		"a": [
-			"Çanakkale",
-			"Balıkesir",
-			"Yalova",
-			"İstanbul"
-		],
-		"kaynak": "Q10259759"
-	},
-	{
-		"id": "cog-wd-ilce-Q1559296",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Gökçeada hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Çanakkale",
-			"Tekirdağ",
-			"İstanbul",
-			"Yalova"
-		],
-		"kaynak": "Q1559296"
-	},
-	{
 		"id": "cog-wd-ilce-Q15966457",
 		"cat": "cografya",
 		"diff": 3,
@@ -588,34 +364,6 @@ export default [
 			"Sakarya"
 		],
 		"kaynak": "Q15966457"
-	},
-	{
-		"id": "cog-wd-ilce-Q49106069",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Lapseki hangi ilin ilçesidir?",
-		"a": [
-			"Çanakkale",
-			"Tekirdağ",
-			"Yalova",
-			"Sakarya"
-		],
-		"kaynak": "Q49106069"
-	},
-	{
-		"id": "cog-wd-ilce-Q2834288",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Çorlu hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Tekirdağ",
-			"Edirne",
-			"Bilecik",
-			"Balıkesir"
-		],
-		"kaynak": "Q2834288"
 	},
 	{
 		"id": "cog-wd-ilce-Q2678987",
@@ -644,20 +392,6 @@ export default [
 			"Bursa"
 		],
 		"kaynak": "Q2227273"
-	},
-	{
-		"id": "cog-wd-ilce-Q388544",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Şarköy ilçesi hangi ildedir?",
-		"a": [
-			"Tekirdağ",
-			"Kırklareli",
-			"Bilecik",
-			"Sakarya"
-		],
-		"kaynak": "Q388544"
 	},
 	{
 		"id": "cog-wd-ilce-Q1947903",
@@ -702,20 +436,6 @@ export default [
 		"kaynak": "Q117272513"
 	},
 	{
-		"id": "cog-wd-ilce-Q14512178",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Uzunköprü ilçesi hangi ildedir?",
-		"a": [
-			"Edirne",
-			"Çanakkale",
-			"İstanbul",
-			"Kocaeli"
-		],
-		"kaynak": "Q14512178"
-	},
-	{
 		"id": "cog-wd-ilce-Q344021",
 		"cat": "cografya",
 		"diff": 2,
@@ -744,20 +464,6 @@ export default [
 		"kaynak": "Q1912026"
 	},
 	{
-		"id": "cog-wd-ilce-Q1911884",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Söğüt hangi ilin ilçesidir?",
-		"a": [
-			"Bilecik",
-			"Sakarya",
-			"Kocaeli",
-			"Edirne"
-		],
-		"kaynak": "Q1911884"
-	},
-	{
 		"id": "cog-wd-ilce-Q49101408",
 		"cat": "cografya",
 		"diff": 2,
@@ -772,48 +478,6 @@ export default [
 		"kaynak": "Q49101408"
 	},
 	{
-		"id": "cog-wd-ilce-Q1960660",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Bodrum hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Muğla",
-			"Denizli",
-			"Manisa",
-			"Kütahya"
-		],
-		"kaynak": "Q1960660"
-	},
-	{
-		"id": "cog-wd-ilce-Q4285705",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Marmaris hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Muğla",
-			"Burdur",
-			"Kütahya",
-			"İzmir"
-		],
-		"kaynak": "Q4285705"
-	},
-	{
-		"id": "cog-wd-ilce-Q207998",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Fethiye ilçesi hangi ildedir?",
-		"a": [
-			"Muğla",
-			"Burdur",
-			"Afyonkarahisar",
-			"Manisa"
-		],
-		"kaynak": "Q207998"
-	},
-	{
 		"id": "cog-wd-ilce-Q947051",
 		"cat": "cografya",
 		"diff": 1,
@@ -826,20 +490,6 @@ export default [
 			"Kütahya"
 		],
 		"kaynak": "Q947051"
-	},
-	{
-		"id": "cog-wd-ilce-Q847295",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Dalaman hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Muğla",
-			"Burdur",
-			"Manisa",
-			"Kütahya"
-		],
-		"kaynak": "Q847295"
 	},
 	{
 		"id": "cog-wd-ilce-Q2860284",
@@ -870,48 +520,6 @@ export default [
 		"kaynak": "Q924252"
 	},
 	{
-		"id": "cog-wd-ilce-Q1911818",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Kuşadası ilçesi hangi ildedir?",
-		"a": [
-			"Aydın",
-			"İzmir",
-			"Kütahya",
-			"Uşak"
-		],
-		"kaynak": "Q1911818"
-	},
-	{
-		"id": "cog-wd-ilce-Q958144",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Didim hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Aydın",
-			"Muğla",
-			"Uşak",
-			"Afyonkarahisar"
-		],
-		"kaynak": "Q958144"
-	},
-	{
-		"id": "cog-wd-ilce-Q49109217",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Söke ilçesi hangi ildedir?",
-		"a": [
-			"Aydın",
-			"Denizli",
-			"Uşak",
-			"Kütahya"
-		],
-		"kaynak": "Q49109217"
-	},
-	{
 		"id": "cog-wd-ilce-Q2252014",
 		"cat": "cografya",
 		"diff": 2,
@@ -924,20 +532,6 @@ export default [
 			"Afyonkarahisar"
 		],
 		"kaynak": "Q2252014"
-	},
-	{
-		"id": "cog-wd-ilce-Q1911051",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Çeşme ilçesi hangi ildedir?",
-		"a": [
-			"İzmir",
-			"Aydın",
-			"Afyonkarahisar",
-			"Kütahya"
-		],
-		"kaynak": "Q1911051"
 	},
 	{
 		"id": "cog-wd-ilce-Q737822",
@@ -954,34 +548,6 @@ export default [
 		"kaynak": "Q737822"
 	},
 	{
-		"id": "cog-wd-ilce-Q1966755",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Selçuk hangi ile bağlı bir ilçedir?",
-		"a": [
-			"İzmir",
-			"Aydın",
-			"Denizli",
-			"Afyonkarahisar"
-		],
-		"kaynak": "Q1966755"
-	},
-	{
-		"id": "cog-wd-ilce-Q1921294",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Foça hangi ile bağlı bir ilçedir?",
-		"a": [
-			"İzmir",
-			"Aydın",
-			"Afyonkarahisar",
-			"Denizli"
-		],
-		"kaynak": "Q1921294"
-	},
-	{
 		"id": "cog-wd-ilce-Q2343342",
 		"cat": "cografya",
 		"diff": 2,
@@ -996,20 +562,6 @@ export default [
 		"kaynak": "Q2343342"
 	},
 	{
-		"id": "cog-wd-ilce-Q2670720",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Karşıyaka hangi ile bağlı bir ilçedir?",
-		"a": [
-			"İzmir",
-			"Aydın",
-			"Afyonkarahisar",
-			"Kütahya"
-		],
-		"kaynak": "Q2670720"
-	},
-	{
 		"id": "cog-wd-ilce-Q894012",
 		"cat": "cografya",
 		"diff": 1,
@@ -1022,20 +574,6 @@ export default [
 			"Denizli"
 		],
 		"kaynak": "Q894012"
-	},
-	{
-		"id": "cog-wd-ilce-Q1871530",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Konak hangi ile bağlı bir ilçedir?",
-		"a": [
-			"İzmir",
-			"Balıkesir",
-			"Kütahya",
-			"Muğla"
-		],
-		"kaynak": "Q1871530"
 	},
 	{
 		"id": "cog-wd-ilce-Q293927",
@@ -1094,34 +632,6 @@ export default [
 		"kaynak": "Q2523774"
 	},
 	{
-		"id": "cog-wd-ilce-Q996748",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Aliağa ilçesi hangi ildedir?",
-		"a": [
-			"İzmir",
-			"Aydın",
-			"Uşak",
-			"Kütahya"
-		],
-		"kaynak": "Q996748"
-	},
-	{
-		"id": "cog-wd-ilce-Q49106391",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Menemen hangi ile bağlı bir ilçedir?",
-		"a": [
-			"İzmir",
-			"Balıkesir",
-			"Kütahya",
-			"Muğla"
-		],
-		"kaynak": "Q49106391"
-	},
-	{
 		"id": "cog-wd-ilce-Q15963253",
 		"cat": "cografya",
 		"diff": 2,
@@ -1164,20 +674,6 @@ export default [
 		"kaynak": "Q847308"
 	},
 	{
-		"id": "cog-wd-ilce-Q16052713",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Soma hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Manisa",
-			"Aydın",
-			"Afyonkarahisar",
-			"Muğla"
-		],
-		"kaynak": "Q16052713"
-	},
-	{
 		"id": "cog-wd-ilce-Q15869633",
 		"cat": "cografya",
 		"diff": 2,
@@ -1204,20 +700,6 @@ export default [
 			"Muğla"
 		],
 		"kaynak": "Q4027542"
-	},
-	{
-		"id": "cog-wd-ilce-Q420157",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Pamukkale hangi ilin ilçesidir?",
-		"a": [
-			"Denizli",
-			"Uşak",
-			"Kütahya",
-			"İzmir"
-		],
-		"kaynak": "Q420157"
 	},
 	{
 		"id": "cog-wd-ilce-Q1003598",
@@ -1262,20 +744,6 @@ export default [
 		"kaynak": "Q2512452"
 	},
 	{
-		"id": "cog-wd-ilce-Q1958867",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Gediz ilçesi hangi ildedir?",
-		"a": [
-			"Kütahya",
-			"Balıkesir",
-			"İzmir",
-			"Denizli"
-		],
-		"kaynak": "Q1958867"
-	},
-	{
 		"id": "cog-wd-ilce-Q2423834",
 		"cat": "cografya",
 		"diff": 2,
@@ -1288,62 +756,6 @@ export default [
 			"İzmir"
 		],
 		"kaynak": "Q2423834"
-	},
-	{
-		"id": "cog-wd-ilce-Q1915508",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Bolvadin hangi ilin ilçesidir?",
-		"a": [
-			"Afyonkarahisar",
-			"Isparta",
-			"Manisa",
-			"Muğla"
-		],
-		"kaynak": "Q1915508"
-	},
-	{
-		"id": "cog-wd-ilce-Q116609383",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Dinar ilçesi hangi ildedir?",
-		"a": [
-			"Afyonkarahisar",
-			"Isparta",
-			"Aydın",
-			"Manisa"
-		],
-		"kaynak": "Q116609383"
-	},
-	{
-		"id": "cog-wd-ilce-Q1635214",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Alanya hangi ilin ilçesidir?",
-		"a": [
-			"Antalya",
-			"Konya",
-			"Kahramanmaraş",
-			"Osmaniye"
-		],
-		"kaynak": "Q1635214"
-	},
-	{
-		"id": "cog-wd-ilce-Q2218182",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Manavgat hangi ilin ilçesidir?",
-		"a": [
-			"Antalya",
-			"Karaman",
-			"Kahramanmaraş",
-			"Hatay"
-		],
-		"kaynak": "Q2218182"
 	},
 	{
 		"id": "cog-wd-ilce-Q2413977",
@@ -1432,7 +844,7 @@ export default [
 	{
 		"id": "cog-wd-ilce-Q15995624",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Konyaaltı ilçesi hangi ildedir?",
 		"a": [
@@ -1456,34 +868,6 @@ export default [
 			"Adana"
 		],
 		"kaynak": "Q49106734"
-	},
-	{
-		"id": "cog-wd-ilce-Q15989046",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Akseki ilçesi hangi ildedir?",
-		"a": [
-			"Antalya",
-			"Burdur",
-			"Osmaniye",
-			"Hatay"
-		],
-		"kaynak": "Q15989046"
-	},
-	{
-		"id": "cog-wd-ilce-Q49103271",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Elmalı ilçesi hangi ildedir?",
-		"a": [
-			"Antalya",
-			"Burdur",
-			"Osmaniye",
-			"Hatay"
-		],
-		"kaynak": "Q49103271"
 	},
 	{
 		"id": "cog-wd-ilce-Q1911174",
@@ -1514,62 +898,6 @@ export default [
 		"kaynak": "Q49110068"
 	},
 	{
-		"id": "cog-wd-ilce-Q581187",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Bucak hangi ilin ilçesidir?",
-		"a": [
-			"Burdur",
-			"Antalya",
-			"Adana",
-			"Kahramanmaraş"
-		],
-		"kaynak": "Q581187"
-	},
-	{
-		"id": "cog-wd-ilce-Q2800095",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Tarsus hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Mersin",
-			"Niğde",
-			"Isparta",
-			"Burdur"
-		],
-		"kaynak": "Q2800095"
-	},
-	{
-		"id": "cog-wd-ilce-Q49109008",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Silifke hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Mersin",
-			"Konya",
-			"Hatay",
-			"Kahramanmaraş"
-		],
-		"kaynak": "Q49109008"
-	},
-	{
-		"id": "cog-wd-ilce-Q485575",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Anamur hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Mersin",
-			"Adana",
-			"Osmaniye",
-			"Burdur"
-		],
-		"kaynak": "Q485575"
-	},
-	{
 		"id": "cog-wd-ilce-Q988315",
 		"cat": "cografya",
 		"diff": 2,
@@ -1584,20 +912,6 @@ export default [
 		"kaynak": "Q988315"
 	},
 	{
-		"id": "cog-wd-ilce-Q2000450",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Mut hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Mersin",
-			"Antalya",
-			"Kahramanmaraş",
-			"Burdur"
-		],
-		"kaynak": "Q2000450"
-	},
-	{
 		"id": "cog-wd-ilce-Q1911402",
 		"cat": "cografya",
 		"diff": 2,
@@ -1610,20 +924,6 @@ export default [
 			"Burdur"
 		],
 		"kaynak": "Q1911402"
-	},
-	{
-		"id": "cog-wd-ilce-Q2784562",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Ceyhan hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Adana",
-			"Niğde",
-			"Burdur",
-			"Isparta"
-		],
-		"kaynak": "Q2784562"
 	},
 	{
 		"id": "cog-wd-ilce-Q1884223",
@@ -1652,48 +952,6 @@ export default [
 			"Burdur"
 		],
 		"kaynak": "Q1004432"
-	},
-	{
-		"id": "cog-wd-ilce-Q49108856",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Seyhan hangi ilin ilçesidir?",
-		"a": [
-			"Adana",
-			"Kayseri",
-			"Isparta",
-			"Antalya"
-		],
-		"kaynak": "Q49108856"
-	},
-	{
-		"id": "cog-wd-ilce-Q49100745",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Antakya hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Hatay",
-			"Osmaniye",
-			"Antalya",
-			"Burdur"
-		],
-		"kaynak": "Q49100745"
-	},
-	{
-		"id": "cog-wd-ilce-Q174341",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "İskenderun hangi ilin ilçesidir?",
-		"a": [
-			"Hatay",
-			"Osmaniye",
-			"Burdur",
-			"Antalya"
-		],
-		"kaynak": "Q174341"
 	},
 	{
 		"id": "cog-wd-ilce-Q2782103",
@@ -1752,20 +1010,6 @@ export default [
 		"kaynak": "Q49100847"
 	},
 	{
-		"id": "cog-wd-ilce-Q3032005",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Kırıkhan hangi ilin ilçesidir?",
-		"a": [
-			"Hatay",
-			"Adana",
-			"Isparta",
-			"Mersin"
-		],
-		"kaynak": "Q3032005"
-	},
-	{
 		"id": "cog-wd-ilce-Q1958104",
 		"cat": "cografya",
 		"diff": 2,
@@ -1794,20 +1038,6 @@ export default [
 		"kaynak": "Q389650"
 	},
 	{
-		"id": "cog-wd-ilce-Q2455942",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Çankaya hangi ilin ilçesidir?",
-		"a": [
-			"Ankara",
-			"Konya",
-			"Yozgat",
-			"Niğde"
-		],
-		"kaynak": "Q2455942"
-	},
-	{
 		"id": "cog-wd-ilce-Q1021220",
 		"cat": "cografya",
 		"diff": 1,
@@ -1824,7 +1054,7 @@ export default [
 	{
 		"id": "cog-wd-ilce-Q1029159",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Etimesgut hangi ilin ilçesidir?",
 		"a": [
@@ -1836,23 +1066,9 @@ export default [
 		"kaynak": "Q1029159"
 	},
 	{
-		"id": "cog-wd-ilce-Q2196741",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Beypazarı hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Ankara",
-			"Kırşehir",
-			"Nevşehir",
-			"Yozgat"
-		],
-		"kaynak": "Q2196741"
-	},
-	{
 		"id": "cog-wd-ilce-Q14141584",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Polatlı hangi ilin ilçesidir?",
 		"a": [
@@ -1878,37 +1094,9 @@ export default [
 		"kaynak": "Q1020663"
 	},
 	{
-		"id": "cog-wd-ilce-Q1947523",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Nallıhan hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Ankara",
-			"Aksaray",
-			"Niğde",
-			"Kayseri"
-		],
-		"kaynak": "Q1947523"
-	},
-	{
-		"id": "cog-wd-ilce-Q49110497",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Çubuk hangi ilin ilçesidir?",
-		"a": [
-			"Ankara",
-			"Bolu",
-			"Sivas",
-			"Yozgat"
-		],
-		"kaynak": "Q49110497"
-	},
-	{
 		"id": "cog-wd-ilce-Q1020659",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Sincan ilçesi hangi ildedir?",
 		"a": [
@@ -1948,20 +1136,6 @@ export default [
 		"kaynak": "Q49100953"
 	},
 	{
-		"id": "cog-wd-ilce-Q2401967",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Derinkuyu hangi ilin ilçesidir?",
-		"a": [
-			"Nevşehir",
-			"Kırşehir",
-			"Sivas",
-			"Ankara"
-		],
-		"kaynak": "Q2401967"
-	},
-	{
 		"id": "cog-wd-ilce-Q2404697",
 		"cat": "cografya",
 		"diff": 2,
@@ -1974,20 +1148,6 @@ export default [
 			"Çankırı"
 		],
 		"kaynak": "Q2404697"
-	},
-	{
-		"id": "cog-wd-ilce-Q1958767",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Akşehir ilçesi hangi ildedir?",
-		"a": [
-			"Konya",
-			"Isparta",
-			"Sivas",
-			"Kırıkkale"
-		],
-		"kaynak": "Q1958767"
 	},
 	{
 		"id": "cog-wd-ilce-Q127389",
@@ -2004,37 +1164,9 @@ export default [
 		"kaynak": "Q127389"
 	},
 	{
-		"id": "cog-wd-ilce-Q2192534",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Seydişehir ilçesi hangi ildedir?",
-		"a": [
-			"Konya",
-			"Niğde",
-			"Sivas",
-			"Yozgat"
-		],
-		"kaynak": "Q2192534"
-	},
-	{
-		"id": "cog-wd-ilce-Q14329111",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Selçuklu ilçesi hangi ildedir?",
-		"a": [
-			"Konya",
-			"Antalya",
-			"Kayseri",
-			"Nevşehir"
-		],
-		"kaynak": "Q14329111"
-	},
-	{
 		"id": "cog-wd-ilce-Q3055997",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Meram ilçesi hangi ildedir?",
 		"a": [
@@ -2054,24 +1186,10 @@ export default [
 		"a": [
 			"Konya",
 			"Niğde",
-			"Nevşehir",
-			"Yozgat"
+			"Yozgat",
+			"Kırşehir"
 		],
 		"kaynak": "Q2140670"
-	},
-	{
-		"id": "cog-wd-ilce-Q1914881",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Ilgın ilçesi hangi ildedir?",
-		"a": [
-			"Konya",
-			"Antalya",
-			"Sivas",
-			"Nevşehir"
-		],
-		"kaynak": "Q1914881"
 	},
 	{
 		"id": "cog-wd-ilce-Q49109327",
@@ -2086,34 +1204,6 @@ export default [
 			"Konya"
 		],
 		"kaynak": "Q49109327"
-	},
-	{
-		"id": "cog-wd-ilce-Q1938725",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Bor hangi ilin ilçesidir?",
-		"a": [
-			"Niğde",
-			"Konya",
-			"Kırıkkale",
-			"Sivas"
-		],
-		"kaynak": "Q1938725"
-	},
-	{
-		"id": "cog-wd-ilce-Q3150097",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Ulukışla hangi ilin ilçesidir?",
-		"a": [
-			"Niğde",
-			"Adana",
-			"Kırıkkale",
-			"Karaman"
-		],
-		"kaynak": "Q3150097"
 	},
 	{
 		"id": "cog-wd-ilce-Q2432620",
@@ -2172,90 +1262,6 @@ export default [
 		"kaynak": "Q49107201"
 	},
 	{
-		"id": "cog-wd-ilce-Q2755924",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Divriği hangi ilin ilçesidir?",
-		"a": [
-			"Sivas",
-			"Kayseri",
-			"Niğde",
-			"Karaman"
-		],
-		"kaynak": "Q2755924"
-	},
-	{
-		"id": "cog-wd-ilce-Q2319523",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Suşehri ilçesi hangi ildedir?",
-		"a": [
-			"Sivas",
-			"Giresun",
-			"Çankırı",
-			"Kırşehir"
-		],
-		"kaynak": "Q2319523"
-	},
-	{
-		"id": "cog-wd-ilce-Q1869200",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Boğazlıyan hangi ilin ilçesidir?",
-		"a": [
-			"Yozgat",
-			"Çorum",
-			"Eskişehir",
-			"Ankara"
-		],
-		"kaynak": "Q1869200"
-	},
-	{
-		"id": "cog-wd-ilce-Q1837352",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Kaman hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Kırşehir",
-			"Ankara",
-			"Çankırı",
-			"Karaman"
-		],
-		"kaynak": "Q1837352"
-	},
-	{
-		"id": "cog-wd-ilce-Q2662858",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Safranbolu ilçesi hangi ildedir?",
-		"a": [
-			"Karabük",
-			"Çankırı",
-			"Sinop",
-			"Rize"
-		],
-		"kaynak": "Q2662858"
-	},
-	{
-		"id": "cog-wd-ilce-Q15960770",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Amasra ilçesi hangi ildedir?",
-		"a": [
-			"Bartın",
-			"Kastamonu",
-			"Gümüşhane",
-			"Ordu"
-		],
-		"kaynak": "Q15960770"
-	},
-	{
 		"id": "cog-wd-ilce-Q117354824",
 		"cat": "cografya",
 		"diff": 2,
@@ -2268,34 +1274,6 @@ export default [
 			"Artvin"
 		],
 		"kaynak": "Q117354824"
-	},
-	{
-		"id": "cog-wd-ilce-Q1881719",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Mengen hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Bolu",
-			"Karabük",
-			"Trabzon",
-			"Çorum"
-		],
-		"kaynak": "Q1881719"
-	},
-	{
-		"id": "cog-wd-ilce-Q2734899",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Mudurnu hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Bolu",
-			"Ankara",
-			"Artvin",
-			"Çorum"
-		],
-		"kaynak": "Q2734899"
 	},
 	{
 		"id": "cog-wd-ilce-Q49103672",
@@ -2326,76 +1304,6 @@ export default [
 		"kaynak": "Q117272530"
 	},
 	{
-		"id": "cog-wd-ilce-Q2523477",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "İnebolu hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Kastamonu",
-			"Karabük",
-			"Bolu",
-			"Gümüşhane"
-		],
-		"kaynak": "Q2523477"
-	},
-	{
-		"id": "cog-wd-ilce-Q49109449",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Taşköprü hangi ilin ilçesidir?",
-		"a": [
-			"Kastamonu",
-			"Çankırı",
-			"Amasya",
-			"Gümüşhane"
-		],
-		"kaynak": "Q49109449"
-	},
-	{
-		"id": "cog-wd-ilce-Q2168792",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Boyabat ilçesi hangi ildedir?",
-		"a": [
-			"Sinop",
-			"Samsun",
-			"Zonguldak",
-			"Gümüşhane"
-		],
-		"kaynak": "Q2168792"
-	},
-	{
-		"id": "cog-wd-ilce-Q2014028",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Gerze ilçesi hangi ildedir?",
-		"a": [
-			"Sinop",
-			"Kastamonu",
-			"Zonguldak",
-			"Gümüşhane"
-		],
-		"kaynak": "Q2014028"
-	},
-	{
-		"id": "cog-wd-ilce-Q49101057",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Bafra ilçesi hangi ildedir?",
-		"a": [
-			"Samsun",
-			"Sinop",
-			"Giresun",
-			"Düzce"
-		],
-		"kaynak": "Q49101057"
-	},
-	{
 		"id": "cog-wd-ilce-Q49110417",
 		"cat": "cografya",
 		"diff": 2,
@@ -2424,20 +1332,6 @@ export default [
 		"kaynak": "Q4812671"
 	},
 	{
-		"id": "cog-wd-ilce-Q2123173",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Merzifon ilçesi hangi ildedir?",
-		"a": [
-			"Amasya",
-			"Samsun",
-			"Bolu",
-			"Bayburt"
-		],
-		"kaynak": "Q2123173"
-	},
-	{
 		"id": "cog-wd-ilce-Q1999421",
 		"cat": "cografya",
 		"diff": 2,
@@ -2450,20 +1344,6 @@ export default [
 			"Çorum"
 		],
 		"kaynak": "Q1999421"
-	},
-	{
-		"id": "cog-wd-ilce-Q3439134",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Zile hangi ilin ilçesidir?",
-		"a": [
-			"Tokat",
-			"Ordu",
-			"Trabzon",
-			"Düzce"
-		],
-		"kaynak": "Q3439134"
 	},
 	{
 		"id": "cog-wd-ilce-Q5512183",
@@ -2494,34 +1374,6 @@ export default [
 		"kaynak": "Q14421288"
 	},
 	{
-		"id": "cog-wd-ilce-Q2628739",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Osmancık ilçesi hangi ildedir?",
-		"a": [
-			"Çorum",
-			"Samsun",
-			"Düzce",
-			"Rize"
-		],
-		"kaynak": "Q2628739"
-	},
-	{
-		"id": "cog-wd-ilce-Q117336584",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "İskilip hangi ilin ilçesidir?",
-		"a": [
-			"Çorum",
-			"Amasya",
-			"Rize",
-			"Karabük"
-		],
-		"kaynak": "Q117336584"
-	},
-	{
 		"id": "cog-wd-ilce-Q334985",
 		"cat": "cografya",
 		"diff": 2,
@@ -2548,48 +1400,6 @@ export default [
 			"Bayburt"
 		],
 		"kaynak": "Q2046545"
-	},
-	{
-		"id": "cog-wd-ilce-Q49109527",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Tirebolu hangi ilin ilçesidir?",
-		"a": [
-			"Giresun",
-			"Trabzon",
-			"Amasya",
-			"Artvin"
-		],
-		"kaynak": "Q49109527"
-	},
-	{
-		"id": "cog-wd-ilce-Q388662",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Şebinkarahisar hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Giresun",
-			"Sivas",
-			"Bayburt",
-			"Bartın"
-		],
-		"kaynak": "Q388662"
-	},
-	{
-		"id": "cog-wd-ilce-Q2610839",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Akçaabat hangi ilin ilçesidir?",
-		"a": [
-			"Trabzon",
-			"Gümüşhane",
-			"Kastamonu",
-			"Zonguldak"
-		],
-		"kaynak": "Q2610839"
 	},
 	{
 		"id": "cog-wd-ilce-Q2144595",
@@ -2622,7 +1432,7 @@ export default [
 	{
 		"id": "cog-wd-ilce-Q2260832",
 		"cat": "cografya",
-		"diff": 2,
+		"diff": 1,
 		"type": "choice",
 		"q": "Of ilçesi hangi ildedir?",
 		"a": [
@@ -2662,20 +1472,6 @@ export default [
 		"kaynak": "Q49100806"
 	},
 	{
-		"id": "cog-wd-ilce-Q117148242",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Çamlıhemşin hangi ilin ilçesidir?",
-		"a": [
-			"Rize",
-			"Artvin",
-			"Amasya",
-			"Çorum"
-		],
-		"kaynak": "Q117148242"
-	},
-	{
 		"id": "cog-wd-ilce-Q657127",
 		"cat": "cografya",
 		"diff": 2,
@@ -2688,20 +1484,6 @@ export default [
 			"Bolu"
 		],
 		"kaynak": "Q657127"
-	},
-	{
-		"id": "cog-wd-ilce-Q15960747",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Arhavi ilçesi hangi ildedir?",
-		"a": [
-			"Artvin",
-			"Erzurum",
-			"Amasya",
-			"Ordu"
-		],
-		"kaynak": "Q15960747"
 	},
 	{
 		"id": "cog-wd-ilce-Q2589142",
@@ -2718,34 +1500,6 @@ export default [
 		"kaynak": "Q2589142"
 	},
 	{
-		"id": "cog-wd-ilce-Q49110308",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Yusufeli ilçesi hangi ildedir?",
-		"a": [
-			"Artvin",
-			"Rize",
-			"Ordu",
-			"Samsun"
-		],
-		"kaynak": "Q49110308"
-	},
-	{
-		"id": "cog-wd-ilce-Q49110614",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Şavşat hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Artvin",
-			"Rize",
-			"Tokat",
-			"Gümüşhane"
-		],
-		"kaynak": "Q49110614"
-	},
-	{
 		"id": "cog-wd-ilce-Q2151715",
 		"cat": "cografya",
 		"diff": 1,
@@ -2758,48 +1512,6 @@ export default [
 			"Tunceli"
 		],
 		"kaynak": "Q2151715"
-	},
-	{
-		"id": "cog-wd-ilce-Q2097604",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Kağızman ilçesi hangi ildedir?",
-		"a": [
-			"Kars",
-			"Erzurum",
-			"Van",
-			"Bingöl"
-		],
-		"kaynak": "Q2097604"
-	},
-	{
-		"id": "cog-wd-ilce-Q2301990",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Doğubayazıt hangi ilin ilçesidir?",
-		"a": [
-			"Ağrı",
-			"Muş",
-			"Malatya",
-			"Elazığ"
-		],
-		"kaynak": "Q2301990"
-	},
-	{
-		"id": "cog-wd-ilce-Q116674347",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Patnos hangi ilin ilçesidir?",
-		"a": [
-			"Ağrı",
-			"Van",
-			"Tunceli",
-			"Elazığ"
-		],
-		"kaynak": "Q116674347"
 	},
 	{
 		"id": "cog-wd-ilce-Q1911586",
@@ -2816,62 +1528,6 @@ export default [
 		"kaynak": "Q1911586"
 	},
 	{
-		"id": "cog-wd-ilce-Q2214840",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Tatvan hangi ilin ilçesidir?",
-		"a": [
-			"Bitlis",
-			"Muş",
-			"Hakkari",
-			"Ardahan"
-		],
-		"kaynak": "Q2214840"
-	},
-	{
-		"id": "cog-wd-ilce-Q15981193",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Ahlat hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Bitlis",
-			"Batman",
-			"Malatya",
-			"Erzincan"
-		],
-		"kaynak": "Q15981193"
-	},
-	{
-		"id": "cog-wd-ilce-Q2028809",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Malazgirt ilçesi hangi ildedir?",
-		"a": [
-			"Muş",
-			"Bingöl",
-			"Elazığ",
-			"Ardahan"
-		],
-		"kaynak": "Q2028809"
-	},
-	{
-		"id": "cog-wd-ilce-Q2546707",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Oltu ilçesi hangi ildedir?",
-		"a": [
-			"Erzurum",
-			"Erzincan",
-			"Van",
-			"Elazığ"
-		],
-		"kaynak": "Q2546707"
-	},
-	{
 		"id": "cog-wd-ilce-Q49109576",
 		"cat": "cografya",
 		"diff": 3,
@@ -2884,48 +1540,6 @@ export default [
 			"Hakkari"
 		],
 		"kaynak": "Q49109576"
-	},
-	{
-		"id": "cog-wd-ilce-Q1004488",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Palandöken hangi ilin ilçesidir?",
-		"a": [
-			"Erzurum",
-			"Muş",
-			"Elazığ",
-			"Iğdır"
-		],
-		"kaynak": "Q1004488"
-	},
-	{
-		"id": "cog-wd-ilce-Q2068148",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "İspir ilçesi hangi ildedir?",
-		"a": [
-			"Erzurum",
-			"Kars",
-			"Van",
-			"Iğdır"
-		],
-		"kaynak": "Q2068148"
-	},
-	{
-		"id": "cog-wd-ilce-Q117462025",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Kemaliye ilçesi hangi ildedir?",
-		"a": [
-			"Erzincan",
-			"Giresun",
-			"Kars",
-			"Iğdır"
-		],
-		"kaynak": "Q117462025"
 	},
 	{
 		"id": "cog-wd-ilce-Q115978913",
@@ -2956,34 +1570,6 @@ export default [
 		"kaynak": "Q1003964"
 	},
 	{
-		"id": "cog-wd-ilce-Q116954254",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Pülümür ilçesi hangi ildedir?",
-		"a": [
-			"Tunceli",
-			"Erzincan",
-			"Van",
-			"Iğdır"
-		],
-		"kaynak": "Q116954254"
-	},
-	{
-		"id": "cog-wd-ilce-Q2314602",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Midyat ilçesi hangi ildedir?",
-		"a": [
-			"Mardin",
-			"Diyarbakır",
-			"Adıyaman",
-			"Siirt"
-		],
-		"kaynak": "Q2314602"
-	},
-	{
 		"id": "cog-wd-ilce-Q3267420",
 		"cat": "cografya",
 		"diff": 2,
@@ -3010,76 +1596,6 @@ export default [
 			"Gaziantep"
 		],
 		"kaynak": "Q2194160"
-	},
-	{
-		"id": "cog-wd-ilce-Q2125354",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Hasankeyf hangi ilin ilçesidir?",
-		"a": [
-			"Batman",
-			"Siirt",
-			"Şanlıurfa",
-			"Adıyaman"
-		],
-		"kaynak": "Q2125354"
-	},
-	{
-		"id": "cog-wd-ilce-Q15989053",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Kahta hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Adıyaman",
-			"Gaziantep",
-			"Şırnak",
-			"Batman"
-		],
-		"kaynak": "Q15989053"
-	},
-	{
-		"id": "cog-wd-ilce-Q849497",
-		"cat": "cografya",
-		"diff": 2,
-		"type": "choice",
-		"q": "Birecik hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Şanlıurfa",
-			"Mardin",
-			"Şırnak",
-			"Batman"
-		],
-		"kaynak": "Q849497"
-	},
-	{
-		"id": "cog-wd-ilce-Q49103996",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Halfeti hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Şanlıurfa",
-			"Mardin",
-			"Siirt",
-			"Kilis"
-		],
-		"kaynak": "Q49103996"
-	},
-	{
-		"id": "cog-wd-ilce-Q1967756",
-		"cat": "cografya",
-		"diff": 1,
-		"type": "choice",
-		"q": "Harran hangi ilin ilçesidir?",
-		"a": [
-			"Şanlıurfa",
-			"Gaziantep",
-			"Kilis",
-			"Siirt"
-		],
-		"kaynak": "Q1967756"
 	},
 	{
 		"id": "cog-wd-ilce-Q3379626",
@@ -3122,20 +1638,6 @@ export default [
 			"Siirt"
 		],
 		"kaynak": "Q2203170"
-	},
-	{
-		"id": "cog-wd-ilce-Q917838",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Ceylanpınar hangi ilin ilçesidir?",
-		"a": [
-			"Şanlıurfa",
-			"Diyarbakır",
-			"Siirt",
-			"Şırnak"
-		],
-		"kaynak": "Q917838"
 	},
 	{
 		"id": "cog-wd-ilce-Q13899160",
@@ -3194,20 +1696,6 @@ export default [
 		"kaynak": "Q49103329"
 	},
 	{
-		"id": "cog-wd-ilce-Q2273905",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Silvan hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Diyarbakır",
-			"Şanlıurfa",
-			"Kilis",
-			"Siirt"
-		],
-		"kaynak": "Q2273905"
-	},
-	{
 		"id": "cog-wd-ilce-Q664716",
 		"cat": "cografya",
 		"diff": 2,
@@ -3262,19 +1750,5 @@ export default [
 			"Ardahan"
 		],
 		"kaynak": "Q2176882"
-	},
-	{
-		"id": "cog-wd-ilce-Q4444751",
-		"cat": "cografya",
-		"diff": 3,
-		"type": "choice",
-		"q": "Şemdinli hangi ile bağlı bir ilçedir?",
-		"a": [
-			"Hakkari",
-			"Şırnak",
-			"Erzurum",
-			"Kars"
-		],
-		"kaynak": "Q4444751"
 	}
 ];

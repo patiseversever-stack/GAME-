@@ -5,10 +5,11 @@
 //   mancinik  Mancınık      tahmin et ama aşma: kaydırıcı mancınığın gücü, taş surun önüne düşer ya da üstünden uçar
 //
 // Örnekler bankadan (src/data/bank.js, oyunun doğrulanmış soruları) seçilir: Halat için kategori başına kısa doğru/yanlış,
-// karşılaştır ve kısa şıklı sorular; Mancınık için tahmin (num) soruları olduğu gibi.
+// karşılaştır ve kısa şıklı sorular; Mancınık için tahmin (num) soruları olduğu gibi. Bankadan türedikleri için
+// SAMPLES.halat ve SAMPLES.mancinik ilk erişimde kurulur (tarayıcıda banka menüden sonra açılır; bkz. bank.js).
 
 import { PROFILE } from './timing.js';
-import { BANK } from '../data/bank.js';
+import { BANK, bankadan } from '../data/bank.js';
 import { halat } from './d_halat.js';
 import { mancinik } from './d_mancinik.js';
 
@@ -369,7 +370,6 @@ function halatMore(base) {
 		return { id: `dn-ht${7 + j}`, cat, diff: 2, type: 'halat', q: `Halatı kendine çek! · ${CAT_NAME[cat]}`, items };
 	});
 }
-const HALAT = ['tarih', 'cografya', 'bilim', 'spor', 'sanat', 'eglence'].map(halatRound);
 
 /**
  * 2026-11 büyütmesi: ek bankadan (src/data/q/ek) turlar. Kategori başına en çok 8 tur; tur başına 12 kısa doğru/yanlış,
@@ -399,23 +399,41 @@ function halatEk(prev) {
 
 /**
  * 2026-11 büyütmesi: ek bankanın tahmin soruları da Mancınık olur ("aşma" kuralına uygun: cevap aralığın %10–90'ı
- * arasında, aralık geniş, cevap pozitif). Kimlik kaynak sorudan (dn-mc-<kaynak>): banka büyüse de kaymaz.
+ * arasında, aralık geniş, cevap pozitif). Kimlik kaynak sorudan (dn-mc-<kaynak>): banka büyüse de kaymaz. Wikidata doğum
+ * yılı ailesi (-wd-dogum-, SORU-100K Aşama 1 pilotu) aynı şartlarla ikiz kurar.
  */
+const IKIZ_KAYNAK = /-ek-nu-|-wd-dogum-/;
 const mancinikEk = (have) =>
-	BANK.filter((q) => q.type === 'num' && /-ek-nu-/.test(q.id) && !have.has(q.id) && Number.isFinite(q.ans) && q.ans > 0 && Number.isFinite(q.min) && Number.isFinite(q.max) && q.max - q.min >= 10)
+	BANK.filter((q) => q.type === 'num' && IKIZ_KAYNAK.test(q.id) && !have.has(q.id) && Number.isFinite(q.ans) && q.ans > 0 && Number.isFinite(q.min) && Number.isFinite(q.max) && q.max - q.min >= 10)
 		.filter((q) => {
 			const f = (q.ans - q.min) / (q.max - q.min);
 			return f >= 0.1 && f <= 0.9;
 		})
 		.map((q) => ({ ...q, id: `dn-mc-${q.id}`, src: q.id, type: 'mancinik' }));
 
-const HALAT_ALL = [...HALAT, ...halatMore(HALAT)];
-const MANCINIK = MANCINIK_IDS.map((id, i) => [BANK.find((q) => q.id === id), i])
-	.filter(([q]) => q)
-	.map(([q, i]) => ({ ...q, id: `dn-mc${i + 1}`, src: q.id, type: 'mancinik' }));
-
-export const SAMPLES = {
-	halat: [...HALAT_ALL, ...halatEk(HALAT_ALL)],
+// Halat turları ve Mancınık ikizleri bankadan türer: ilk erişimde bir kez kurulur (bankadan, src/data/bank.js). Tur
+// sırası ve kimlikler eskisiyle aynı (önce 6 temel tur, sonra ek turlar, sonra ek bankanın turları).
+const halatlar = bankadan(() => {
+	const temel = ['tarih', 'cografya', 'bilim', 'spor', 'sanat', 'eglence'].map(halatRound);
+	const hepsi = [...temel, ...halatMore(temel)];
+	return [...hepsi, ...halatEk(hepsi)];
+});
+const mancinikler = bankadan(() => {
+	const istenen = new Set(MANCINIK_IDS);
+	const bul = new Map();
+	for (const q of BANK) if (istenen.has(q.id) && !bul.has(q.id)) bul.set(q.id, q);
 	// kimlik listedeki sıradan: bankadan bir soru düşse bile öbürlerinin dn-mc kimliği kaymaz
-	mancinik: [...MANCINIK, ...mancinikEk(new Set(MANCINIK_IDS))],
-};
+	const liste = MANCINIK_IDS.map((id, i) => [bul.get(id), i])
+		.filter(([q]) => q)
+		.map(([q, i]) => ({ ...q, id: `dn-mc${i + 1}`, src: q.id, type: 'mancinik' }));
+	return [...liste, ...mancinikEk(istenen)];
+});
+
+/** Örnekler: erişimci (getter); deneme.js DENEME_SAMPLES'a erişimciyi kopyalar (Object.assign gibi değeri değil). */
+export const SAMPLES = Object.defineProperties(
+	{},
+	{
+		halat: { get: halatlar, enumerable: true },
+		mancinik: { get: mancinikler, enumerable: true },
+	},
+);

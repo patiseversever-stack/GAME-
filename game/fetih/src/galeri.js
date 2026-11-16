@@ -12,7 +12,7 @@ import { createFetih } from './index.js';
 import { TYPES } from './quiz/types.js';
 import { expansionPlan } from './game/match.js';
 import { CATS } from './quiz/categories.js';
-import { BANK } from './data/bank.js';
+import { BANK, bankaHazir } from './data/bank.js';
 import { DENEME_TYPES, DENEME_ORDER, DENEME_SAMPLES, TAZE_ORDER, bindApp } from './quiz/deneme.js';
 import { designBook } from './ui/tasarim.js';
 
@@ -187,6 +187,8 @@ export async function galeri() {
 	fab.addEventListener('click', () => drawer(true));
 
 	const game = await createFetih({ container: document.body });
+	// soru bankası (src/data/bank.js) oyun kurulduktan sonra açılır; örnek listeleri (examples) ve maç ondan okur
+	const banka = bankaHazir();
 	const app = game.app;
 	bindApp(app); // deneme tipleri haritaya, kameraya ve arayüze buradan ulaşır
 	const root = app.container;
@@ -228,6 +230,7 @@ export async function galeri() {
 	addEventListener('resize', fit);
 
 	// maç: 1'e 1, İç Anadolu; başkentler ve yayılma hızlı kurulur, ilerleme kaydedilmez
+	await banka;
 	await app.debugScene({ show: 'none', cfg: { mode: '1v1', region: 'icanadolu', seed: 7, bot: 'er' }, seconds: 0.2 });
 	const m = app.match;
 	m.persist = false;

@@ -59,12 +59,18 @@ export function setKaroKaynak(fn) {
  * Sunucu girişi kurar (veritabanı, dosya …). Hesap kimliği istemcinin beyanından alınmaz: kimliği doğrulayan bağlantı
  * katmanı koltuğa yazar (Match cfg.hesap[koltuk] ya da uzak denetleyicinin .hesap alanı). Depo yoksa ya da koltuğun hesabı
  * yoksa eski davranış: yalnız cihazın gönderdiği özet.
+ * Kayıt v3 (soru sırası → maç yaşı, base64; bütün banka görülmüşken 100 bin soruda ≈ 150 KB, çoğu oyuncuda 10–25 KB).
+ * Geçiş dönemi: depodaki eski v2 kayıt ve eski istemcinin v2 özeti de okunur (kimlikler src/data/sira.json ile sıraya
+ * çevrilir, sırası olmayan düşer); depoya hep v3 yazılır.
  */
 let hafizaDeposu = null;
 export function setHafizaDeposu(depo) {
 	hafizaDeposu = depo && typeof depo.oku === 'function' && typeof depo.yaz === 'function' ? depo : null;
 }
-/** Hesabın kaydını depodan kur (yoksa boş), yeni maçı başlat, cihazın özetini (varsa) kat. Depo yoksa null. */
+/**
+ * Hesabın kaydını depodan kur (yoksa boş), yeni maçı başlat, cihazın özetini (varsa; v3 ya da eski v2) kat: her soruda
+ * daha yakın görülme kalır. Depo yoksa null.
+ */
 export function hesapHafizasi(hesap, ozet = null) {
 	if (!hafizaDeposu || hesap == null || hesap === '') return null;
 	let kayit = null;

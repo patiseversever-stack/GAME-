@@ -4,8 +4,10 @@
 import { build } from 'esbuild';
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { gzipSync } from 'node:zlib';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { paketMetni } from './src/data/banka-ac.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const kb = (n) => (n / 1024).toFixed(0) + ' KB';
@@ -85,6 +87,39 @@ const base = {
 	define: { 'import.meta.env.DEV': JSON.stringify(dev) },
 };
 
+// SORU BANKASI (SORU-100K.md Aşama 0.5): sorular açılış betiğinde JS nesnesi olarak değerlendirilmez. Banka Node'da
+// kurulur (src/data/bank.js, aynı süzgeç ve sıra; --ek-yok geçerli), paket metni (src/data/banka-ac.js) gzip ile
+// sıkıştırılıp base64 dize olarak `fl:banka-veri` sanal modülüne gömülür. Oyun paketlerinde `./banka-kaynak.js`
+// (içerik dosyalarını eşzamanlı içe aktaran Node sürümü) yerine `./banka-paket.js` (paketi menüden sonra açan sürüm)
+// girer; q/*.js, q/ek/*.js ve q/harita.js oyun dosyasına hiç girmez. Sınama: test/banka.test.mjs.
+// --banka-kat=N (yalnız ölçüm): soru verisi N kez çoğaltılır (kopyaların kimliği ~k ekiyle ayrılır); 100 bin soruluk
+// bankanın dosya boyu ve açılış kestirimi için (gzip penceresi 32 KB: uzaktaki kopyalar sıkışmayı ucuzlatmaz).
+const KAT = Math.max(1, Number(process.argv.find((a) => a.startsWith('--banka-kat='))?.slice(12)) || 1);
+async function bankaVerisi() {
+	const r = await build({ ...base, entryPoints: [join(root, 'src/data/bank.js')], platform: 'node', format: 'esm', minify: false, write: false });
+	const { BANK } = await import('data:text/javascript;base64,' + Buffer.from(r.outputFiles[0].text).toString('base64'));
+	const liste = KAT > 1 ? Array.from({ length: KAT }, (_, k) => (k ? BANK.map((q) => ({ ...q, id: `${q.id}~${k}` })) : BANK)).flat() : BANK;
+	const metin = paketMetni(liste);
+	const gz = gzipSync(Buffer.from(metin, 'utf8'), { level: 9 });
+	return { sayi: liste.length, ham: Buffer.byteLength(metin), gz: gz.length, b64: gz.toString('base64') };
+}
+const BANKA = await bankaVerisi();
+// Paketin yeri: HTML sayfalarında (FetihLigi, galeri, paylaşım sayfası) betiğin ARDINDA çalışmayan bir veri bloğu
+// (<script type="application/octet-stream" id="fl-banka">): oyun betiği ayrıştırılırken taranmaz, 100 bin soruda bile
+// betik büyümez. fetih.esm.js'te sayfa yok: paket betiğe dize olarak gömülür. --banka-dize: HTML'de de dize (ölçüm).
+const DIZE = process.argv.includes('--banka-dize');
+const bankaPaket = (gomulu) => ({
+	name: 'banka-paket',
+	setup(b) {
+		b.onResolve({ filter: /^\.\/banka-kaynak\.js$/ }, (a) => (/[\\/]src[\\/]data$/.test(a.resolveDir) ? { path: join(root, 'src/data/banka-paket.js') } : null));
+		b.onResolve({ filter: /^fl:banka-veri$/ }, () => ({ path: 'banka-veri', namespace: 'fl-banka' }));
+		b.onLoad({ filter: /.*/, namespace: 'fl-banka' }, () => ({ contents: `export default ${gomulu ? JSON.stringify(BANKA.b64) : 'null'};\nexport const SAYI = ${BANKA.sayi};`, loader: 'js' }));
+	},
+});
+const HTML_GOMULU = DIZE;
+const bankaBlok = HTML_GOMULU ? '' : `<script type="application/octet-stream" id="fl-banka">${BANKA.b64}</script>`;
+console.log(`soru paketi: ${BANKA.sayi} soru · ham ${kb(BANKA.ham)} · gzip ${kb(BANKA.gz)} · base64 ${kb(BANKA.b64.length)}`);
+
 // İşçiler (Web Worker): ayrı derlenir, ana pakete metin olarak gömülür (tek dosya; blob: adresinden çalışır)
 async function workerCode(entry) {
 	const r = await build({ ...base, entryPoints: [join(root, entry)], format: 'iife', write: false, sourcemap: false });
@@ -111,6 +146,7 @@ const BUILD = sourceStamp();
 
 const common = {
 	...base,
+	plugins: [...base.plugins, bankaPaket(HTML_GOMULU)],
 	sourcemap: dev ? 'inline' : false,
 	define: { ...base.define, __AUDIO_WORKER__: JSON.stringify(AUDIO_WORKER), __HERO_WORKER__: JSON.stringify(HERO_WORKER), __BUILD__: JSON.stringify(BUILD) },
 };
@@ -125,7 +161,10 @@ const app = await build({
 });
 const js = app.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
 const tpl = readFileSync(join(root, 'test/template.html'), 'utf8');
-const html = tpl.replace('/*__FONTS__*/', () => fontFaces()).replace('/*__APP__*/', () => js);
+const html = tpl
+	.replace('/*__FONTS__*/', () => fontFaces())
+	.replace('/*__APP__*/', () => js)
+	.replace('</body>', () => bankaBlok + '\n</body>');
 writeFileSync(join(dist, 'FetihLigi.html'), html);
 
 // 1b) İsteğe bağlı: paylaşılabilir sayfa sürümü (iskeletsiz; yayın ortamı doctype/head/body ekler)
@@ -144,7 +183,8 @@ body{position:fixed;inset:0}
 #uk-boot span{font-family:'Fredoka',system-ui,sans-serif;font-weight:600;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#ffd76a}
 </style>
 <div id="uk-boot"><b>Fetih Ligi</b><span>Harita hazırlanıyor</span></div>
-<script>${js}</script>`;
+<script>${js}</script>
+${bankaBlok}`;
 	writeFileSync(out, page);
 	console.log(`paylaşım sayfası: ${out} ${kb(Buffer.byteLength(page))}`);
 }
@@ -167,7 +207,8 @@ body{position:fixed;inset:0}
 #uk-boot span{font-family:'Fredoka',system-ui,sans-serif;font-weight:600;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#ffd76a}
 </style>
 <div id="uk-boot"><b>Soru Galerisi</b><span>Harita ve sorular hazırlanıyor</span></div>
-<script>${gjs}</script>`;
+<script>${gjs}</script>
+${bankaBlok}`;
 	writeFileSync(join(dist, 'SoruGalerisi.html'), gpage);
 	console.log(`SoruGalerisi.html ${kb(Buffer.byteLength(gpage))}`);
 }
@@ -175,6 +216,7 @@ body{position:fixed;inset:0}
 // 2) Ana oyuna bağlamak için modül: three dışarıdan gelir (ana oyunun kendi three kopyası kullanılır).
 await build({
 	...common,
+	plugins: [...base.plugins, bankaPaket(true)],
 	entryPoints: [join(root, 'src/index.js')],
 	format: 'esm',
 	external: ['three'],

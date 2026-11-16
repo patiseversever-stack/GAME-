@@ -1,101 +1,103 @@
 # Pilot kişi seçimi: doğum yılı "kim daha yakın" (SORU-100K.md Aşama 1).
-# Biçim: Ad (veride yazıldığı gibi) | kategori | tanım (soruda adın önüne gelir) | zorluk
+# Biçim: Ad (veride yazıldığı gibi) | kategori | tanım (soruda adın önüne gelir) | zorluk [| soruda görünen ad]
+# Görünen ad yalnız Wikidata etiketi TDK yazımından ya da bankadaki yerleşik yazımdan ayrıysa yazılır.
 # Doğum yılı Wikidata'dan (tools/veri/ham/kisiler*.json); tartışmalı olanlar veride işaretli ve alınmaz.
 # Alınmayanlar: yaşayan siyasetçiler ve din liderleri (güncel siyaset yok), tartışmalı ya da şiddetle anılan kişiler,
 # Türk oyuncunun tanımayacağı kişiler, doğum yılı bankada zaten sorulmuş olanlar.
+# Zorluk (doğum yılını yakın tahmin): 1 çoğu yetişkin dönemini ya da yaşını bilir, 2 kültürlü biri bilir, 3 meraklısı bilir.
+# Zorluk yalnız buradan gelir; üretici kendiliğinden değiştirmez. Hedef: kolay ≥ %25, zor ≤ %30.
+#
+# BAĞIMSIZ DENETİM (16 Kasım 2026) çıkardıkları, gerekçesiyle (geri eklemeden önce gerekçeyi oku):
+#   Che Guevara (silahlı eylem; tartışmalı), Fidel Castro (doğum yılı 1926/1927 tartışmalı), Ho Şi Minh (doğum tarihi belirsiz),
+#   Cengiz Han (1155/1162/1167), Selahaddin Eyyubi (1137/1138), Kanuni Sultan Süleyman (Kasım 1494 – Nisan 1495),
+#   Merzifonlu Kara Mustafa Paşa (1634/1635), Ali Kuşçu (yaklaşık 1403), Isaac Asimov (1919 sonu – 1920 başı, kesin değil),
+#   Louis Armstrong (1900/1901; eski kaynaklar 1900), Johannes Kepler ve Jacques Cartier (ham'da yıl bir fazla: getir.mjs
+#   Jülyen takvim hatası; Kepler 1571, Cartier 1491), Hernan Cortes (yazım Hernán Cortés; tanınırlık), Katsushika Hokusai
+#   (tanınırlık), Halet Çambel (tanınırlık), Kenan Evren (darbe; yargılandı), Cemal Gürsel (darbe lideri), Alparslan Türkeş
+#   (güncel siyaset), Ahmet Kaya (siyasi tartışma), Yılmaz Güney (adam öldürmekten hüküm), Hakan Şükür (terör örgütü
+#   davası, firari), Elvan Abeylegesse (doping cezası), Zülfü Livaneli (eski milletvekili; yaşayan siyasetçi kuralı),
+#   Mesut Özil (siyasi parti görevi haberleri; kararsız kalındığında silinir).
+#   Alfred Nobel, Evliya Çelebi, Osman Hamdi Bey: doğum yılları bankada Tünel sorularının sabit kartında açıkça yazıyor
+#   (yn-tunel-129, yn-tunel-103, yn-tunel-84): başka sorunun kökü bu sorunun cevabını açar.
+#   Zor payı %30'u aştığından ayrıca Türk oyuncunun en az tanıdığı 3'lükler çıkarıldı (aşağıda "# denge:" satırları).
 # --- dünya: bilim
 Albert Einstein | bilim | Fizikçi | 1
 Charles Darwin | bilim | Doğa bilimci | 1
-Galileo Galilei | bilim | Gök bilimci | 2
+Galileo Galilei | bilim | Gökbilimci | 2
 Thomas Edison | bilim | Mucit | 1
 Sigmund Freud | bilim | Psikanalizin kurucusu | 2
 Marie Curie | bilim | Bilim insanı | 1
 Nikola Tesla | bilim | Mucit | 1
 Louis Pasteur | bilim | Bilim insanı | 2
-Nicolaus Copernicus | bilim | Gök bilimci | 2
-Carl Linnaeus | bilim | Botanikçi | 3
+Nicolaus Copernicus | bilim | Gökbilimci | 2
 Stephen Hawking | bilim | Fizikçi | 1
 Carl Friedrich Gauss | bilim | Matematikçi | 3
 Blaise Pascal | bilim | Matematikçi | 3
-Alfred Nobel | bilim | Kimyager | 2
 Alan Turing | bilim | Bilgisayar bilimci | 2
 Leonhard Euler | bilim | Matematikçi | 3
 Niels Bohr | bilim | Fizikçi | 3
-Johannes Kepler | bilim | Gök bilimci | 3
 Max Planck | bilim | Fizikçi | 3
 Michael Faraday | bilim | Fizikçi | 3
 Dimitri Mendeleyev | bilim | Kimyager | 2
 Ernest Rutherford | bilim | Fizikçi | 3
-Enrico Fermi | bilim | Fizikçi | 3
 Erwin Schrödinger | bilim | Fizikçi | 3
 Tim Berners-Lee | bilim | Web'in mucidi | 2
-James Clerk Maxwell | bilim | Fizikçi | 3
 Alexander Graham Bell | bilim | Mucit | 2
 James Watt | bilim | Mühendis | 2
-Richard Feynman | bilim | Fizikçi | 3
 Wilhelm Conrad Röntgen | bilim | Fizikçi | 2
-Linus Torvalds | bilim | Linux'un yaratıcısı | 3
 Carl Gustav Jung | bilim | Psikiyatr | 3
 İbn-i Sina | bilim | Hekim ve düşünür | 2
 Neil Armstrong | bilim | Astronot | 1
 Yuri Gagarin | bilim | Kozmonot | 1
+Enrico Fermi | bilim | Fizikçi | 3
+Linus Torvalds | bilim | Linux'un yaratıcısı | 3
+# denge: Carl Linnaeus, James Clerk Maxwell, Richard Feynman
 # --- dünya: tarih
 Abraham Lincoln | tarih | ABD Başkanı | 2
 Vladimir Lenin | tarih | Devrimci | 2
 Nelson Mandela | tarih | Güney Afrika lideri | 1
 Napolyon Bonapart | tarih | Fransız imparatoru | 1
-Mohandas Karamçand Gandi | tarih | Hindistan bağımsızlık önderi | 1
+Mohandas Karamçand Gandi | tarih | Hindistan bağımsızlık önderi | 1 | Mahatma Gandi
 George Washington | tarih | ABD'nin ilk başkanı | 2
 Winston Churchill | tarih | İngiltere Başbakanı | 2
 II. Elizabeth | tarih | İngiltere Kraliçesi | 1
 Martin Luther King | tarih | Sivil haklar önderi | 2
 John F. Kennedy | tarih | ABD Başkanı | 1
-Franklin D. Roosevelt | tarih | ABD Başkanı | 3
-Che Guevara | tarih | Devrimci | 2
-Thomas Jefferson | tarih | ABD Başkanı | 3
+Franklin D. Roosevelt | tarih | ABD Başkanı | 2
 Charles de Gaulle | tarih | Fransa Cumhurbaşkanı | 2
 Otto von Bismarck | tarih | Alman şansölyesi | 2
 Benjamin Franklin | tarih | ABD'nin kurucularından | 2
 Marco Polo | tarih | Gezgin | 2
-Cengiz Han | tarih | Moğol hükümdarı | 2
 Margaret Thatcher | tarih | İngiltere Başbakanı | 2
-Fidel Castro | tarih | Küba lideri | 2
 Mihail Gorbaçov | tarih | Sovyet lideri | 2
-Harry S. Truman | tarih | ABD Başkanı | 3
-Theodore Roosevelt | tarih | ABD Başkanı | 3
-Cevahirlal Nehru | tarih | Hindistan Başbakanı | 3
-Richard Nixon | tarih | ABD Başkanı | 3
-Dwight Eisenhower | tarih | ABD Başkanı | 3
-Roald Amundsen | tarih | Kutup kâşifi | 3
-I. Elizabeth | tarih | İngiltere Kraliçesi | 3
-Woodrow Wilson | tarih | ABD Başkanı | 3
-Lev Troçki | tarih | Devrimci | 3
+Harry S. Truman | tarih | ABD Başkanı | 2
+Richard Nixon | tarih | ABD Başkanı | 2
+Woodrow Wilson | tarih | ABD Başkanı | 2
 XIV. Louis | tarih | Fransa Kralı | 2
 I. Petro | tarih | Rus çarı | 2
-Kofi Annan | tarih | BM Genel Sekreteri | 3
 Marcus Aurelius | tarih | Roma imparatoru | 3
 Victoria | tarih | İngiltere Kraliçesi | 3
-Simón Bolívar | tarih | Güney Amerika bağımsızlık önderi | 3
 İndira Gandi | tarih | Hindistan Başbakanı | 3
-Hernan Cortes | tarih | İspanyol fatih | 3
 Nikita Kruşçev | tarih | Sovyet lideri | 3
 İbn Haldun | tarih | Tarihçi | 2
 İbn Battuta | tarih | Gezgin | 2
-Ho Şi Minh | tarih | Vietnam lideri | 3
 II. Katerina | tarih | Rus çariçesi | 2
-Kanuni Sultan Süleyman | tarih | Osmanlı padişahı | 1
-Selahaddin Eyyubi | tarih | Eyyubi sultanı | 2
 Florence Nightingale | tarih | Modern hemşireliğin öncüsü | 2
 Anne Frank | tarih | Günlük yazarı | 2
-Diana Spencer | tarih | Galler Prensesi | 2
+Diana Spencer | tarih | Galler Prensesi | 1
 Hirohito | tarih | Japon imparatoru | 3
-Jacques Cartier | tarih | Kâşif | 3
+Thomas Jefferson | tarih | ABD Başkanı | 3
+Dwight Eisenhower | tarih | ABD Başkanı | 3
+I. Elizabeth | tarih | İngiltere Kraliçesi | 3
+Lev Troçki | tarih | Devrimci | 3
+Kofi Annan | tarih | BM Genel Sekreteri | 3
+Simón Bolívar | tarih | Güney Amerika bağımsızlık önderi | 3
+# denge: Theodore Roosevelt, Cevahirlal Nehru, Roald Amundsen
 # --- dünya: sanat (edebiyat, resim, müzik, mimari)
 Michael Jackson | eglence | Şarkıcı | 1
 Leonardo da Vinci | sanat | Ressam | 1
 Lev Tolstoy | sanat | Yazar | 1
 Goethe | sanat | Alman şair | 2
-Galileo Galilei | bilim | Gök bilimci | 2
 Victor Hugo | sanat | Yazar | 1
 Vincent van Gogh | sanat | Ressam | 1
 Pablo Picasso | sanat | Ressam | 1
@@ -112,96 +114,70 @@ Anton Çehov | sanat | Yazar | 2
 Molière | sanat | Oyun yazarı | 3
 Edgar Allan Poe | sanat | Yazar | 2
 Oscar Wilde | sanat | Yazar | 2
-Lord Byron | sanat | Şair | 3
 Walt Disney | eglence | Çizgi film yapımcısı | 1
 George Orwell | sanat | Yazar | 1
 Gabriel García Márquez | sanat | Yazar | 2
-James Joyce | sanat | Yazar | 3
 Ernest Hemingway | sanat | Yazar | 2
 Richard Wagner | sanat | Besteci | 3
 Rembrandt | sanat | Ressam | 2
 J. R. R. Tolkien | sanat | Yazar | 1
 Jane Austen | sanat | Yazar | 2
 Albert Camus | sanat | Yazar | 2
-Le Corbusier | sanat | Mimar | 3
 Frida Kahlo | sanat | Ressam | 2
-Jorge Luis Borges | sanat | Yazar | 3
-Marcel Proust | sanat | Yazar | 3
 Pyotr İlyiç Çaykovski | sanat | Besteci | 2
 Jules Verne | sanat | Yazar | 1
-Rudyard Kipling | sanat | Yazar | 3
-Albrecht Dürer | sanat | Ressam | 3
 Alfred Hitchcock | eglence | Yönetmen | 2
-Francisco Goya | sanat | Ressam | 3
-George Bernard Shaw | sanat | Oyun yazarı | 3
 John Lennon | eglence | Müzisyen | 1
 Bob Dylan | eglence | Şarkıcı ve söz yazarı | 2
-Friedrich Schiller | sanat | Şair | 3
 J. K. Rowling | sanat | Yazar | 1
 Arthur Conan Doyle | sanat | Yazar | 2
-Henri Matisse | sanat | Ressam | 3
-Maksim Gorki | sanat | Yazar | 3
-Charles Baudelaire | sanat | Şair | 3
-Louis Armstrong | eglence | Caz müzisyeni | 2
 Andy Warhol | sanat | Ressam | 2
-Katsushika Hokusai | sanat | Ressam | 3
-Akira Kurosava | eglence | Yönetmen | 3
-Honoré de Balzac | sanat | Yazar | 3
-Virginia Woolf | sanat | Yazar | 3
 Freddie Mercury | eglence | Şarkıcı | 1
-Peter Paul Rubens | sanat | Ressam | 3
-Franz Schubert | sanat | Besteci | 3
 Necib Mahfuz | sanat | Yazar | 3
-Henrik Ibsen | sanat | Oyun yazarı | 3
 Antoine de Saint-Exupéry | sanat | Küçük Prens'in yazarı | 1
 Steven Spielberg | eglence | Yönetmen | 1
 Antonio Vivaldi | sanat | Besteci | 2
-H. G. Wells | sanat | Yazar | 3
-Igor Stravinsky | sanat | Besteci | 3
-Pablo Neruda | sanat | Şair | 3
-Diego Velázquez | sanat | Ressam | 3
-Émile Zola | sanat | Yazar | 3
-Thomas Mann | sanat | Yazar | 3
 Bob Marley | eglence | Şarkıcı | 1
-Hermann Hesse | sanat | Yazar | 3
-Federico Fellini | eglence | Yönetmen | 3
-Isaac Asimov | sanat | Bilimkurgu yazarı | 2
-Johannes Brahms | sanat | Besteci | 3
-George Frideric Handel | sanat | Besteci | 3
-Jonathan Swift | sanat | Gulliver'in yazarı | 2
+Jonathan Swift | sanat | Gulliver'in Gezileri'nin yazarı | 2
 Stanley Kubrick | eglence | Yönetmen | 2
-Aleksandr Soljenitsin | sanat | Yazar | 3
 Mevlânâ Celâleddin-i Rûmî | sanat | Mutasavvıf şair | 1
-Gustave Flaubert | sanat | Yazar | 3
 Claude Monet | sanat | Ressam | 2
-Joseph Haydn | sanat | Besteci | 3
 Marlon Brando | eglence | Oyuncu | 2
-Lewis Carroll | sanat | Alice'in yazarı | 2
-Guy de Maupassant | sanat | Yazar | 3
-Vladimir Nabokov | sanat | Yazar | 3
+Lewis Carroll | sanat | Alice Harikalar Diyarında'nın yazarı | 2
 Audrey Hepburn | eglence | Oyuncu | 2
-Gustav Mahler | sanat | Besteci | 3
-İvan Sergeyeviç Turgenyev | sanat | Yazar | 3
-Antonín Dvořák | sanat | Besteci | 3
-Giovanni Boccaccio | sanat | Yazar | 3
 Umberto Eco | sanat | Yazar | 2
-Robert Louis Stevenson | sanat | Define Adası'nın yazarı | 3
 Elvis Presley | eglence | Şarkıcı | 1
 Marilyn Monroe | eglence | Oyuncu | 1
 Bruce Lee | eglence | Oyuncu | 1
 Jackie Chan | eglence | Oyuncu | 1
 Robin Williams | eglence | Oyuncu | 2
-Arnold Schwarzenegger | eglence | Oyuncu | 2
+Arnold Schwarzenegger | eglence | Oyuncu | 1
 Leonardo DiCaprio | eglence | Oyuncu | 1
 Madonna | eglence | Şarkıcı | 1
 Shakira | eglence | Şarkıcı | 1
-Celine Dion | eglence | Şarkıcı | 2
-Beyoncé | eglence | Şarkıcı | 2
-Rihanna | eglence | Şarkıcı | 2
-Taylor Swift | eglence | Şarkıcı | 2
+Celine Dion | eglence | Şarkıcı | 2 | Céline Dion
+Beyoncé | eglence | Şarkıcı | 1
+Rihanna | eglence | Şarkıcı | 1
+Taylor Swift | eglence | Şarkıcı | 1
 Eminem | eglence | Rapçi | 2
-Angelina Jolie | eglence | Oyuncu | 2
+Angelina Jolie | eglence | Oyuncu | 1
 Scarlett Johansson | eglence | Oyuncu | 2
+Lord Byron | sanat | Şair | 3
+Francisco Goya | sanat | Ressam | 3
+Henri Matisse | sanat | Ressam | 3
+Akira Kurosava | eglence | Yönetmen | 3 | Akira Kurosawa
+Honoré de Balzac | sanat | Yazar | 3
+Franz Schubert | sanat | Besteci | 3
+Henrik Ibsen | sanat | Oyun yazarı | 3
+Émile Zola | sanat | Yazar | 3
+Hermann Hesse | sanat | Yazar | 3
+Johannes Brahms | sanat | Besteci | 3
+George Frideric Handel | sanat | Besteci | 3 | Georg Friedrich Händel
+Robert Louis Stevenson | sanat | Define Adası'nın yazarı | 3
+# denge: James Joyce, Le Corbusier, Jorge Luis Borges, Marcel Proust, Rudyard Kipling, Albrecht Dürer, George Bernard Shaw,
+# Friedrich Schiller, Maksim Gorki, Charles Baudelaire, Virginia Woolf, Peter Paul Rubens, H. G. Wells, Igor Stravinsky,
+# Pablo Neruda, Diego Velázquez, Thomas Mann, Federico Fellini, Aleksandr Soljenitsin, Gustave Flaubert, Joseph Haydn,
+# Guy de Maupassant, Vladimir Nabokov, Gustav Mahler, İvan Sergeyeviç Turgenyev, Antonín Dvořák, Giovanni Boccaccio
 # --- dünya: düşünce (Genel Kültür)
 Karl Marx | eglence | Düşünür | 1
 René Descartes | eglence | Filozof | 2
@@ -210,23 +186,17 @@ Friedrich Nietzsche | eglence | Filozof | 2
 Jean-Jacques Rousseau | eglence | Düşünür | 2
 Niccolò Machiavelli | eglence | Düşünür | 2
 Adam Smith | eglence | İktisatçı | 2
-Martin Luther | eglence | Reform önderi | 3
+Martin Luther | eglence | Reform önderi | 2
 Jean-Paul Sartre | eglence | Filozof | 3
 Friedrich Engels | eglence | Düşünür | 3
-Gottfried Leibniz | eglence | Filozof ve matematikçi | 3
 Georg Wilhelm Friedrich Hegel | eglence | Filozof | 3
-Francis Bacon | eglence | Filozof | 3
-John Maynard Keynes | eglence | İktisatçı | 3
-Bertrand Russell | eglence | Filozof | 3
-Baruch Spinoza | eglence | Filozof | 3
 Arthur Schopenhauer | eglence | Filozof | 3
-Montesquieu | eglence | Düşünür | 3
-Thomas Hobbes | eglence | Filozof | 3
-Søren Kierkegaard | eglence | Filozof | 3
-Simone de Beauvoir | eglence | Yazar ve filozof | 3
-Helen Keller | eglence | Yazar | 3
 Henry Ford | eglence | Otomobil üreticisi | 2
-Steve Jobs | eglence | Apple'ın kurucusu | 1
+Steve Jobs | eglence | Apple'ın kurucularından | 1
+Francis Bacon | eglence | Filozof | 3
+Montesquieu | eglence | Düşünür | 3
+# denge: Gottfried Leibniz, John Maynard Keynes, Bertrand Russell, Baruch Spinoza, Thomas Hobbes, Søren Kierkegaard,
+# Simone de Beauvoir, Helen Keller
 # --- dünya: spor
 Lionel Messi | spor | Futbolcu | 1
 Cristiano Ronaldo | spor | Futbolcu | 1
@@ -234,21 +204,18 @@ Pelé | spor | Futbolcu | 1
 Muhammed Ali | spor | Boksör | 1
 Diego Maradona | spor | Futbolcu | 1
 Michael Schumacher | spor | Formula 1 pilotu | 2
-Roger Federer | spor | Tenisçi | 2
-Rafael Nadal | spor | Tenisçi | 2
+Roger Federer | spor | Tenisçi | 1
+Rafael Nadal | spor | Tenisçi | 1
 Novak Djokovic | spor | Tenisçi | 2
-Neymar | spor | Futbolcu | 2
+Neymar | spor | Futbolcu | 1
 # --- Türkiye: tarih
 İsmet İnönü | tarih | Cumhurbaşkanı | 1
-Celâl Bayar | tarih | Cumhurbaşkanı | 2
+Celâl Bayar | tarih | Cumhurbaşkanı | 2 | Celal Bayar
 Adnan Menderes | tarih | Başbakan | 1
 Süleyman Demirel | tarih | Cumhurbaşkanı | 2
 Turgut Özal | tarih | Cumhurbaşkanı | 2
 Bülent Ecevit | tarih | Başbakan | 2
 Necmettin Erbakan | tarih | Başbakan | 2
-Alparslan Türkeş | tarih | Siyasetçi | 3
-Kenan Evren | tarih | Cumhurbaşkanı | 2
-Cemal Gürsel | tarih | Cumhurbaşkanı | 3
 Cevdet Sunay | tarih | Cumhurbaşkanı | 3
 Fahri Korutürk | tarih | Cumhurbaşkanı | 3
 Kâzım Karabekir | tarih | Komutan | 2
@@ -258,8 +225,7 @@ Talat Paşa | tarih | Osmanlı sadrazamı | 3
 Cemal Paşa | tarih | Osmanlı komutanı | 3
 Mithat Paşa | tarih | Osmanlı sadrazamı | 3
 Gazi Osman Paşa | tarih | Plevne savunucusu | 3
-Merzifonlu Kara Mustafa Paşa | tarih | Osmanlı sadrazamı | 3
-Sabiha Gökçen | tarih | İlk kadın savaş pilotu | 2
+Sabiha Gökçen | tarih | İlk Türk kadın savaş pilotu | 2
 II. Abdülhamid | tarih | Osmanlı padişahı | 1
 II. Mahmud | tarih | Osmanlı padişahı | 2
 III. Selim | tarih | Osmanlı padişahı | 2
@@ -273,8 +239,7 @@ III. Murad | tarih | Osmanlı padişahı | 3
 IV. Mehmed | tarih | Osmanlı padişahı | 3
 I. Ahmed | tarih | Osmanlı padişahı | 3
 Cem Sultan | tarih | Osmanlı şehzadesi | 3
-Evliya Çelebi | tarih | Seyyah | 1
-Katip Çelebi | tarih | Bilgin | 3
+Katip Çelebi | tarih | Bilgin | 3 | Kâtip Çelebi
 # --- Türkiye: sanat ve edebiyat
 Orhan Pamuk | sanat | Nobelli yazar | 1
 Elif Şafak | sanat | Yazar | 2
@@ -283,14 +248,13 @@ Sabahattin Ali | sanat | Yazar | 2
 Ahmet Hamdi Tanpınar | sanat | Yazar | 3
 Orhan Veli Kanık | sanat | Şair | 2
 Halide Edib Adıvar | sanat | Yazar | 2
-Mehmet Âkif Ersoy | sanat | İstiklal Marşı şairi | 1
-Nâmık Kemal | sanat | Vatan şairi | 2
+Mehmet Âkif Ersoy | sanat | İstiklal Marşı şairi | 1 | Mehmet Akif Ersoy
+Nâmık Kemal | sanat | Vatan şairi | 2 | Namık Kemal
 Ziya Gökalp | sanat | Düşünür | 3
 Ayşe Kulin | sanat | Yazar | 3
 Adalet Ağaoğlu | sanat | Yazar | 3
-Fatma Aliye Topuz | sanat | İlk kadın romancımız | 3
+Fatma Aliye Topuz | sanat | Romancı | 3
 Şemseddin Sami | sanat | Sözlük yazarı | 3
-Osman Hamdi Bey | sanat | Ressam | 2
 Fazıl Say | sanat | Piyanist | 2
 İdil Biret | sanat | Piyanist | 3
 Nuri Bilge Ceylan | eglence | Yönetmen | 2
@@ -300,20 +264,17 @@ Sezen Aksu | eglence | Şarkıcı | 1
 Tarkan | eglence | Şarkıcı | 1
 Barış Manço | eglence | Müzisyen | 1
 Ajda Pekkan | eglence | Şarkıcı | 2
-Zülfü Livaneli | eglence | Müzisyen ve yazar | 2
-İbrahim Tatlıses | eglence | Şarkıcı | 2
-Ahmet Kaya | eglence | Şarkıcı | 2
+İbrahim Tatlıses | eglence | Şarkıcı | 1
 Bülent Ersoy | eglence | Şarkıcı | 2
-Sertab Erener | eglence | Eurovision birincisi şarkıcı | 2
+Sertab Erener | eglence | Şarkıcı | 2
 Hande Yener | eglence | Şarkıcı | 3
 Mustafa Sandal | eglence | Şarkıcı | 3
 Candan Erçetin | eglence | Şarkıcı | 3
 Ferdi Tayfur | eglence | Şarkıcı | 2
-Türkân Şoray | eglence | Oyuncu | 1
+Türkân Şoray | eglence | Oyuncu | 1 | Türkan Şoray
 Cüneyt Arkın | eglence | Oyuncu | 1
-Yılmaz Güney | eglence | Oyuncu ve yönetmen | 2
 Haluk Bilginer | eglence | Oyuncu | 2
-Kıvanç Tatlıtuğ | eglence | Oyuncu | 2
+Kıvanç Tatlıtuğ | eglence | Oyuncu | 1
 Halit Ergenç | eglence | Oyuncu | 2
 Kenan İmirzalıoğlu | eglence | Oyuncu | 2
 Beren Saat | eglence | Oyuncu | 3
@@ -321,28 +282,23 @@ Beren Saat | eglence | Oyuncu | 3
 Aziz Sancar | bilim | Nobelli kimyager | 1
 Uğur Şahin | bilim | Aşı geliştiren bilim insanı | 2
 Özlem Türeci | bilim | Aşı geliştiren bilim insanı | 3
-Ali Kuşçu | bilim | Gök bilimci | 3
 Halil İnalcık | tarih | Tarihçi | 3
 İlber Ortaylı | tarih | Tarihçi | 2
 Muazzez İlmiye Çığ | tarih | Sümerolog | 3
-Halet Çambel | tarih | Arkeolog | 3
 # --- Türkiye: spor
 Naim Süleymanoğlu | spor | Halterci | 1
-Hakan Şükür | spor | Futbolcu | 1
 Rüştü Reçber | spor | Kaleci | 2
 Fatih Terim | spor | Teknik direktör | 1
 Şenol Güneş | spor | Teknik direktör | 2
 Arda Turan | spor | Futbolcu | 2
-Mesut Özil | spor | Futbolcu | 2
 Hakan Çalhanoğlu | spor | Futbolcu | 2
-Arda Güler | spor | Futbolcu | 2
+Arda Güler | spor | Futbolcu | 1
 Hidayet Türkoğlu | spor | Basketbolcu | 2
 Mehmet Okur | spor | Basketbolcu | 3
 Halil Mutlu | spor | Halterci | 2
 Taha Akgül | spor | Güreşçi | 2
 Mete Gazoz | spor | Okçu | 2
 Yusuf Dikeç | spor | Atıcı | 2
-Elvan Abeylegesse | spor | Atlet | 3
 Nur Tatar | spor | Tekvandocu | 3
 Zehra Güneş | spor | Voleybolcu | 2
 Volkan Demirel | spor | Kaleci | 2

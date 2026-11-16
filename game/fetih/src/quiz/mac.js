@@ -22,7 +22,7 @@
 import { TYPES, TYPE_WEIGHTS } from './types.js';
 import { DIS_ZAMAN } from './timing.js';
 import { DENEME_TYPES, DENEME_SAMPLES } from './deneme.js';
-import { BANK } from '../data/bank.js';
+import { BANK, bankadan } from '../data/bank.js';
 import { CATS } from './categories.js';
 import DATA from '../data/turkiye.json';
 
@@ -57,13 +57,12 @@ for (const t of YENI) {
 
 // ---------------------------------------------------------------- köprü: yeni tiplerin soruları
 
-let BANKY = null;
 /**
  * Yeni tiplerin maç bankası: galeri örnekleri (DENEME_SAMPLES; içerik ajanı oraya ekler). Kimliği bankayla çakışan,
- * kategorisi çarkta olmayan ya da tipi uymayan soru alınmaz. İlk çağrıda bir kez kurulur.
+ * kategorisi çarkta olmayan ya da tipi uymayan soru alınmaz. İlk çağrıda (banka kuruluyken) bir kez kurulur: Halat ve
+ * Mancınık örnekleri bankadan türer (src/data/bank.js bankadan).
  */
-export function yeniBank() {
-	if (BANKY) return BANKY;
+export const yeniBank = bankadan(() => {
 	const seen = new Set(BANK.map((q) => q.id));
 	const out = [];
 	for (const t of YENI)
@@ -72,8 +71,8 @@ export function yeniBank() {
 			seen.add(q.id);
 			out.push(q);
 		}
-	return (BANKY = out);
-}
+	return out;
+});
 
 // ---------------------------------------------------------------- an × mod ağırlıkları
 

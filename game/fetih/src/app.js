@@ -29,6 +29,7 @@ import { NightLights } from './gfx/nightlights.js';
 import { Weather } from './gfx/weather.js';
 import { clock } from './core/clock.js';
 import { quizWarm } from './quiz/warm.js';
+import { bankaHazir, bankaVar } from './data/bank.js';
 
 const SKY_VS = /* glsl */ `
 varying vec3 vD;
@@ -514,7 +515,29 @@ export class App {
 		}
 	}
 
+	/**
+	 * Soru bankası hazır olsun (src/data/bank.js): açılışta değerlendirilmez, menüden sonra boşta açılır. Maç başlarken
+	 * bitmemişse acele ettirilir ve beklenir (yavaş telefonda bile birkaç yüz ms); uzarsa kısa bir not gösterilir.
+	 * Dönüş: hazır mı (açılamadıysa uyarı verilir, başlık ekranına dönülür).
+	 */
+	async bankaBekle() {
+		if (bankaVar()) return true;
+		const not = setTimeout(() => this.ui?.toast?.('Sorular hazırlanıyor…', { ms: 1500 }), 250);
+		try {
+			await bankaHazir();
+			return true;
+		} catch (e) {
+			console.error('[banka]', e);
+			this.ui?.toast?.('Sorular açılamadı, yeniden dene', { tone: 'warn', ms: 2600 });
+			this.ui?.title?.(true);
+			return false;
+		} finally {
+			clearTimeout(not);
+		}
+	}
+
 	async startMatch(cfg) {
+		if (!(await this.bankaBekle())) return;
 		this.resetBoard();
 		this.ui.title(false);
 		this.lowFps = false;
@@ -582,6 +605,7 @@ export class App {
 
 	/** Bütün oyuncular bot, arayüz ve sinema anında: maçı baştan sona oynat (denge testi). */
 	async debugSim(cfg = {}) {
+		await bankaHazir();
 		this.ui.fast = true;
 		this.cinema.fast = true;
 		this.resetBoard();
@@ -594,6 +618,7 @@ export class App {
 
 	/** Maçı belli bir ana kadar hızlı oynat, sonra o anı gerçek arayüzle göster (ekran görüntüsü). */
 	async debugScene({ cfg = {}, show = 'question', type = 'choice', cat = 'tarih', seconds = 1.2 } = {}) {
+		await bankaHazir();
 		this.ui.title(false);
 		this.ui.fast = true;
 		this.cinema.fast = true;

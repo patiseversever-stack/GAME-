@@ -28,7 +28,7 @@ import { BAYRAK, CANLI, HIZLI, isYeni, yeniBank, kapsam, tipSec, payOf, egri, ok
 import { bindApp } from '../quiz/d_ortak.js';
 import { ADIM, Oturum, hesapHafizasi, hesapKaydet } from './sunucu.js';
 import { CATS } from '../quiz/categories.js';
-import { BANK as QUESTIONS } from '../data/bank.js';
+import { BANK as QUESTIONS, bankaVar } from '../data/bank.js';
 import { rng } from '../core/math.js';
 import { JOKERS, JOKER_ORDER, PER_QUESTION, BOT_BOOST, SABOTAGE, cutFor, makeLoadout, botLoadout, support, computeEffect, botPlan, questionTime } from './jokers.js';
 import { ensureSystems } from './campaign.js';
@@ -58,6 +58,14 @@ const WHEEL_CATS = Object.keys(CATS);
  * büyür (tek bölge 3–4 kişiye dar geliyordu: herkese 2–3 il düşüyor, maç başlamadan bitiyordu).
  */
 export const PROVINCES_PER_PLAYER = 8; // v2: 6 → 8 (zincir saldırıya yer; KARARLAR 5)
+
+/**
+ * Wikidata aileleri (SORU-100K.md Aşama 1 pilotu; kimlikte '-wd-': ilçe hangi ilde, doğum yılı ve Mancınık ikizi, ilçe
+ * haritada bul): bir seçimde bu sorulardan birinin gelme olasılığı en çok WD_PAY (havuzdaki paylarından bağımsız).
+ * cfg.wdPay maç başına değiştirir (1: sınır yok). Sınama: test/banka.test.mjs (100 maçta pay ≤ %15).
+ */
+export const WD_PAY = 0.15;
+export const isWd = (q) => typeof q?.id === 'string' && q.id.includes('-wd-');
 
 /**
  * Tüm Türkiye haritası (v2): yayılmada boş illerin yarısı 4 turda dağıtılır, kalanı tarafsız kalır. Tarafsız ile
@@ -274,6 +282,9 @@ export class Match {
 	 * app: harita, kaleler, kamera; ui: arayüz
 	 */
 	constructor(app, ui, cfg) {
+		// tarayıcıda banka menüden sonra açılır (src/data/bank.js): maçı kuran önce `await bankaHazir()` der
+		// (App.startMatch, debugSim, debugScene, ui/debug.js). Boş havuzla maç kurulmaz.
+		if (!bankaVar()) throw new Error('Soru bankası henüz açılmadı: maçtan önce await bankaHazir()');
 		this.app = app;
 		this.aborted = false;
 		this.ui = guard(this, ui);
@@ -372,6 +383,8 @@ export class Match {
 		// tip sayaçları, eski/yeni dengesi ve soru günlüğü (an, tip; rapor ve sınama için)
 		this.flags = { ...BAYRAK, ...(cfg.yeni || {}) };
 		this.pool = [...QUESTIONS, ...yeniBank()].filter((q) => this.typeOn(q.type));
+		this.wdPay = Number.isFinite(cfg.wdPay) ? cfg.wdPay : WD_PAY;
+		this.wdSay = { n: 0, toplam: 0 }; // seçilen Wikidata sorusu / bütün seçimler (rapor)
 		this.twin = ikizler(this.pool); // Mancınık ↔ kaynak tahmin sorusu (aynı soru iki kimlikle)
 		this.tcount = {};
 		this.cov = kapsam(this.pool, WHEEL_CATS); // yeni tiplerin kategori kapsamı (mac.js agirliklar)
@@ -623,10 +636,24 @@ export class Match {
 			total += x;
 			return x;
 		});
+		// Wikidata aileleri: seçilme olasılığı en çok wdPay (ağırlıkları o paya ölçeklenir; listede başka soru yoksa sınır
+		// uygulanmaz, tekrar yerine yeni soru)
+		if (this.wdPay < 1) {
+			let a = 0;
+			for (let i = 0; i < list.length; i++) if (isWd(list[i])) a += w[i];
+			const b = total - a;
+			if (a > 0 && b > 0 && a > this.wdPay * total) {
+				const f = (this.wdPay * b) / ((1 - this.wdPay) * a);
+				for (let i = 0; i < list.length; i++) if (isWd(list[i])) w[i] *= f;
+				total = b + a * f;
+			}
+		}
 		let r = this.R() * total;
 		let k = 0;
 		for (; k < list.length - 1; k++) if ((r -= w[k]) <= 0) break;
 		const q = list[k];
+		this.wdSay.toplam++;
+		if (isWd(q)) this.wdSay.n++;
 		this.used.add(q.id);
 		if (q.src) this.used.add(q.src); // Mancınık sorusu bankadaki tahmin sorusunun kardeşi: ikisi aynı maçta çıkmaz
 		const fk = kardes(q);
@@ -2208,6 +2235,7 @@ export class Match {
 			jokers: { ...this.jokerUse },
 			types: { ...this.tcount },
 			qlog: this.qlog.slice(),
+			wd: { ...this.wdSay },
 			filmSeconds: Math.round(this.filmSec),
 		};
 	}

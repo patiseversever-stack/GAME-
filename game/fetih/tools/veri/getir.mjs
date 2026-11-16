@@ -257,6 +257,12 @@ function temizAd(s) {
 
 
 // Elle düzeltmeler: yalnız Wikidata'daki açık eksik/hatalar için, her biri gerekçeli (bkz. ham/ilceler_fark.txt).
+// NOT (bağımsız denetim, 16 Kasım 2026; ham yeniden üretilmedi, düzeltme pilot üreticide):
+// - Çayeli (Q117148419) ilçe öğesinde enlem ve boylam ters girilmiş (40,75 / 41,07 → Erzurum'a düşüyor); ilçe merkezi Q2248873.
+// - Gebze, Finike, Akşehir, Bafra, Çamlıhemşin, Alanya, Polatlı, Enez, Tosya, İnegöl: ilçe öğesinin koordinatı ilçe merkezinden
+//   8–20 km uzakta (ilçe alanının ortası ya da kaba değer). tools/veri/pilot/ilce.mjs MERKEZ_KOORD merkez öğelerinin
+//   koordinatını kullanır. Ham yeniden üretilecekse ilçe merkezi (P36 başkent ya da aynı adlı kasaba öğesi) koordinatı alınmalı.
+// - Kahta (Q15989053): Türkçe etiket şapkasız; resmî ve TDK yazımı Kâhta (tr.wikipedia başlığı da Kâhta). Pilot seçimde görünen ad.
 const ILCE_HARIC = {
 	Q116788474: 'Burmageçit bir köy/belde; ilçe sınıfına yanlış konmuş',
 };
@@ -657,7 +663,12 @@ const TAKVIM_NOTU = {
 	Q26961029: '1584 öncesi Gregoryen tarih',
 	Q712144: 'fiilî (de facto)',
 };
-const JULYEN = 'http://www.wikidata.org/entity/Q1985786';
+// cevir() varlık adreslerini QID'ye kısaltır ("http://www.wikidata.org/entity/Q1985786" → "Q1985786"); karşılaştırma QID ile.
+// HATA DÜZELTMESİ (bağımsız denetim, 16 Kasım 2026): burada tam adres yazılıydı, eşleşme hiç tutmadı ve Jülyen tarihler
+// geri çevrilmedi. ham/kisiler*.json bu hatayla üretildi: Aralık sonunda Jülyen takvimle doğanların yılı bir fazla
+// (Johannes Kepler 27 Aralık 1571 → 1572, Jacques Cartier 31 Aralık 1491 → 1492). Ham yeniden üretilene dek bu kişiler
+// pilot seçiminden (tools/veri/pilot/kisi_secim.txt) çıkarıldı.
+const JULYEN = 'Q1985786';
 
 // WDQS zaman değerini Gregoryen'e çevrilmiş verir. Değer Jülyen takvimiyle girilmişse girildiği takvime geri çevrilir
 // (Wikidata arayüzünde görünen yıl; ör. Newton 25 Aralık 1642 Jülyen = 4 Ocak 1643 Gregoryen). jdn: Gregoryen gün numarası.

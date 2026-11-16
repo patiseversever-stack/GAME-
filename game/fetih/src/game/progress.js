@@ -77,7 +77,7 @@ const defaults = () => ({
 	stats: { played: 0, won: 0, answered: 0, correct: 0, provinces: 0, bestStreak: 0, streak: 0, towers: 0 },
 	daily: { last: '', streak: 0 },
 	seen: [],
-	hafiza: null, // soru hafızası (src/quiz/hafiza.js): kimlik → görüldüğü maç; v1 'seen' (son 400) buraya taşınır
+	hafiza: null, // soru hafızası (src/quiz/hafiza.js, v3: soru sırası → maç yaşı, base64); v1 'seen' (son 400) ve v2 göç eder
 	ads: { noAds: false, matches: 0, shown: 0 },
 	updatedAt: 0,
 });
@@ -111,7 +111,8 @@ export class Progress {
 		out.rating.cat = { ...(s.rating?.cat || {}) };
 		out.owned.costume = [...new Set([...d.owned.costume, ...(s.owned?.costume || [])])];
 		out.owned.banner = [...new Set([...d.owned.banner, ...(s.owned?.banner || [])])];
-		// v2 soru hafızası; eski kayıttaki son 400 kimlik hafızaya "bir önceki maçta görüldü" diye geçer
+		// soru hafızası (v3; v2 kaydı Hafiza ilk erişimde çevirir); eski kayıttaki son 400 kimlik hafızaya "bir önceki maçta
+		// görüldü" diye geçer
 		out.hafiza = s.hafiza && typeof s.hafiza === 'object' ? s.hafiza : Array.isArray(s.seen) && s.seen.length ? s.seen.slice(-400) : null;
 		out.seen = [];
 		return out;
@@ -349,7 +350,11 @@ export class Progress {
 		return (this._h ||= new Hafiza(this.d.hafiza));
 	}
 
-	/** Soru soruldu: hafızaya yazıldı, kayıt sessizce (dinleyicisiz) diske. Maçı yarıda bırakan da bir daha görmez. */
+	/**
+	 * Soru soruldu: hafızaya yazıldı, kayıt sessizce (dinleyicisiz) diske. Maçı yarıda bırakan da bir daha görmez. Hafıza
+	 * kaydı sabit boyutlu (100 bin soru görülmüşken ≈ 150 KB, tipik oyuncuda 10–25 KB): yazma görülen soru sayısıyla
+	 * büyümez.
+	 */
 	gordu() {
 		this.d.hafiza = this.hafiza.toJSON();
 		try {
@@ -366,7 +371,7 @@ export class Progress {
 	}
 
 	seenSet() {
-		return new Set(this.hafiza.m.keys());
+		return new Set(this.hafiza.kimlikler());
 	}
 
 	// ---------------------------------------------------------------- ELO (dereceli oyun için hazır)

@@ -8,6 +8,7 @@
 import { App } from './app.js';
 import { createStore } from './core/store.js';
 import { lockPortrait } from './core/portrait.js';
+import { bankaBosta } from './data/bank.js';
 
 export async function createFetih(opts = {}) {
 	const store = createStore(opts.store);
@@ -25,6 +26,9 @@ export async function createFetih(opts = {}) {
 		open() {
 			root.style.display = '';
 			app.start();
+			// soru bankası açılışın kritik yolunda değil: menü göründükten sonra boşta açılır (src/data/bank.js); maç
+			// başlarken bitmemişse App.startMatch bekler
+			bankaBosta();
 		},
 		close() {
 			app.stop();

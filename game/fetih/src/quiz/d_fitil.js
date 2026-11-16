@@ -20,7 +20,7 @@
 import { css, esc, shuffle, pCorrect, buzz, clamp } from './util.js';
 import { appOf, stamp, onClose, onOpen, sfx, stampLater, LOOK, DENEME_CSS } from './d_ortak.js';
 import { clock, setTimeout, clearTimeout } from '../core/clock.js';
-import { BANK } from '../data/bank.js';
+import { BANK, bankadan } from '../data/bank.js';
 
 export const QMAX = 6; // kimse cevaplamazsa mini soru kapanır (sn)
 export const GAP = 0.8; // iki soru arası (topun dönüşü)
@@ -150,16 +150,14 @@ export function sheetFor(v, skill, R) {
 // ---------------------------------------------------------------- mini sorular (bankadan)
 
 const len = (s) => [...String(s)].length;
-let POOL = null;
-function pool() {
-	if (POOL) return POOL;
-	POOL = BANK.filter((q) => {
+// havuz ilk turda (banka kuruluyken) bir kez kurulur (src/data/bank.js bankadan)
+const pool = bankadan(() =>
+	BANK.filter((q) => {
 		if (q.type === 'tf') return typeof q.ans === 'boolean' && len(q.q) <= 82;
 		if (q.type === 'hilo') return q.left && q.right && len(q.q) <= 48 && len(q.left.t) <= 18 && len(q.right.t) <= 18 && q.left.v !== q.right.v;
 		return false;
-	});
-	return POOL;
-}
+	}),
+);
 
 function pickItems(q, R) {
 	const all = pool();

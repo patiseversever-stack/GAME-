@@ -16,6 +16,46 @@ const ilOf = new Map(TR.map((p) => [p.name, p]));
 // il merkezi (şehrin kendisi): mevcut "X ili nerede?" harita sorularından; merkeze 25 km'den yakın ilçe haritada il merkeziyle
 // aynı nokta olur (Kadıköy ≈ İstanbul): haritada bul sorusu yapılmaz, yalnız "hangi ilde" sorulur
 const HARITA = (await import('../../../src/data/q/harita.js')).default;
+// BANKADA AYNI BİLGİ (bağımsız denetim, 16 Kasım 2026; SORU-100K ölçüt 5: tekrar yok, kök başka sorunun cevabını açmaz).
+// Bankada (bu ailenin kendi -wd- soruları hariç) ilçenin ilini soran ya da kökünde açıkça söyleyen soru varsa "hangi ilde"
+// sorusu yapılmaz: "Bodrum hangi ilimizdedir?", Yıldırım maddesi "Akçaabat Trabzon'un ilçesidir.", "Togg'un fabrikası hangi
+// Bursa ilçesindedir? → Gemlik", "İzmir'in Selçuk ilçesinin eski adı…". Açıklama (why), balon/mayın notu, rota durağı ve tünel
+// kartı sayılmaz (cevaptan sonra görünür; başka bilgi sorar). Aynı ilçeyi (ya da ilçedeki yapıyı: Bodrum Kalesi, Datça
+// Yarımadası, İznik Gölü) soran harita sorusu varsa haritada bul sorusu yapılmaz.
+const { BANK } = await import('../../../src/data/bank.js');
+const { yeniBank } = await import('../../../src/quiz/mac.js');
+const BANKA = [];
+{
+	const gorulenId = new Set();
+	for (const q of [...BANK, ...yeniBank(), ...HARITA]) if (!gorulenId.has(q.id) && !/-wd-/.test(q.id)) gorulenId.add(q.id), BANKA.push(q);
+}
+const kucuk = (x) => x.toLocaleLowerCase('tr');
+const kelimeVar = (metin, w) => new RegExp('(^|[^a-zçğıöşüâîû])' + kucuk(w) + '($|[^a-zçğıöşüâîû])').test(kucuk(metin));
+const DOGRU_ILK = new Set(['choice', 'penalti', 'kusbakisi', 'gozkarari']);
+const kokler = (q) => {
+	const k = [];
+	if (typeof q.q === 'string') k.push({ t: q.q, cevap: DOGRU_ILK.has(q.type) ? String(q.a?.[0] ?? '') : '' });
+	if (typeof q.t === 'string') k.push({ t: q.t, cevap: '' }); // yanlışı bul cümlesi
+	for (const x of q.items || []) if (x && typeof x.t === 'string') k.push({ t: x.t, cevap: Array.isArray(x.o) ? String(x.o[x.r] ?? '') : '' });
+	for (const x of q.anchors || []) k.push({ t: String(x[0]), cevap: '' }); // tünelin sabit kartı ekranda yazılı
+	return k;
+};
+// adı başka bir şeyin adı olan ilçe (Fatih: padişah): kökte geçmesi ilçeyi anmaz
+const BANKA_ESGEC = new Set(['Fatih']);
+const bankadaIl = (ad, il) => {
+	if (BANKA_ESGEC.has(ad)) return null;
+	for (const q of BANKA)
+		for (const k of kokler(q)) {
+			if (!kelimeVar(k.t, ad) && !(k.cevap && kelimeVar(k.cevap, ad))) continue;
+			const ilAnildi = kelimeVar(k.t, il) || k.cevap === il;
+			if (ilAnildi) return q.id;
+		}
+	return null;
+};
+const bankadaHarita = (ad) => {
+	for (const q of BANKA) if ((q.type === 'pin' || q.lat != null) && !q.il && typeof q.q === 'string' && kelimeVar(q.q, ad)) return q.id;
+	return null;
+};
 const MERKEZ = new Map();
 for (const q of HARITA) if (q.il && !q.gol && !MERKEZ.has(q.il)) MERKEZ.set(q.il, q); // il sorusunun noktası il merkezidir
 // harita sorusu olmayan ilde merkez ilçe: büyükşehir olmayan ilde ilin adını taşır, büyükşehirde elle (valiliğin bulunduğu ilçe)
@@ -36,6 +76,93 @@ const km = (a, b) => {
 	return 2 * R * Math.asin(Math.sqrt(x));
 };
 const KOORD_SUPHE = new Set(['Sarıyahşi', 'İnönü', 'Kaynarca', 'Bahçesaray', 'Altınova', 'Adalar', 'Tuzla']);
+// Haritada bul noktası İLÇE MERKEZİDİR (yarıçap 12 km). Wikidata'nın ilçe öğesindeki koordinat kimi ilçede ilçe alanının
+// ortası (dağda, kıyıdan içeride) ya da enlem/boylamı ters girilmiş; kasabanın (ilçe merkezinin) kendi Wikidata öğesiyle
+// 8 km'den çok ayrışanlarda merkez öğesinin koordinatı alınır (bağımsız denetim, 16 Kasım 2026; kaynak: köşeli QID).
+// ilçe QID → [enlem, boylam, merkez öğesi QID, ilçe öğesindeki sapma]
+const MERKEZ_KOORD = {
+	Q49103654: [40.8028, 29.4306, 'Q206116', 'Gebze: ilçe öğesi 14,6 km kuzeydoğuda (ilçe alanının ortası)'],
+	Q49103504: [36.3017, 30.1455, 'Q1012894', 'Finike: ilçe öğesi 15,3 km kuzeyde, dağda'],
+	Q1958767: [38.3592, 31.4164, 'Q169974', 'Akşehir: ilçe öğesi 19,7 km güneydoğuda, Sultan Dağları'],
+	Q49101057: [41.5654, 35.8952, 'Q799805', 'Bafra: ilçe öğesi 12,4 km güneyde'],
+	Q117148242: [41.0458, 41.0053, 'Q2670821', 'Çamlıhemşin: ilçe öğesi 12,7 km güneyde, Kaçkarlar'],
+	Q117148419: [41.0881, 40.7231, 'Q2248873', 'Çayeli: ilçe öğesinde enlem ve boylam ters (40,75 / 41,07: Erzurum)'],
+	Q1635214: [36.5436, 31.9997, 'Q171810', 'Alanya: ilçe öğesi kaba (36,5 / 32,0), 4,9 km açıkta denizde'],
+	Q14141584: [39.5842, 32.1472, 'Q945388', 'Polatlı: ilçe öğesi 11,6 km güneyde'],
+	Q1912026: [40.7247, 26.0825, 'Q610751', 'Enez: ilçe öğesi 9,7 km doğuda'],
+	Q117272530: [41.0169, 34.0383, 'Q255479', 'Tosya: ilçe öğesi 9,2 km kuzeyde'],
+	Q2083281: [40.0806, 29.5097, 'Q343973', 'İnegöl: ilçe öğesi 8,3 km güneyde'],
+	Q15989053: [37.7803, 38.6217, 'Q375432', 'Kâhta: ilçe öğesi 8,1 km doğuda'],
+};
+// "Hangi ilde" sorusunda çeldirici olamayacak iller: o ilde aynı adlı belde ya da çok bilinen bir yer var (soru belirsizleşir).
+const CELDIRICI_YASAK = {
+	Kadıköy: ['Yalova'], // Yalova'da Kadıköy beldesi (Wikidata Q6345862)
+	Karapınar: ['Nevşehir', 'Afyonkarahisar', 'Zonguldak'], // bu illerde Karapınar beldesi (Q10777291, Q6368599, Q10777313)
+	Gediz: ['İzmir', 'Manisa'], // Gediz Nehri, Gediz Ovası ve Deltası bu illerde
+};
+// Oyun haritasındaki il çokgenleri (src/data/turkiye.json; dünya birimi: x = (lon - lon0)·cos(lat0)·K, y = (lat - lat0)·K).
+// Haritada bul noktası kendi ilinin çokgeninde olmalı: başka ilin içine düşen nokta (kaba sınır) cevabı yanlış ilde gösterir.
+// Kıyıda çokgen dışına (denize) düşen nokta, kendi iline 3 km'den yakın ve en yakın il kendi iliyse kabul edilir.
+const { K: GK, lon0: GLON, lat0: GLAT } = JSON.parse(readFileSync('src/data/turkiye.json', 'utf8')).meta;
+const GC = Math.cos((GLAT * Math.PI) / 180), BIRIM_KM = ((Math.PI / 180) * 6371) / GK;
+const icinde = (x, y, r) => {
+	let ic = false;
+	for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+		const xi = r[i], yi = r[i + 1], xj = r[j], yj = r[j + 1];
+		if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) ic = !ic;
+	}
+	return ic;
+};
+const kenarKm = (x, y, rings) => {
+	let en = Infinity;
+	for (const r of rings)
+		for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+			const ax = r[j], ay = r[j + 1], dx = r[i] - ax, dy = r[i + 1] - ay;
+			const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy || 1)));
+			en = Math.min(en, Math.hypot(x - ax - t * dx, y - ay - t * dy));
+		}
+	return en * BIRIM_KM;
+};
+// Haritada bul zorluğu (bağımsız denetim, 16 Kasım 2026). Doğru sayılma eşiği noktaya 12 + 15 = 27 km (types.js pinJudge).
+// İç bölgede ilin adını bilmek bu eşiğe yetmez (ilin ortasına basan çoğu kez 50 km öteye düşer). Bu yüzden:
+// - nokta kıyıya, ulusal sınıra ya da haritada çizili büyük bir göle 12 km'den yakınsa (oyuncunun tutunacağı çapa var)
+//   zorluk "hangi ilde" sorusununkiyle aynıdır;
+// - iç bölgede bilinen (1) ilçe 2 olur; 2'lik ilçeyi haritada 27 km içinde bulmak yöre insanının işidir (yalnız uzmanın
+//   bileceği soru olmaz kuralı): haritada bul sorusu yapılmaz.
+// Açık kenar: il çokgeninin başka hiçbir ille paylaşılmayan kenarı (kıyı ya da ulusal sınır).
+const segKm = (x, y, ax, ay, bx, by) => {
+	const dx = bx - ax, dy = by - ay;
+	const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy || 1)));
+	return Math.hypot(x - ax - t * dx, y - ay - t * dy) * BIRIM_KM;
+};
+const halkaKm = (x, y, r) => {
+	let en = Infinity;
+	for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) en = Math.min(en, segKm(x, y, r[j], r[j + 1], r[i], r[i + 1]));
+	return en;
+};
+const ACIK = new Map();
+for (const p of TR) {
+	const kenar = [];
+	for (const r of p.rings)
+		for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+			const mx = (r[i] + r[j]) / 2, my = (r[i + 1] + r[j + 1]) / 2;
+			if (!TR.some((o) => o !== p && o.rings.some((rr) => halkaKm(mx, my, rr) < 0.02 * BIRIM_KM))) kenar.push([r[j], r[j + 1], r[i], r[i + 1]]);
+		}
+	ACIK.set(p.name, kenar);
+}
+const GOLLER = JSON.parse(readFileSync('src/data/turkiye.json', 'utf8')).lakes.filter((l) => l.ring && l.name !== 'Göl');
+const capali = (lat, lon, il) => {
+	const x = (lon - GLON) * GC * GK, y = (lat - GLAT) * GK;
+	if (ACIK.get(il).some((s) => segKm(x, y, ...s) < 12)) return true;
+	return GOLLER.some((g) => halkaKm(x, y, g.ring) < 12);
+};
+const haritadaIlde = (lat, lon, il) => {
+	const x = (lon - GLON) * GC * GK, y = (lat - GLAT) * GK;
+	const dustu = TR.find((p) => p.rings.some((r) => icinde(x, y, r)));
+	if (dustu) return dustu.name === il;
+	const uz = TR.map((p) => [p.name, kenarKm(x, y, p.rings)]).sort((a, b) => a[1] - b[1]);
+	return uz[0][0] === il && uz[0][1] < 3;
+};
 
 // kararlı tohum (aynı kaynak → aynı soru): kimlikten
 const h32 = (s) => {
@@ -59,12 +186,13 @@ const secim = readFileSync('tools/veri/pilot/ilce_secim.txt', 'utf8')
 	.map((l) => l.trim())
 	.filter((l) => l && !l.startsWith('#'))
 	.map((l) => {
-		const [ad, il, z] = l.split('|').map((x) => x.trim());
-		return { ad, il, diff: Number(z) };
+		// 4. alan (isteğe bağlı): soruda görünen ad, Wikidata etiketi TDK/resmî yazımdan ayrıysa (Kahta → Kâhta)
+		const [ad, il, z, goster] = l.split('|').map((x) => x.trim());
+		return { ad, il, diff: Number(z), goster: goster || ad };
 	});
 
 const KALIP = [(a) => `${a} hangi ilin ilçesidir?`, (a) => `${a} ilçesi hangi ildedir?`, (a) => `${a} hangi ile bağlı bir ilçedir?`];
-const rapor = { secilen: secim.length, atlanan: [], test: 0, harita: 0, zorluk: { 1: 0, 2: 0, 3: 0 } };
+const rapor = { secilen: secim.length, atlanan: [], test: 0, harita: 0, zorluk: { 1: 0, 2: 0, 3: 0 }, haritaZorluk: { 1: 0, 2: 0, 3: 0 }, haritaIcBolge: [], bankada: [], bankadaHarita: [] };
 const test = [];
 const harita = [];
 const gorulen = new Set();
@@ -92,6 +220,8 @@ for (const s of secim) {
 		rapor.atlanan.push(`${s.ad}: bir ilin de adı`);
 		continue;
 	}
+	const bankaIl = bankadaIl(s.goster, s.il) || (s.goster !== s.ad && bankadaIl(s.ad, s.il));
+	if (bankaIl) rapor.bankada.push(`${s.goster} (${s.il}): ${bankaIl}`); // "hangi ilde" yapılmaz; haritada bul ayrıca denetlenir
 	const p = ilOf.get(s.il);
 	const seed = h32(k.qid);
 	// çeldiriciler: 1 komşu il + 2 aynı bölgeden (komşu olmayan) il; eksikse komşunun komşusu
@@ -102,13 +232,16 @@ for (const s of secim) {
 	);
 	const ikinci = karistir([...new Set(p.nb.flatMap((i) => ilOf.get(ilAd.get(i)).nb.map((j) => ilAd.get(j))))].filter((n) => n !== s.il && !komsu.includes(n)), seed ^ 0x85ebca6b);
 	const yanlis = [];
-	for (const n of [komsu[0], ...bolge, ...komsu.slice(1), ...ikinci]) if (n && !yanlis.includes(n) && n !== s.il && !s.ad.includes(n)) yanlis.push(n);
+	const yasak = CELDIRICI_YASAK[s.ad] || [];
+	const izinli = (n) => n && !yasak.includes(n) && n !== s.il && !s.ad.includes(n);
+	const komsuI = komsu.filter(izinli); // yasaklı komşu atlanır, sıradaki komşu çeldirici olur
+	for (const n of [komsuI[0], ...bolge, ...komsuI.slice(1), ...ikinci]) if (izinli(n) && !yanlis.includes(n)) yanlis.push(n);
 	const q = {
 		id: `cog-wd-ilce-${k.qid}`,
 		cat: 'cografya',
 		diff: s.diff,
 		type: 'choice',
-		q: KALIP[seed % KALIP.length](s.ad),
+		q: KALIP[seed % KALIP.length](s.goster),
 		a: [s.il, ...yanlis.slice(0, 3)],
 		kaynak: k.qid,
 	};
@@ -117,24 +250,33 @@ for (const s of secim) {
 		rapor.atlanan.push(`${s.ad}: ${ih.length ? 'uzunluk ' + ih.map((v) => v.alan).join(',') : 'çeldirici yetmedi'}`);
 		continue;
 	}
-	test.push(q);
-	rapor.zorluk[s.diff]++;
+	if (!bankaIl) test.push(q), rapor.zorluk[s.diff]++;
 	// haritada bul: yalnız bilinen (1–2) ilçe; il çokgeni dışında kalan koordinat ve adalar alınmaz
 	const mz = MERKEZ.get(s.il);
 	if (!mz) rapor.atlanan.push(`${s.il}: il merkezi koordinatı bulunamadı (harita)`);
-	if (s.diff <= 2 && !KOORD_SUPHE.has(s.ad) && mz && km(k, mz) >= 25) {
+	const mk = MERKEZ_KOORD[k.qid];
+	const nokta = mk ? { lat: mk[0], lon: mk[1] } : { lat: k.lat, lon: k.lon };
+	const ilde = haritadaIlde(nokta.lat, nokta.lon, s.il);
+	if (s.diff <= 2 && !ilde) rapor.atlanan.push(`${s.ad} (harita): nokta oyun haritasında ${s.il} çokgeninin dışında`);
+	const capa = capali(nokta.lat, nokta.lon, s.il);
+	if (s.diff === 2 && !capa) rapor.haritaIcBolge.push(s.ad);
+	const bankaHarita = s.diff <= 2 ? bankadaHarita(s.goster) || (s.goster !== s.ad && bankadaHarita(s.ad)) : null;
+	if (bankaHarita) rapor.bankadaHarita.push(`${s.goster}: ${bankaHarita}`);
+	if (s.diff <= 2 && !bankaHarita && (capa || s.diff === 1) && !KOORD_SUPHE.has(s.ad) && ilde && mz && km(nokta, mz) >= 25) {
 		const pq = {
 			id: `cog-wd-ilcepin-${k.qid}`,
 			cat: 'cografya',
-			diff: s.diff, // yakınlığa göre puanlanır: ünlü ilçeyi haritada bulmak, adını bilmek kadar kolay
+			diff: capa ? s.diff : 2, // yukarıdaki "Haritada bul zorluğu" kuralı
 			type: 'pin',
-			q: `${s.ad} ilçesi nerede?`,
-			lat: Math.round(k.lat * 100) / 100,
-			lon: Math.round(k.lon * 100) / 100,
+			// "X ilçesi nerede?" bankanın harita kuralına aykırı (test/harita.test.mjs: en az 4 kelime, çıplak "X nerede?" yok);
+			// ipucu olarak il yazılamaz (aynı ilçenin "hangi ilde" sorusunun cevabını açar). Nokta ilçe merkezidir: öyle sorulur.
+			q: `${s.goster} ilçe merkezi nerede?`,
+			lat: Math.round(nokta.lat * 100) / 100,
+			lon: Math.round(nokta.lon * 100) / 100,
 			r: 12,
 			kaynak: k.qid,
 		};
-		if (!ihlaller(pq).length) harita.push(pq);
+		if (!ihlaller(pq).length) harita.push(pq), rapor.haritaZorluk[pq.diff]++;
 	}
 }
 rapor.test = test.length;
@@ -146,5 +288,8 @@ const bas = (ne) =>
 	`// tools/veri/pilot/ilce_secim.txt'de değiştirip yeniden üret. Bilgi Wikidata'dan (CC0), kaynak: soru.kaynak.\n`;
 writeFileSync('src/data/q/wd/ilce.js', bas('İlçe hangi ilde') + 'export default ' + JSON.stringify(test, null, '\t') + ';\n');
 writeFileSync('src/data/q/wd/ilce_pin.js', bas('İlçe haritada bul') + 'export default ' + JSON.stringify(harita, null, '\t') + ';\n');
-console.log(JSON.stringify({ ...rapor, atlanan: rapor.atlanan.length }, null, 1));
+console.log(JSON.stringify({ ...rapor, atlanan: rapor.atlanan.length, haritaIcBolge: rapor.haritaIcBolge.length, bankada: rapor.bankada.length, bankadaHarita: rapor.bankadaHarita.length }, null, 1));
+console.log('  bankada ili zaten sorulan/açılan (hangi ilde yapılmadı): ' + rapor.bankada.join('; '));
+console.log('  bankada harita sorusu olan (haritada bul yapılmadı): ' + rapor.bankadaHarita.join('; '));
+console.log('  haritada bul yapılmayan iç bölge 2\'likleri: ' + rapor.haritaIcBolge.join(', '));
 for (const a of rapor.atlanan) console.log('  atlandı: ' + a);

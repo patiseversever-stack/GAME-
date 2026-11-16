@@ -8,12 +8,14 @@
 import { Match } from '../game/match.js';
 import { TYPES } from '../quiz/types.js';
 import { QUESTIONS } from '../data/questions.js';
+import { bankaHazir } from '../data/bank.js';
 import { showCommander } from './menu.js';
 import { duelIntro } from './duel.js';
 import { sleep, setTimeout } from '../core/clock.js';
 
 
 async function setup(ui, cfg = {}, { partial = false } = {}) {
+	await bankaHazir(); // soru bankası menüden sonra açılır (src/data/bank.js): sahne maçı kurmadan önce hazır olsun
 	const app = ui.app;
 	ui.fast = true;
 	app.cinema.fast = true;
