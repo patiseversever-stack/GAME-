@@ -1,0 +1,10704 @@
+[
+	{
+		"qid": "Q16869",
+		"tur": "antik",
+		"ad": "Konstantinopolis",
+		"sl": 128,
+		"trwiki": "Konstantinopolis",
+		"lat": 41.01224,
+		"lon": 28.976018,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q22647",
+		"tur": "antik",
+		"ad": "Troya",
+		"sl": 123,
+		"trwiki": "Troya",
+		"lat": 39.9575,
+		"lon": 26.238889,
+		"yukseklik": [],
+		"alan": [
+			158
+		],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q72303",
+		"tur": "dag",
+		"ad": "Ağrı Dağı",
+		"sl": 112,
+		"trwiki": "Ağrı Dağı",
+		"lat": 39.701944444,
+		"lon": 44.298333333,
+		"yukseklik": [
+			5137
+		],
+		"alan": [],
+		"iller": [
+			"Ağrı"
+		]
+	},
+	{
+		"qid": "Q47611",
+		"tur": "antik",
+		"ad": "Efes",
+		"sl": 97,
+		"trwiki": "Efes",
+		"lat": 37.939722,
+		"lon": 27.340833,
+		"yukseklik": [],
+		"alan": [
+			614.76
+		],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q43018",
+		"tur": "antik",
+		"ad": "Artemis Tapınağı",
+		"sl": 94,
+		"trwiki": "Artemis Tapınağı",
+		"lat": 37.949722,
+		"lon": 27.363889,
+		"yukseklik": [],
+		"alan": [
+			45.82
+		],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q45368",
+		"tur": "antik",
+		"ad": "Halikarnas Mozolesi",
+		"sl": 90,
+		"trwiki": "Halikarnas Mozolesi",
+		"lat": 37.037942,
+		"lon": 27.424097,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q126307",
+		"tur": "gol",
+		"ad": "Van Gölü",
+		"sl": 90,
+		"trwiki": "Van Gölü",
+		"lat": 38.633333333,
+		"lon": 42.816666666,
+		"yukseklik": [
+			1640
+		],
+		"alan": [
+			3755
+		],
+		"iller": [
+			"Van",
+			"Bitlis"
+		]
+	},
+	{
+		"qid": "Q200441",
+		"tur": "antik",
+		"ad": "Antakya",
+		"sl": 81,
+		"trwiki": "Antakya (antik kent)",
+		"lat": 36.204722222,
+		"lon": 36.181666666,
+		"yukseklik": [],
+		"alan": [
+			15
+		],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q214944",
+		"tur": "antik",
+		"ad": "Göbeklitepe",
+		"sl": 78,
+		"trwiki": "Göbeklitepe",
+		"lat": 37.223055555,
+		"lon": 38.9225,
+		"yukseklik": [
+			760
+		],
+		"alan": [
+			461,
+			126
+		],
+		"iller": [
+			"Şanlıurfa"
+		]
+	},
+	{
+		"qid": "Q169460",
+		"tur": "antik",
+		"ad": "Milet",
+		"sl": 73,
+		"trwiki": "Milet",
+		"lat": 37.531111,
+		"lon": 27.275556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q18986",
+		"tur": "antik",
+		"ad": "Pergamon",
+		"sl": 72,
+		"trwiki": "Pergamon",
+		"lat": 39.12947,
+		"lon": 27.18412,
+		"yukseklik": [],
+		"alan": [
+			426.928,
+			315.46
+		],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q192522",
+		"tur": "antik",
+		"ad": "Çatalhöyük",
+		"sl": 71,
+		"trwiki": "Çatalhöyük",
+		"lat": 37.6675,
+		"lon": 32.828333333,
+		"yukseklik": [],
+		"alan": [
+			110.74
+		],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q181007",
+		"tur": "antik",
+		"ad": "Hattuşa",
+		"sl": 71,
+		"trwiki": "Hattuşa",
+		"lat": 40.019722222,
+		"lon": 34.615277777,
+		"yukseklik": [],
+		"alan": [
+			261
+		],
+		"iller": [
+			"Çorum"
+		]
+	},
+	{
+		"qid": "Q179839",
+		"tur": "gol",
+		"ad": "Haliç",
+		"sl": 63,
+		"trwiki": "Haliç",
+		"lat": 41.029166666,
+		"lon": 28.961111111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q207917",
+		"tur": "dag",
+		"ad": "Nemrut Dağı",
+		"sl": 61,
+		"trwiki": "Nemrut Dağı",
+		"lat": 37.980738888,
+		"lon": 38.740830555,
+		"yukseklik": [
+			2150
+		],
+		"alan": [
+			11
+		],
+		"iller": [
+			"Adıyaman"
+		]
+	},
+	{
+		"qid": "Q546010",
+		"tur": "antik",
+		"ad": "Ani",
+		"sl": 59,
+		"trwiki": "Ani",
+		"lat": 40.5075,
+		"lon": 43.572777777,
+		"yukseklik": [],
+		"alan": [
+			432.45,
+			250.7
+		],
+		"iller": [
+			"Kars"
+		]
+	},
+	{
+		"qid": "Q232615",
+		"tur": "antik",
+		"ad": "Sardis",
+		"sl": 59,
+		"trwiki": "Sardis",
+		"lat": 38.488333,
+		"lon": 28.040278,
+		"yukseklik": [],
+		"alan": [
+			1656,
+			1652
+		],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q658437",
+		"tur": "antik",
+		"ad": "Gökçeada",
+		"sl": 55,
+		"trwiki": "Gökçeada (ada)",
+		"lat": 40.233058,
+		"lon": 25.903047,
+		"yukseklik": [
+			672
+		],
+		"alan": [
+			279
+		],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q7428276",
+		"tur": "antik",
+		"ad": "Hierapolis",
+		"sl": 54,
+		"trwiki": "Hierapolis",
+		"lat": 37.925,
+		"lon": 29.125833333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Denizli"
+		]
+	},
+	{
+		"qid": "Q5843680",
+		"tur": "antik",
+		"ad": "Halikarnassos",
+		"sl": 52,
+		"trwiki": "Halikarnas",
+		"lat": 37.037778,
+		"lon": 27.424167,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q739037",
+		"tur": "antik",
+		"ad": "Nikaia",
+		"sl": 52,
+		"trwiki": "Nikaia",
+		"lat": 40.429,
+		"lon": 29.7195,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q152405",
+		"tur": "antik",
+		"ad": "Side",
+		"sl": 51,
+		"trwiki": "Side",
+		"lat": 36.7724,
+		"lon": 31.3934,
+		"yukseklik": [
+			185
+		],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q126804",
+		"tur": "dag",
+		"ad": "Erciyes Dağı",
+		"sl": 49,
+		"trwiki": "Erciyes",
+		"lat": 38.531666666,
+		"lon": 35.45,
+		"yukseklik": [
+			3916
+		],
+		"alan": [],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q211823",
+		"tur": "gol",
+		"ad": "Tuz Gölü",
+		"sl": 49,
+		"trwiki": "Tuz Gölü",
+		"lat": 38.833333333,
+		"lon": 33.333333333,
+		"yukseklik": [
+			905,
+			899
+		],
+		"alan": [
+			2075
+		],
+		"iller": [
+			"Aksaray",
+			"Konya",
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q209349",
+		"tur": "antik",
+		"ad": "Nicomedia",
+		"sl": 46,
+		"trwiki": "Nikomedia",
+		"lat": 40.7625,
+		"lon": 29.9175,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Yalova"
+		]
+	},
+	{
+		"qid": "Q337381",
+		"tur": "antik",
+		"ad": "Kalkedon",
+		"sl": 44,
+		"trwiki": "Kalkedon",
+		"lat": 40.983333333,
+		"lon": 29.033333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q283680",
+		"tur": "antik",
+		"ad": "Karkamış",
+		"sl": 44,
+		"trwiki": "Karkamış (antik kent)",
+		"lat": 36.829722222,
+		"lon": 38.015,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q744406",
+		"tur": "antik",
+		"ad": "Celsus Kütüphanesi",
+		"sl": 43,
+		"trwiki": "Celsus Kütüphanesi",
+		"lat": 37.939138888,
+		"lon": 27.34075,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1190403",
+		"tur": "antik",
+		"ad": "Edessa",
+		"sl": 43,
+		"trwiki": "Edessa",
+		"lat": 37.176388888,
+		"lon": 38.776111111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Şanlıurfa"
+		]
+	},
+	{
+		"qid": "Q464936",
+		"tur": "antik",
+		"ad": "Ksantos",
+		"sl": 43,
+		"trwiki": "Ksanthos",
+		"lat": 36.362742,
+		"lon": 29.327378,
+		"yukseklik": [],
+		"alan": [
+			112,
+			34.4
+		],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q618495",
+		"tur": "antik",
+		"ad": "Afrodisias",
+		"sl": 42,
+		"trwiki": "Afrodisias",
+		"lat": 37.708333333,
+		"lon": 28.723611111,
+		"yukseklik": [],
+		"alan": [
+			70.33
+		],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q652024",
+		"tur": "antik",
+		"ad": "Myra",
+		"sl": 41,
+		"trwiki": "Mira (antik kent)",
+		"lat": 36.259166666,
+		"lon": 29.985277777,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q216511",
+		"tur": "antik",
+		"ad": "Yerebatan Sarnıcı",
+		"sl": 41,
+		"trwiki": "Yerebatan Sarnıcı",
+		"lat": 41.0084038,
+		"lon": 28.9779209,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q542854",
+		"tur": "antik",
+		"ad": "Gordion",
+		"sl": 40,
+		"trwiki": "Gordion",
+		"lat": 39.6504791,
+		"lon": 31.9784831,
+		"yukseklik": [],
+		"alan": [
+			1064
+		],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q89917",
+		"tur": "kale",
+		"ad": "Konstantinopolis Surları",
+		"sl": 40,
+		"trwiki": "Konstantinopolis Surları",
+		"lat": 41.01805556,
+		"lon": 28.92333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q925688",
+		"tur": "dag",
+		"ad": "Uludağ",
+		"sl": 38,
+		"trwiki": "Uludağ",
+		"lat": 40.0705295,
+		"lon": 29.222009805,
+		"yukseklik": [
+			2542
+		],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q620593",
+		"tur": "antik",
+		"ad": "Göreme Tarihî Millî Parkı",
+		"sl": 37,
+		"trwiki": "Göreme Tarihî Millî Parkı",
+		"lat": 38.652777777,
+		"lon": 34.863055555,
+		"yukseklik": [],
+		"alan": [
+			9572
+		],
+		"iller": [
+			"Nevşehir"
+		]
+	},
+	{
+		"qid": "Q1302768",
+		"tur": "dag",
+		"ad": "Hasandağı",
+		"sl": 37,
+		"trwiki": "Hasandağı",
+		"lat": 38.12652,
+		"lon": 34.16511,
+		"yukseklik": [
+			3268
+		],
+		"alan": [],
+		"iller": [
+			"Aksaray"
+		]
+	},
+	{
+		"qid": "Q703480",
+		"tur": "antik",
+		"ad": "Letoon",
+		"sl": 37,
+		"trwiki": "Litoon",
+		"lat": 36.331944444,
+		"lon": 29.289722222,
+		"yukseklik": [],
+		"alan": [
+			29,
+			14
+		],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q720583",
+		"tur": "antik",
+		"ad": "Tigranakert",
+		"sl": 37,
+		"trwiki": "Tigranakert",
+		"lat": 38.14222222,
+		"lon": 41.00138889,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Diyarbakır"
+		]
+	},
+	{
+		"qid": "Q538605",
+		"tur": "antik",
+		"ad": "Kültepe",
+		"sl": 36,
+		"trwiki": "Kültepe",
+		"lat": 38.85,
+		"lon": 35.633333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q135779",
+		"tur": "antik",
+		"ad": "Meryem Ana Evi",
+		"sl": 36,
+		"trwiki": "Meryem Ana Evi",
+		"lat": 37.911527777,
+		"lon": 27.333972222,
+		"yukseklik": [],
+		"alan": [
+			83,
+			0.55
+		],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q142819",
+		"tur": "antik",
+		"ad": "Priene",
+		"sl": 36,
+		"trwiki": "Priene",
+		"lat": 37.659722,
+		"lon": 27.297778,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q369923",
+		"tur": "gol",
+		"ad": "Beyşehir Gölü",
+		"sl": 35,
+		"trwiki": "Beyşehir Gölü",
+		"lat": 37.782,
+		"lon": 31.5076,
+		"yukseklik": [
+			1115
+		],
+		"alan": [
+			650
+		],
+		"iller": [
+			"Konya",
+			"Isparta"
+		]
+	},
+	{
+		"qid": "Q1334148",
+		"tur": "gol",
+		"ad": "Eğirdir Gölü",
+		"sl": 35,
+		"trwiki": "Eğirdir Gölü",
+		"lat": 37.9936,
+		"lon": 30.8884,
+		"yukseklik": [
+			917
+		],
+		"alan": [
+			482
+		],
+		"iller": [
+			"Isparta"
+		]
+	},
+	{
+		"qid": "Q719815",
+		"tur": "antik",
+		"ad": "Perge",
+		"sl": 35,
+		"trwiki": "Perge",
+		"lat": 36.962229,
+		"lon": 30.855068,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q90801",
+		"tur": "kale",
+		"ad": "Rumeli Hisarı",
+		"sl": 35,
+		"trwiki": "Rumeli Hisarı",
+		"lat": 41.084722222,
+		"lon": 29.056111111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q1419157",
+		"tur": "antik",
+		"ad": "Sümela Manastırı",
+		"sl": 35,
+		"trwiki": "Sümela Manastırı",
+		"lat": 40.69,
+		"lon": 39.65833333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Trabzon"
+		]
+	},
+	{
+		"qid": "Q336446",
+		"tur": "antik",
+		"ad": "Abidos",
+		"sl": 34,
+		"trwiki": "Abidos (Misya)",
+		"lat": 40.196017,
+		"lon": 26.406964,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q849709",
+		"tur": "antik",
+		"ad": "Laodikeia",
+		"sl": 34,
+		"trwiki": "Laodikya",
+		"lat": 37.855246,
+		"lon": 29.136425,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Denizli"
+		]
+	},
+	{
+		"qid": "Q81650",
+		"tur": "kale",
+		"ad": "Anadolu Hisarı",
+		"sl": 33,
+		"trwiki": "Anadolu Hisarı",
+		"lat": 41.082138888,
+		"lon": 29.067027777,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q1328958",
+		"tur": "antik",
+		"ad": "Derinkuyu Yeraltı Şehri",
+		"sl": 33,
+		"trwiki": "Derinkuyu Yeraltı Şehri",
+		"lat": 38.373403,
+		"lon": 34.735034,
+		"yukseklik": [],
+		"alan": [
+			2.5
+		],
+		"iller": [
+			"Nevşehir"
+		]
+	},
+	{
+		"qid": "Q690575",
+		"tur": "antik",
+		"ad": "Knidos",
+		"sl": 33,
+		"trwiki": "Knidos",
+		"lat": 36.685833,
+		"lon": 27.375,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q1001370",
+		"tur": "antik",
+		"ad": "Kolossai",
+		"sl": 33,
+		"trwiki": "Kolossai",
+		"lat": 37.790552,
+		"lon": 29.259161,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Denizli"
+		]
+	},
+	{
+		"qid": "Q615449",
+		"tur": "antik",
+		"ad": "Kyzikos",
+		"sl": 33,
+		"trwiki": "Kizikos",
+		"lat": 40.387777777,
+		"lon": 27.870555555,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q948747",
+		"tur": "dag",
+		"ad": "Nemrut Dağı",
+		"sl": 33,
+		"trwiki": "Nemrut Dağı (Bitlis)",
+		"lat": 38.62257,
+		"lon": 42.24668,
+		"yukseklik": [
+			3050
+		],
+		"alan": [],
+		"iller": [
+			"Bitlis"
+		]
+	},
+	{
+		"qid": "Q575249",
+		"tur": "antik",
+		"ad": "Aççana Höyük",
+		"sl": 32,
+		"trwiki": "Alalah",
+		"lat": 36.237777777,
+		"lon": 36.384722222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q558861",
+		"tur": "antik",
+		"ad": "Alacahöyük",
+		"sl": 32,
+		"trwiki": "Alacahöyük",
+		"lat": 40.233895,
+		"lon": 34.695575,
+		"yukseklik": [
+			1080
+		],
+		"alan": [],
+		"iller": [
+			"Çorum"
+		]
+	},
+	{
+		"qid": "Q705132",
+		"tur": "antik",
+		"ad": "Arslantepe",
+		"sl": 32,
+		"trwiki": "Melid",
+		"lat": 38.38194444,
+		"lon": 38.36111111,
+		"yukseklik": [],
+		"alan": [
+			74.07,
+			4.85
+		],
+		"iller": [
+			"Malatya"
+		]
+	},
+	{
+		"qid": "Q302511",
+		"tur": "antik",
+		"ad": "Heraclea Pontica",
+		"sl": 32,
+		"trwiki": "Herakleia Pontiki",
+		"lat": 41.284722222,
+		"lon": 31.414722222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Zonguldak"
+		]
+	},
+	{
+		"qid": "Q1551419",
+		"tur": "antik",
+		"ad": "İmrahor Camii",
+		"sl": 32,
+		"trwiki": "İmrahor Camii",
+		"lat": 40.99611111,
+		"lon": 28.92861111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q428732",
+		"tur": "antik",
+		"ad": "Phokaia",
+		"sl": 32,
+		"trwiki": "Fokaia",
+		"lat": 38.6675,
+		"lon": 26.758055555,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q633757",
+		"tur": "antik",
+		"ad": "Aspendos",
+		"sl": 31,
+		"trwiki": "Aspendos",
+		"lat": 36.9382,
+		"lon": 31.1732,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q744631",
+		"tur": "antik",
+		"ad": "Assos",
+		"sl": 31,
+		"trwiki": "Assos",
+		"lat": 39.491621,
+		"lon": 26.339656,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q272720",
+		"tur": "antik",
+		"ad": "Çayönü",
+		"sl": 31,
+		"trwiki": "Çayönü",
+		"lat": 38.216,
+		"lon": 39.725,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Diyarbakır"
+		]
+	},
+	{
+		"qid": "Q536598",
+		"tur": "antik",
+		"ad": "Klazomenai",
+		"sl": 31,
+		"trwiki": "Klazomenai",
+		"lat": 38.373889,
+		"lon": 26.785278,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q233121",
+		"tur": "antik",
+		"ad": "Patara",
+		"sl": 31,
+		"trwiki": "Patara",
+		"lat": 36.260278,
+		"lon": 29.314167,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q1135603",
+		"tur": "antik",
+		"ad": "Thiatira",
+		"sl": 31,
+		"trwiki": "Thiatira",
+		"lat": 38.920833333,
+		"lon": 27.841666666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q579468",
+		"tur": "antik",
+		"ad": "Antiokheia (Pisidya)",
+		"sl": 30,
+		"trwiki": "Antioheia (Pisidya)",
+		"lat": 38.306111111,
+		"lon": 31.189166666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Isparta"
+		]
+	},
+	{
+		"qid": "Q671358",
+		"tur": "antik",
+		"ad": "Didyma",
+		"sl": 30,
+		"trwiki": "Didyma",
+		"lat": 37.385,
+		"lon": 27.25638889,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q1142488",
+		"tur": "antik",
+		"ad": "Kolophon",
+		"sl": 30,
+		"trwiki": "Kolofon (antik kent)",
+		"lat": 38.11555556,
+		"lon": 27.14222222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q937499",
+		"tur": "antik",
+		"ad": "Malkara",
+		"sl": 30,
+		"trwiki": "Malkara",
+		"lat": 40.893333333,
+		"lon": 26.904166666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tekirdağ"
+		]
+	},
+	{
+		"qid": "Q1433508",
+		"tur": "dag",
+		"ad": "Süphan Dağı",
+		"sl": 30,
+		"trwiki": "Süphan Dağı",
+		"lat": 38.92983,
+		"lon": 42.82959,
+		"yukseklik": [
+			4058
+		],
+		"alan": [],
+		"iller": [
+			"Bitlis"
+		]
+	},
+	{
+		"qid": "Q1113602",
+		"tur": "kale",
+		"ad": "Bodrum Kalesi",
+		"sl": 29,
+		"trwiki": "Bodrum Kalesi",
+		"lat": 37.031666666,
+		"lon": 27.429444444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q7060882",
+		"tur": "kale",
+		"ad": "Diyarbakır Kalesi",
+		"sl": 29,
+		"trwiki": "Diyarbakır Kalesi",
+		"lat": 37.910861111,
+		"lon": 40.227277777,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Diyarbakır"
+		]
+	},
+	{
+		"qid": "Q192369",
+		"tur": "gol",
+		"ad": "İznik Gölü",
+		"sl": 29,
+		"trwiki": "İznik Gölü",
+		"lat": 40.443611111,
+		"lon": 29.508333333,
+		"yukseklik": [
+			85
+		],
+		"alan": [
+			290
+		],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q17586",
+		"tur": "antik",
+		"ad": "Teos",
+		"sl": 29,
+		"trwiki": "Teos",
+		"lat": 38.199104,
+		"lon": 26.837477,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1026347",
+		"tur": "antik",
+		"ad": "Samosata",
+		"sl": 28,
+		"trwiki": "Samosata",
+		"lat": 37.57955,
+		"lon": 38.481316666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adıyaman"
+		]
+	},
+	{
+		"qid": "Q753776",
+		"tur": "baraj",
+		"ad": "Atatürk Barajı ve Hidroelektrik Santrali",
+		"sl": 27,
+		"trwiki": "Atatürk Barajı ve Hidroelektrik Santrali",
+		"lat": 37.481666666,
+		"lon": 38.3175,
+		"yukseklik": [
+			417
+		],
+		"alan": [],
+		"iller": [
+			"Adıyaman",
+			"Şanlıurfa"
+		]
+	},
+	{
+		"qid": "Q1641126",
+		"tur": "dag",
+		"ad": "Kaçkar Dağı",
+		"sl": 27,
+		"trwiki": "Kaçkar Dağı",
+		"lat": 40.83547,
+		"lon": 41.16131,
+		"yukseklik": [
+			3932
+		],
+		"alan": [],
+		"iller": [
+			"Rize"
+		]
+	},
+	{
+		"qid": "Q573852",
+		"tur": "antik",
+		"ad": "Uluburun batığı",
+		"sl": 27,
+		"trwiki": "Uluburun batığı",
+		"lat": 36.128611111,
+		"lon": 29.685833333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q632795",
+		"tur": "kale",
+		"ad": "Yedikule Hisarı",
+		"sl": 27,
+		"trwiki": "Yedikule Zindanları",
+		"lat": 40.99305556,
+		"lon": 28.92333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q421825",
+		"tur": "gol",
+		"ad": "Aktaş Gölü",
+		"sl": 26,
+		"trwiki": "Aktaş Gölü",
+		"lat": 41.214722222,
+		"lon": 43.214722222,
+		"yukseklik": [
+			1799
+		],
+		"alan": [
+			26.3
+		],
+		"iller": [
+			"Ardahan"
+		]
+	},
+	{
+		"qid": "Q219525",
+		"tur": "antik",
+		"ad": "Anavarza Kalesi",
+		"sl": 26,
+		"trwiki": "Anavarza",
+		"lat": 37.256,
+		"lon": 35.9,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q1010475",
+		"tur": "gol",
+		"ad": "Burdur Gölü",
+		"sl": 26,
+		"trwiki": "Burdur Gölü",
+		"lat": 37.7337,
+		"lon": 30.1781,
+		"yukseklik": [
+			857
+		],
+		"alan": [
+			250
+		],
+		"iller": [
+			"Burdur",
+			"Isparta"
+		]
+	},
+	{
+		"qid": "Q1143135",
+		"tur": "dag",
+		"ad": "Cudi Dağı",
+		"sl": 26,
+		"trwiki": "Cudi Dağı",
+		"lat": 37.377528,
+		"lon": 42.4543142,
+		"yukseklik": [
+			2118,
+			2089
+		],
+		"alan": [],
+		"iller": [
+			"Şırnak"
+		]
+	},
+	{
+		"qid": "Q585145",
+		"tur": "antik",
+		"ad": "Dara",
+		"sl": 26,
+		"trwiki": "Dara (antik kent)",
+		"lat": 37.183333,
+		"lon": 40.933333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mardin"
+		]
+	},
+	{
+		"qid": "Q595329",
+		"tur": "antik",
+		"ad": "Faselis",
+		"sl": 26,
+		"trwiki": "Faselis",
+		"lat": 36.523611,
+		"lon": 30.552222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q1432674",
+		"tur": "antik",
+		"ad": "Magnesia",
+		"sl": 26,
+		"trwiki": "Magnesia (Aydın)",
+		"lat": 37.853091,
+		"lon": 27.533091,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q555923",
+		"tur": "antik",
+		"ad": "Misis",
+		"sl": 26,
+		"trwiki": "Misis",
+		"lat": 36.958843,
+		"lon": 35.625744,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q1423615",
+		"tur": "antik",
+		"ad": "Tuvana Krallığı",
+		"sl": 26,
+		"trwiki": "Tuvana",
+		"lat": 37.848055555,
+		"lon": 34.611111111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q529923",
+		"tur": "antik",
+		"ad": "Yazılıkaya",
+		"sl": 26,
+		"trwiki": "Yazılıkaya",
+		"lat": 40.025,
+		"lon": 34.63278,
+		"yukseklik": [],
+		"alan": [
+			1.8
+		],
+		"iller": [
+			"Çorum"
+		]
+	},
+	{
+		"qid": "Q174270",
+		"tur": "antik",
+		"ad": "Amorium",
+		"sl": 25,
+		"trwiki": "Amorium",
+		"lat": 39.0225,
+		"lon": 31.295,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Afyonkarahisar"
+		]
+	},
+	{
+		"qid": "Q272986",
+		"tur": "gol",
+		"ad": "Çıldır Gölü",
+		"sl": 25,
+		"trwiki": "Çıldır Gölü",
+		"lat": 41.0446,
+		"lon": 43.2556,
+		"yukseklik": [
+			1959
+		],
+		"alan": [
+			120
+		],
+		"iller": [
+			"Ardahan",
+			"Kars"
+		]
+	},
+	{
+		"qid": "Q152556",
+		"tur": "baraj",
+		"ad": "Karakaya Barajı ve Hidroelektrik Santrali",
+		"sl": 25,
+		"trwiki": "Karakaya Barajı ve Hidroelektrik Santrali",
+		"lat": 38.22652,
+		"lon": 39.1357,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Diyarbakır",
+			"Elazığ"
+		]
+	},
+	{
+		"qid": "Q1393407",
+		"tur": "antik",
+		"ad": "Alexandria Troas",
+		"sl": 24,
+		"trwiki": "Aleksandreia Troas",
+		"lat": 39.75194444,
+		"lon": 26.15861111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q6026101",
+		"tur": "antik",
+		"ad": "Gaziantep Kalesi",
+		"sl": 24,
+		"trwiki": "Gaziantep Kalesi",
+		"lat": 37.0664,
+		"lon": 37.3833,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q1360503",
+		"tur": "antik",
+		"ad": "İssos",
+		"sl": 24,
+		"trwiki": "İssos",
+		"lat": 36.838333333,
+		"lon": 36.164444444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1229422",
+		"tur": "antik",
+		"ad": "Lampsakos",
+		"sl": 24,
+		"trwiki": "Lampsakos",
+		"lat": 40.346685,
+		"lon": 26.699162,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1151606",
+		"tur": "antik",
+		"ad": "Nevali Çori",
+		"sl": 24,
+		"trwiki": "Nevali Çori",
+		"lat": 37.518333333,
+		"lon": 38.605555555,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adıyaman"
+		]
+	},
+	{
+		"qid": "Q1380189",
+		"tur": "antik",
+		"ad": "Olimpos",
+		"sl": 24,
+		"trwiki": "Olimpos, Kumluca",
+		"lat": 36.39685,
+		"lon": 30.474637,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q593737",
+		"tur": "antik",
+		"ad": "Sestos",
+		"sl": 24,
+		"trwiki": "Sestos",
+		"lat": 40.228356,
+		"lon": 26.417225,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q532698",
+		"tur": "dag",
+		"ad": "Spil Dağı",
+		"sl": 24,
+		"trwiki": "Spil Dağı",
+		"lat": 38.56698,
+		"lon": 27.45484,
+		"yukseklik": [
+			1513
+		],
+		"alan": [],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q599462",
+		"tur": "antik",
+		"ad": "Termessos",
+		"sl": 24,
+		"trwiki": "Termessos",
+		"lat": 36.9825,
+		"lon": 30.46444444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q196987",
+		"tur": "antik",
+		"ad": "Zeugma",
+		"sl": 24,
+		"trwiki": "Zeugma",
+		"lat": 37.05861111,
+		"lon": 37.86583333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q206225",
+		"tur": "kale",
+		"ad": "Ankara Kalesi",
+		"sl": 23,
+		"trwiki": "Ankara Kalesi",
+		"lat": 39.94166667,
+		"lon": 32.865,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q2728644",
+		"tur": "antik",
+		"ad": "Binbirdirek Sarnıcı",
+		"sl": 23,
+		"trwiki": "Binbirdirek Sarnıcı",
+		"lat": 41.0075,
+		"lon": 28.974444444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q608095",
+		"tur": "antik",
+		"ad": "Kaunos",
+		"sl": 23,
+		"trwiki": "Kaunos",
+		"lat": 36.828275,
+		"lon": 28.625838,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q535982",
+		"tur": "antik",
+		"ad": "Kilistra",
+		"sl": 23,
+		"trwiki": "Kilistra",
+		"lat": 37.664119444,
+		"lon": 32.210711111,
+		"yukseklik": [
+			1400
+		],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q920866",
+		"tur": "antik",
+		"ad": "Magnesia ad Sipylum",
+		"sl": 23,
+		"trwiki": "Magnesia ad Sipylum",
+		"lat": 38.613056,
+		"lon": 27.425833,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q279191",
+		"tur": "antik",
+		"ad": "Sagalassos",
+		"sl": 23,
+		"trwiki": "Sagalassos",
+		"lat": 37.6801,
+		"lon": 30.5253,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q1069007",
+		"tur": "antik",
+		"ad": "Vaşşuganni",
+		"sl": 23,
+		"trwiki": null,
+		"lat": null,
+		"lon": null,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q404513",
+		"tur": "antik",
+		"ad": "Aegospotami",
+		"sl": 22,
+		"trwiki": "Aegospotami",
+		"lat": 40.364072222,
+		"lon": 26.630833333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q30681483",
+		"tur": "gol",
+		"ad": "Akdoğan Gölü",
+		"sl": 22,
+		"trwiki": "Akdoğan Gölü",
+		"lat": 39.14006,
+		"lon": 41.74121,
+		"yukseklik": [
+			2149
+		],
+		"alan": [
+			10.88
+		],
+		"iller": [
+			"Muş"
+		]
+	},
+	{
+		"qid": "Q424815",
+		"tur": "gol",
+		"ad": "Akşehir Gölü",
+		"sl": 22,
+		"trwiki": "Akşehir Gölü",
+		"lat": 38.5112,
+		"lon": 31.4178,
+		"yukseklik": [
+			954
+		],
+		"alan": [
+			353
+		],
+		"iller": [
+			"Afyonkarahisar",
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q1640233",
+		"tur": "antik",
+		"ad": "Augustus Tapınağı",
+		"sl": 22,
+		"trwiki": "Augustus Tapınağı",
+		"lat": 39.944336111,
+		"lon": 32.858266666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q723091",
+		"tur": "antik",
+		"ad": "Erithrai",
+		"sl": 22,
+		"trwiki": "Erithrai",
+		"lat": 38.382709,
+		"lon": 26.480827,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q4811584",
+		"tur": "antik",
+		"ad": "Gemiler Adası",
+		"sl": 22,
+		"trwiki": "Gemile",
+		"lat": 36.553448,
+		"lon": 29.069352,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q908860",
+		"tur": "antik",
+		"ad": "Hacılar Höyük",
+		"sl": 22,
+		"trwiki": "Hacılar Höyük",
+		"lat": 37.5843,
+		"lon": 30.0845,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q1737672",
+		"tur": "baraj",
+		"ad": "Keban Barajı ve Hidroelektrik Santrali",
+		"sl": 22,
+		"trwiki": "Keban Barajı ve Hidroelektrik Santrali",
+		"lat": 38.806944444,
+		"lon": 38.756944444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Elazığ"
+		]
+	},
+	{
+		"qid": "Q372292",
+		"tur": "antik",
+		"ad": "Kuşşara",
+		"sl": 22,
+		"trwiki": "Kuşşara",
+		"lat": 39.385,
+		"lon": 37.502,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q3234128",
+		"tur": "gol",
+		"ad": "Salda Gölü",
+		"sl": 22,
+		"trwiki": "Salda Gölü",
+		"lat": 37.5508,
+		"lon": 29.6833,
+		"yukseklik": [
+			1640
+		],
+		"alan": [
+			43.7
+		],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q1605894",
+		"tur": "antik",
+		"ad": "Seleucia Pieria",
+		"sl": 22,
+		"trwiki": "Seleucia Pieria",
+		"lat": 36.124,
+		"lon": 35.922,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q1095336",
+		"tur": "gol",
+		"ad": "Uzungöl",
+		"sl": 22,
+		"trwiki": "Uzungöl",
+		"lat": 40.61929,
+		"lon": 40.29486,
+		"yukseklik": [
+			1090
+		],
+		"alan": [],
+		"iller": [
+			"Trabzon"
+		]
+	},
+	{
+		"qid": "Q3187042",
+		"tur": "antik",
+		"ad": "Van Kalesi",
+		"sl": 22,
+		"trwiki": "Van Kalesi",
+		"lat": 38.5025,
+		"lon": 43.34,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Van"
+		]
+	},
+	{
+		"qid": "Q411571",
+		"tur": "antik",
+		"ad": "Aizanoi",
+		"sl": 21,
+		"trwiki": "Aizanoi",
+		"lat": 39.197142,
+		"lon": 29.617577,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kütahya"
+		]
+	},
+	{
+		"qid": "Q799781",
+		"tur": "gol",
+		"ad": "Bafa Gölü",
+		"sl": 21,
+		"trwiki": "Bafa Gölü",
+		"lat": 37.5013,
+		"lon": 27.437,
+		"yukseklik": [
+			5
+		],
+		"alan": [
+			176.5
+		],
+		"iller": [
+			"Aydın",
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q6092391",
+		"tur": "antik",
+		"ad": "Edirne Sarayı",
+		"sl": 21,
+		"trwiki": "Edirne Sarayı",
+		"lat": 41.69111111,
+		"lon": 26.55572222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Edirne"
+		]
+	},
+	{
+		"qid": "Q187946",
+		"tur": "dag",
+		"ad": "Karaca Dağ",
+		"sl": 21,
+		"trwiki": "Karaca Dağ",
+		"lat": 37.71142,
+		"lon": 39.82904,
+		"yukseklik": [
+			1957
+		],
+		"alan": [],
+		"iller": [
+			"Diyarbakır",
+			"Şanlıurfa"
+		]
+	},
+	{
+		"qid": "Q5996986",
+		"tur": "antik",
+		"ad": "Karahantepe",
+		"sl": 21,
+		"trwiki": "Karahantepe",
+		"lat": 37.0916,
+		"lon": 39.3027,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Şanlıurfa"
+		]
+	},
+	{
+		"qid": "Q1231380",
+		"tur": "antik",
+		"ad": "Konstantin Forumu",
+		"sl": 21,
+		"trwiki": "Konstantin Forumu",
+		"lat": 41.009,
+		"lon": 28.971,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q2661366",
+		"tur": "gol",
+		"ad": "Köyceğiz Gölü",
+		"sl": 21,
+		"trwiki": "Köyceğiz Gölü",
+		"lat": 36.91224,
+		"lon": 28.65534,
+		"yukseklik": [
+			8
+		],
+		"alan": [
+			52
+		],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q679305",
+		"tur": "antik",
+		"ad": "Kyme",
+		"sl": 21,
+		"trwiki": "Kyme",
+		"lat": 38.761848,
+		"lon": 26.942154,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q941456",
+		"tur": "dag",
+		"ad": "Palandöken Dağı",
+		"sl": 21,
+		"trwiki": "Palandöken Dağı",
+		"lat": 39.848888888,
+		"lon": 41.284166666,
+		"yukseklik": [
+			3271,
+			3174
+		],
+		"alan": [],
+		"iller": [
+			"Erzurum"
+		]
+	},
+	{
+		"qid": "Q305501",
+		"tur": "gol",
+		"ad": "Abant Gölü",
+		"sl": 20,
+		"trwiki": "Abant Gölü",
+		"lat": 40.60545,
+		"lon": 31.28033,
+		"yukseklik": [
+			1350
+		],
+		"alan": [
+			1.25
+		],
+		"iller": [
+			"Bolu"
+		]
+	},
+	{
+		"qid": "Q81593",
+		"tur": "antik",
+		"ad": "Alanya Kalesi",
+		"sl": 20,
+		"trwiki": "Alanya Kalesi",
+		"lat": 36.533333333,
+		"lon": 31.993333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q2380189",
+		"tur": "gol",
+		"ad": "Hazar Gölü",
+		"sl": 20,
+		"trwiki": "Hazar Gölü",
+		"lat": 38.4845,
+		"lon": 39.4047,
+		"yukseklik": [
+			534
+		],
+		"alan": [
+			81
+		],
+		"iller": []
+	},
+	{
+		"qid": "Q1729026",
+		"tur": "antik",
+		"ad": "Karatepe-Arslantaş",
+		"sl": 20,
+		"trwiki": "Karatepe (antik kent)",
+		"lat": 37.29555556,
+		"lon": 36.25361111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Osmaniye"
+		]
+	},
+	{
+		"qid": "Q965581",
+		"tur": "antik",
+		"ad": "Kardiya",
+		"sl": 20,
+		"trwiki": "Kardiya",
+		"lat": 40.548232,
+		"lon": 26.75081,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1953975",
+		"tur": "dag",
+		"ad": "Musa Dağı",
+		"sl": 20,
+		"trwiki": null,
+		"lat": 36.258333333,
+		"lon": 35.903611111,
+		"yukseklik": [
+			1355,
+			997
+		],
+		"alan": [],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q1195800",
+		"tur": "antik",
+		"ad": "Myus",
+		"sl": 20,
+		"trwiki": "Myus",
+		"lat": 37.595252,
+		"lon": 27.433117,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q13089982",
+		"tur": "antik",
+		"ad": "Nova Roma",
+		"sl": 20,
+		"trwiki": "Nova Roma",
+		"lat": 41.013888888,
+		"lon": 28.955555555,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q728353",
+		"tur": "antik",
+		"ad": "Pessinus",
+		"sl": 20,
+		"trwiki": "Pessinus",
+		"lat": 39.333889,
+		"lon": 31.584444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Eskişehir"
+		]
+	},
+	{
+		"qid": "Q1477613",
+		"tur": "antik",
+		"ad": "Rumkale",
+		"sl": 20,
+		"trwiki": "Rumkale",
+		"lat": 37.270777777,
+		"lon": 37.837916666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q656954",
+		"tur": "antik",
+		"ad": "Soli",
+		"sl": 20,
+		"trwiki": "Soli, Mersin",
+		"lat": 36.742658,
+		"lon": 34.537894,
+		"yukseklik": [
+			10
+		],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q1125445",
+		"tur": "dag",
+		"ad": "Tendürek Dağı",
+		"sl": 20,
+		"trwiki": "Tendürek Dağı",
+		"lat": 39.35486,
+		"lon": 43.86703,
+		"yukseklik": [
+			3533
+		],
+		"alan": [],
+		"iller": [
+			"Van",
+			"Ağrı"
+		]
+	},
+	{
+		"qid": "Q481670",
+		"tur": "antik",
+		"ad": "Amik Ovası",
+		"sl": 19,
+		"trwiki": "Amik Ovası",
+		"lat": 36.354349,
+		"lon": 36.36153,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q799921",
+		"tur": "antik",
+		"ad": "Bakras Kalesi",
+		"sl": 19,
+		"trwiki": "Bakras Kalesi",
+		"lat": 36.426944444,
+		"lon": 36.225,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q950952",
+		"tur": "antik",
+		"ad": "Dardanos (antik kent)",
+		"sl": 19,
+		"trwiki": "Dardanos, Çanakkale",
+		"lat": 40.079727,
+		"lon": 26.37442,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1659316",
+		"tur": "baraj",
+		"ad": "Ilısu Barajı ve Hidroelektrik Santrali",
+		"sl": 19,
+		"trwiki": "Ilısu Barajı ve Hidroelektrik Santrali",
+		"lat": 37.5311,
+		"lon": 41.84931,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mardin",
+			"Şırnak"
+		]
+	},
+	{
+		"qid": "Q1673689",
+		"tur": "antik",
+		"ad": "İsa Bey Camii",
+		"sl": 19,
+		"trwiki": "İsa Bey Camii",
+		"lat": 37.952222222,
+		"lon": 27.365833333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q144629",
+		"tur": "antik",
+		"ad": "Justinianus Köprüsü",
+		"sl": 19,
+		"trwiki": "Justinianus Köprüsü",
+		"lat": 40.73736,
+		"lon": 30.37276,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sakarya"
+		]
+	},
+	{
+		"qid": "Q383473",
+		"tur": "dag",
+		"ad": "Kel Dağı",
+		"sl": 19,
+		"trwiki": "Kel Dağı",
+		"lat": 35.9526,
+		"lon": 35.9684,
+		"yukseklik": [
+			1736,
+			1717
+		],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1933754",
+		"tur": "antik",
+		"ad": "Klaros",
+		"sl": 19,
+		"trwiki": "Klaros",
+		"lat": 38.005,
+		"lon": 27.19305556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q302905",
+		"tur": "antik",
+		"ad": "Lebedos",
+		"sl": 19,
+		"trwiki": "Lebedos",
+		"lat": 38.077883,
+		"lon": 26.964722,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q517690",
+		"tur": "antik",
+		"ad": "Lysimachia",
+		"sl": 19,
+		"trwiki": "Lysimachia (Trakya)",
+		"lat": 40.58,
+		"lon": 26.88,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1402638",
+		"tur": "dag",
+		"ad": "Mahya Dağı",
+		"sl": 19,
+		"trwiki": "Mahya Dağı",
+		"lat": 41.783333333,
+		"lon": 27.616666666,
+		"yukseklik": [
+			1031
+		],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1891954",
+		"tur": "gol",
+		"ad": "Manyas Kuşgölü",
+		"sl": 19,
+		"trwiki": "Manyas Kuş Gölü",
+		"lat": 40.1953,
+		"lon": 27.9678,
+		"yukseklik": [
+			18
+		],
+		"alan": [
+			160
+		],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q3150393",
+		"tur": "antik",
+		"ad": "Şerefiye Sarnıcı",
+		"sl": 19,
+		"trwiki": "Şerefiye Sarnıcı",
+		"lat": 41.00725,
+		"lon": 28.9726,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q1068171",
+		"tur": "antik",
+		"ad": "Tarhuntassa",
+		"sl": 19,
+		"trwiki": "Tarhuntaşşa",
+		"lat": 36.86666667,
+		"lon": 33.16666667,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q1039186",
+		"tur": "antik",
+		"ad": "Zincirli Höyük",
+		"sl": 19,
+		"trwiki": "Zincirli Höyük",
+		"lat": 37.103611111,
+		"lon": 36.678611111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q3457705",
+		"tur": "gol",
+		"ad": "Arpaçay Baraj Gölü",
+		"sl": 18,
+		"trwiki": "Arpaçay Baraj Gölü",
+		"lat": 40.60512,
+		"lon": 43.69242,
+		"yukseklik": [
+			1600
+		],
+		"alan": [
+			54
+		],
+		"iller": [
+			"Kars"
+		]
+	},
+	{
+		"qid": "Q3022142",
+		"tur": "dag",
+		"ad": "Demirkazık Dağı",
+		"sl": 18,
+		"trwiki": "Demirkazık Dağı",
+		"lat": 37.83566,
+		"lon": 35.15008,
+		"yukseklik": [
+			3756
+		],
+		"alan": [],
+		"iller": [
+			"Niğde"
+		]
+	},
+	{
+		"qid": "Q8195601",
+		"tur": "antik",
+		"ad": "Harput",
+		"sl": 18,
+		"trwiki": "Harput",
+		"lat": 38.703888888,
+		"lon": 39.25,
+		"yukseklik": [
+			1270
+		],
+		"alan": [],
+		"iller": [
+			"Elazığ"
+		]
+	},
+	{
+		"qid": "Q1062421",
+		"tur": "antik",
+		"ad": "Karain Mağarası",
+		"sl": 18,
+		"trwiki": "Karain Mağarası",
+		"lat": 37.077777777,
+		"lon": 30.570833333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q118948370",
+		"tur": "antik",
+		"ad": "Kaymaklı Yeraltı Şehri",
+		"sl": 18,
+		"trwiki": "Kaymaklı Yeraltı Şehri",
+		"lat": 38.45999508,
+		"lon": 34.752265051,
+		"yukseklik": [],
+		"alan": [
+			0.7
+		],
+		"iller": [
+			"Nevşehir"
+		]
+	},
+	{
+		"qid": "Q2167586",
+		"tur": "antik",
+		"ad": "Korykos",
+		"sl": 18,
+		"trwiki": "Korikos",
+		"lat": 36.467249,
+		"lon": 34.148625,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q1801490",
+		"tur": "antik",
+		"ad": "Namrun Kalesi",
+		"sl": 18,
+		"trwiki": "Namrun Kalesi",
+		"lat": 37.1667361,
+		"lon": 34.602231,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q2988251",
+		"tur": "gol",
+		"ad": "Nemrut Gölü",
+		"sl": 18,
+		"trwiki": "Nemrut Gölü",
+		"lat": 38.619444444,
+		"lon": 42.222222222,
+		"yukseklik": [
+			2247
+		],
+		"alan": [
+			12.36
+		],
+		"iller": [
+			"Bitlis"
+		]
+	},
+	{
+		"qid": "Q916681",
+		"tur": "antik",
+		"ad": "Nerik",
+		"sl": 18,
+		"trwiki": "Nerik",
+		"lat": 41.207,
+		"lon": 35.42,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Samsun"
+		]
+	},
+	{
+		"qid": "Q11815679",
+		"tur": "antik",
+		"ad": "Perinthos",
+		"sl": 18,
+		"trwiki": "Perinthos",
+		"lat": 40.971013,
+		"lon": 27.952973,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tekirdağ"
+		]
+	},
+	{
+		"qid": "Q4811576",
+		"tur": "antik",
+		"ad": "Sedir Adası",
+		"sl": 18,
+		"trwiki": "Sedir Adası",
+		"lat": 36.993055555,
+		"lon": 28.206111111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q930613",
+		"tur": "antik",
+		"ad": "St. Jean Bazilikası",
+		"sl": 18,
+		"trwiki": null,
+		"lat": 37.9525,
+		"lon": 27.36777778,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1250866",
+		"tur": "antik",
+		"ad": "Şarhöyük",
+		"sl": 18,
+		"trwiki": "Şarhöyük",
+		"lat": 39.783333333,
+		"lon": 30.516666666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Eskişehir"
+		]
+	},
+	{
+		"qid": "Q2632366",
+		"tur": "antik",
+		"ad": "Şirakavan",
+		"sl": 18,
+		"trwiki": "Şirakavan",
+		"lat": 40.715707,
+		"lon": 43.721908,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Van"
+		]
+	},
+	{
+		"qid": "Q767968",
+		"tur": "antik",
+		"ad": "Tilbaşar Kalesi",
+		"sl": 18,
+		"trwiki": "Tilbaşar Kalesi",
+		"lat": 36.87416667,
+		"lon": 37.55888889,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q2666527",
+		"tur": "gol",
+		"ad": "Acıgöl",
+		"sl": 17,
+		"trwiki": "Acıgöl",
+		"lat": 37.8268,
+		"lon": 29.8878,
+		"yukseklik": [
+			837,
+			836
+		],
+		"alan": [],
+		"iller": [
+			"Afyonkarahisar",
+			"Denizli"
+		]
+	},
+	{
+		"qid": "Q3605584",
+		"tur": "antik",
+		"ad": "Adramytteion",
+		"sl": 17,
+		"trwiki": "Adramitteion",
+		"lat": 39.498888888,
+		"lon": 26.935833333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q447212",
+		"tur": "antik",
+		"ad": "Altıntepe",
+		"sl": 17,
+		"trwiki": "Altıntepe",
+		"lat": 39.69654167,
+		"lon": 39.646625,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Erzincan"
+		]
+	},
+	{
+		"qid": "Q7361597",
+		"tur": "antik",
+		"ad": "Ankara Roma Hamamı",
+		"sl": 17,
+		"trwiki": "Ankara Roma Hamamı",
+		"lat": 39.9465,
+		"lon": 32.853,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q6055664",
+		"tur": "antik",
+		"ad": "Bin Tepe Lidya Tümülüsleri",
+		"sl": 17,
+		"trwiki": "Bin Tepeler Lidya Tümülüsleri",
+		"lat": 38.576944444,
+		"lon": 27.993333333,
+		"yukseklik": [],
+		"alan": [
+			7588,
+			5183
+		],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q1366366",
+		"tur": "gol",
+		"ad": "Erçek Gölü",
+		"sl": 17,
+		"trwiki": "Erçek Gölü",
+		"lat": 38.6717,
+		"lon": 43.5783,
+		"yukseklik": [
+			1880
+		],
+		"alan": [
+			106.2
+		],
+		"iller": [
+			"Van"
+		]
+	},
+	{
+		"qid": "Q2261221",
+		"tur": "antik",
+		"ad": "Hisarlık",
+		"sl": 17,
+		"trwiki": null,
+		"lat": 39.957222222,
+		"lon": 26.238888888,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1564927",
+		"tur": "antik",
+		"ad": "HMS Irresistible (1898)",
+		"sl": 17,
+		"trwiki": "HMS Irresistible (1898)",
+		"lat": 40.0332832,
+		"lon": 26.3166428,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q611484",
+		"tur": "dag",
+		"ad": "Honaz Dağı",
+		"sl": 17,
+		"trwiki": "Honaz Dağı Millî Parkı",
+		"lat": 37.678611111,
+		"lon": 29.2845,
+		"yukseklik": [
+			2528
+		],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q2470666",
+		"tur": "kale",
+		"ad": "Kızılkule",
+		"sl": 17,
+		"trwiki": "Kızılkule",
+		"lat": 36.536444444,
+		"lon": 31.998308333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q2388359",
+		"tur": "dag",
+		"ad": "Tahtalı Dağı",
+		"sl": 17,
+		"trwiki": "Tahtalı Dağı",
+		"lat": 36.536269444,
+		"lon": 30.442188888,
+		"yukseklik": [
+			2366
+		],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q617518",
+		"tur": "antik",
+		"ad": "Apameia Kibotos",
+		"sl": 16,
+		"trwiki": "Apameia Kibotos",
+		"lat": 38.07166667,
+		"lon": 30.16555556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Afyonkarahisar"
+		]
+	},
+	{
+		"qid": "Q1091987",
+		"tur": "dag",
+		"ad": "Cilo Dağı",
+		"sl": 16,
+		"trwiki": "Cilo Dağı",
+		"lat": 37.48573,
+		"lon": 44.00416,
+		"yukseklik": [
+			4116
+		],
+		"alan": [],
+		"iller": [
+			"Hakkari"
+		]
+	},
+	{
+		"qid": "Q377863",
+		"tur": "antik",
+		"ad": "Cius",
+		"sl": 16,
+		"trwiki": "Kios",
+		"lat": 40.432469,
+		"lon": 29.15639,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q20717624",
+		"tur": "antik",
+		"ad": "Derbe",
+		"sl": 16,
+		"trwiki": "Derbe",
+		"lat": 37.348569,
+		"lon": 33.361453,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Karaman"
+		]
+	},
+	{
+		"qid": "Q4278782",
+		"tur": "dag",
+		"ad": "Küçük Ağrı Dağı",
+		"sl": 16,
+		"trwiki": "Küçükağrı Dağı",
+		"lat": 39.64827,
+		"lon": 44.41373,
+		"yukseklik": [
+			3925
+		],
+		"alan": [],
+		"iller": [
+			"Iğdır"
+		]
+	},
+	{
+		"qid": "Q1318876",
+		"tur": "antik",
+		"ad": "Pinara",
+		"sl": 16,
+		"trwiki": "Pınara",
+		"lat": 36.48915,
+		"lon": 29.25835,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q868012",
+		"tur": "gol",
+		"ad": "Sapanca Gölü",
+		"sl": 16,
+		"trwiki": "Sapanca Gölü",
+		"lat": 40.716666666,
+		"lon": 30.25,
+		"yukseklik": [],
+		"alan": [
+			14264.8
+		],
+		"iller": [
+			"Sakarya",
+			"Kocaeli"
+		]
+	},
+	{
+		"qid": "Q2211116",
+		"tur": "antik",
+		"ad": "Satala",
+		"sl": 16,
+		"trwiki": "Satala",
+		"lat": 40.02611111,
+		"lon": 39.59055556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gümüşhane"
+		]
+	},
+	{
+		"qid": "Q907974",
+		"tur": "antik",
+		"ad": "Tell Tayinat Höyüğü",
+		"sl": 16,
+		"trwiki": "Tayinat Höyüğü",
+		"lat": 36.2475,
+		"lon": 36.376388888,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q1247291",
+		"tur": "antik",
+		"ad": "Theodosius Forumu",
+		"sl": 16,
+		"trwiki": "Theodosius Forumu",
+		"lat": 41.00972222,
+		"lon": 28.96361111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q1325973",
+		"tur": "antik",
+		"ad": "Tlos",
+		"sl": 16,
+		"trwiki": "Tlos",
+		"lat": 36.55389,
+		"lon": 29.42079,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q1015617",
+		"tur": "kale",
+		"ad": "Yoros Kalesi",
+		"sl": 16,
+		"trwiki": "Yoros Kalesi",
+		"lat": 41.17861111,
+		"lon": 29.09444444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q778224",
+		"tur": "antik",
+		"ad": "Alabanda",
+		"sl": 15,
+		"trwiki": "Alabanda (antik kent)",
+		"lat": 37.591796,
+		"lon": 27.985429,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q487013",
+		"tur": "antik",
+		"ad": "Anastasios Suru",
+		"sl": 15,
+		"trwiki": "Anastasius Suru",
+		"lat": 41.2,
+		"lon": 28.333333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q6018069",
+		"tur": "dag",
+		"ad": "Artos Dağı",
+		"sl": 15,
+		"trwiki": "Artos Dağı",
+		"lat": 38.24631,
+		"lon": 43.10657,
+		"yukseklik": [
+			3554
+		],
+		"alan": [],
+		"iller": [
+			"Van"
+		]
+	},
+	{
+		"qid": "Q1058264",
+		"tur": "antik",
+		"ad": "Cendere Köprüsü",
+		"sl": 15,
+		"trwiki": "Cendere Köprüsü",
+		"lat": 37.93292,
+		"lon": 38.60849,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adıyaman"
+		]
+	},
+	{
+		"qid": "Q1559343",
+		"tur": "dag",
+		"ad": "Göllü Dağ",
+		"sl": 15,
+		"trwiki": "Göllü Dağ",
+		"lat": 38.254662,
+		"lon": 34.5446,
+		"yukseklik": [
+			2143
+		],
+		"alan": [],
+		"iller": [
+			"Niğde"
+		]
+	},
+	{
+		"qid": "Q1366229",
+		"tur": "antik",
+		"ad": "Ihlara",
+		"sl": 15,
+		"trwiki": "Ihlara, Güzelyurt",
+		"lat": 38.240833333,
+		"lon": 34.306111111,
+		"yukseklik": [
+			1276
+		],
+		"alan": [],
+		"iller": [
+			"Aksaray"
+		]
+	},
+	{
+		"qid": "Q279048",
+		"tur": "antik",
+		"ad": "İassos",
+		"sl": 15,
+		"trwiki": "İasos",
+		"lat": 37.27777778,
+		"lon": 27.58638889,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q18823111",
+		"tur": "antik",
+		"ad": "Myndos",
+		"sl": 15,
+		"trwiki": "Myndos",
+		"lat": 37.056359,
+		"lon": 27.229636,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q2478029",
+		"tur": "gol",
+		"ad": "Nazik Gölü",
+		"sl": 15,
+		"trwiki": "Nazik Gölü",
+		"lat": 38.8611,
+		"lon": 42.2934,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bitlis"
+		]
+	},
+	{
+		"qid": "Q1310950",
+		"tur": "antik",
+		"ad": "Panionion",
+		"sl": 15,
+		"trwiki": "Panionion",
+		"lat": 37.703924,
+		"lon": 27.329993,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q1411652",
+		"tur": "antik",
+		"ad": "Parion",
+		"sl": 15,
+		"trwiki": "Parion",
+		"lat": 40.420499,
+		"lon": 27.069096,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1848789",
+		"tur": "antik",
+		"ad": "Alinda",
+		"sl": 14,
+		"trwiki": "Alinda",
+		"lat": 37.558055555,
+		"lon": 27.829722222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q9148422",
+		"tur": "antik",
+		"ad": "Alişar Höyüğü",
+		"sl": 14,
+		"trwiki": "Alişar Höyüğü",
+		"lat": 39.60611111,
+		"lon": 35.26138889,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Yozgat"
+		]
+	},
+	{
+		"qid": "Q617524",
+		"tur": "antik",
+		"ad": "Apamea Myrlea",
+		"sl": 14,
+		"trwiki": "Apamea Myrlea",
+		"lat": 40.376389,
+		"lon": 28.883333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q646120",
+		"tur": "antik",
+		"ad": "Arsamosata",
+		"sl": 14,
+		"trwiki": "Arsamosata",
+		"lat": 38.6608665,
+		"lon": 39.5109175,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q194810",
+		"tur": "antik",
+		"ad": "Atarneus",
+		"sl": 14,
+		"trwiki": "Atarneus",
+		"lat": 39.093987,
+		"lon": 26.927974,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q404231",
+		"tur": "antik",
+		"ad": "Ayas",
+		"sl": 14,
+		"trwiki": null,
+		"lat": 36.769676,
+		"lon": 35.789487,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q3675845",
+		"tur": "gol",
+		"ad": "Balık Gölü",
+		"sl": 14,
+		"trwiki": "Balık Gölü",
+		"lat": 39.773888888,
+		"lon": 43.567222222,
+		"yukseklik": [
+			2250
+		],
+		"alan": [
+			34
+		],
+		"iller": [
+			"Ağrı",
+			"Iğdır"
+		]
+	},
+	{
+		"qid": "Q7878579",
+		"tur": "dag",
+		"ad": "Bozdağlar",
+		"sl": 14,
+		"trwiki": "Bozdağlar",
+		"lat": 38.35525,
+		"lon": 27.73949,
+		"yukseklik": [
+			2157
+		],
+		"alan": [],
+		"iller": [
+			"Manisa",
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1171924",
+		"tur": "antik",
+		"ad": "Daskyleion",
+		"sl": 14,
+		"trwiki": "Daskileion",
+		"lat": 40.138708,
+		"lon": 28.062536,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q1324870",
+		"tur": "antik",
+		"ad": "Elaiussa Sebaste",
+		"sl": 14,
+		"trwiki": "Elaiussa Sebaste",
+		"lat": 36.483812,
+		"lon": 34.174114,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q1462894",
+		"tur": "antik",
+		"ad": "Helenopolis",
+		"sl": 14,
+		"trwiki": "Helenopolis",
+		"lat": 40.72,
+		"lon": 29.5,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Yalova"
+		]
+	},
+	{
+		"qid": "Q22343387",
+		"tur": "antik",
+		"ad": "Ihlara Vadisi",
+		"sl": 14,
+		"trwiki": null,
+		"lat": 38.2575,
+		"lon": 34.295277777,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aksaray"
+		]
+	},
+	{
+		"qid": "Q996090",
+		"tur": "antik",
+		"ad": "Kırkgöz Kemeri",
+		"sl": 14,
+		"trwiki": "Kırkgöz Kemeri",
+		"lat": 36.34885,
+		"lon": 30.20754,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q1797436",
+		"tur": "gol",
+		"ad": "Küçükçekmece Gölü",
+		"sl": 14,
+		"trwiki": "Küçükçekmece Gölü",
+		"lat": 41.0056,
+		"lon": 28.7469,
+		"yukseklik": [
+			0
+		],
+		"alan": [
+			16
+		],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q1524213",
+		"tur": "antik",
+		"ad": "Mamure Kalesi",
+		"sl": 14,
+		"trwiki": "Mamure Kalesi",
+		"lat": 36.080833333,
+		"lon": 32.894444444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q601695",
+		"tur": "gol",
+		"ad": "Marmara Gölü",
+		"sl": 14,
+		"trwiki": "Marmara Gölü",
+		"lat": 38.6166,
+		"lon": 28.0155,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q2450228",
+		"tur": "antik",
+		"ad": "Meryem Kilisesi",
+		"sl": 14,
+		"trwiki": "Meryem Kilisesi",
+		"lat": 37.944939,
+		"lon": 27.339203,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q908494",
+		"tur": "antik",
+		"ad": "Puruşhanda",
+		"sl": 14,
+		"trwiki": "Puruşhanda",
+		"lat": 38.411389,
+		"lon": 33.835833,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q647896",
+		"tur": "antik",
+		"ad": "Sillyon",
+		"sl": 14,
+		"trwiki": "Sillyon",
+		"lat": 36.9925,
+		"lon": 30.98972222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q4809067",
+		"tur": "gol",
+		"ad": "Uluabat Gölü",
+		"sl": 14,
+		"trwiki": "Uluabat Gölü",
+		"lat": 40.1726,
+		"lon": 28.5908,
+		"yukseklik": [
+			8
+		],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q28806346",
+		"tur": "antik",
+		"ad": "Zerzevan Kalesi",
+		"sl": 14,
+		"trwiki": "Zerzevan Kalesi",
+		"lat": 37.608333333,
+		"lon": 40.499166666,
+		"yukseklik": [],
+		"alan": [
+			5.7
+		],
+		"iller": [
+			"Diyarbakır"
+		]
+	},
+	{
+		"qid": "Q404200",
+		"tur": "antik",
+		"ad": "Aigai",
+		"sl": 13,
+		"trwiki": "Aigai",
+		"lat": 38.83111111,
+		"lon": 27.18861111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q557517",
+		"tur": "antik",
+		"ad": "Ankuwa",
+		"sl": 13,
+		"trwiki": "Ankuva",
+		"lat": 40.083333,
+		"lon": 33.5,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q571082",
+		"tur": "antik",
+		"ad": "Antandros",
+		"sl": 13,
+		"trwiki": "Antandros",
+		"lat": 39.5785,
+		"lon": 26.791496,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q718048",
+		"tur": "antik",
+		"ad": "Arykanda",
+		"sl": 13,
+		"trwiki": "Arikanda",
+		"lat": 36.51388889,
+		"lon": 30.06,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q4837427",
+		"tur": "dag",
+		"ad": "Babadağ (dağ)",
+		"sl": 13,
+		"trwiki": "Babadağ (dağ)",
+		"lat": 36.53032,
+		"lon": 29.18093,
+		"yukseklik": [
+			1969
+		],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q1374176",
+		"tur": "baraj",
+		"ad": "Birecik Barajı ve Hidroelektrik Santrali",
+		"sl": 13,
+		"trwiki": "Birecik Barajı ve Hidroelektrik Santrali",
+		"lat": 37.05392,
+		"lon": 37.88986,
+		"yukseklik": [
+			366
+		],
+		"alan": [],
+		"iller": [
+			"Şanlıurfa",
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q1021881",
+		"tur": "gol",
+		"ad": "Büyükçekmece Gölü",
+		"sl": 13,
+		"trwiki": "Büyükçekmece Gölü",
+		"lat": 41.0667,
+		"lon": 28.5531,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q272699",
+		"tur": "antik",
+		"ad": "Çavuştepe",
+		"sl": 13,
+		"trwiki": "Çavuştepe Kalesi",
+		"lat": 38.35297222,
+		"lon": 43.46111111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Van"
+		]
+	},
+	{
+		"qid": "Q6920390",
+		"tur": "dag",
+		"ad": "Davraz Dağı",
+		"sl": 13,
+		"trwiki": "Davraz Dağı",
+		"lat": 37.75453,
+		"lon": 30.72685,
+		"yukseklik": [
+			2637
+		],
+		"alan": [],
+		"iller": [
+			"Isparta"
+		]
+	},
+	{
+		"qid": "Q1258822",
+		"tur": "antik",
+		"ad": "HMS Goliath",
+		"sl": 13,
+		"trwiki": "HMS Goliath (1898)",
+		"lat": 40.0332718,
+		"lon": 26.1999531,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1565048",
+		"tur": "antik",
+		"ad": "HMS Majestic (1895)",
+		"sl": 13,
+		"trwiki": "HMS Majestic (1895)",
+		"lat": 40.041666666,
+		"lon": 26.183888888,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1165641",
+		"tur": "antik",
+		"ad": "HMS Ocean",
+		"sl": 13,
+		"trwiki": "HMS Ocean (1898)",
+		"lat": 40.0165443,
+		"lon": 26.2997913,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1456648",
+		"tur": "antik",
+		"ad": "HMS Triumph",
+		"sl": 13,
+		"trwiki": "HMS Triumph (1903)",
+		"lat": 40.0333366,
+		"lon": 26.2500172,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1676200",
+		"tur": "gol",
+		"ad": "Işıklı Gölü",
+		"sl": 13,
+		"trwiki": "Işıklı Gölü",
+		"lat": 38.2316,
+		"lon": 29.9003,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Denizli"
+		]
+	},
+	{
+		"qid": "Q4810717",
+		"tur": "kale",
+		"ad": "Kadifekale",
+		"sl": 13,
+		"trwiki": "Kadifekale",
+		"lat": 38.413888888,
+		"lon": 27.145833333,
+		"yukseklik": [
+			186
+		],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1728921",
+		"tur": "antik",
+		"ad": "Karakuş Tümülüsü",
+		"sl": 13,
+		"trwiki": "Karakuş Tümülüsü",
+		"lat": 37.869388888,
+		"lon": 38.588,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adıyaman"
+		]
+	},
+	{
+		"qid": "Q1957163",
+		"tur": "antik",
+		"ad": "Kız Kalesi",
+		"sl": 13,
+		"trwiki": "Kız Kalesi (Mersin)",
+		"lat": 36.45680556,
+		"lon": 34.14805556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q1785767",
+		"tur": "kale",
+		"ad": "Koz Kalesi",
+		"sl": 13,
+		"trwiki": "Koz Kalesi",
+		"lat": 36.10388889,
+		"lon": 36.19277778,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q1779332",
+		"tur": "antik",
+		"ad": "Nysa",
+		"sl": 13,
+		"trwiki": "Nisa (antik kent)",
+		"lat": 37.90166667,
+		"lon": 28.14666667,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q752699",
+		"tur": "antik",
+		"ad": "Pitane",
+		"sl": 13,
+		"trwiki": "Pitane (Aeolis)",
+		"lat": 38.933333333,
+		"lon": 26.933333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q769197",
+		"tur": "antik",
+		"ad": "Selge",
+		"sl": 13,
+		"trwiki": "Selge",
+		"lat": 37.22923,
+		"lon": 31.127026,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q2292038",
+		"tur": "antik",
+		"ad": "Skepsis",
+		"sl": 13,
+		"trwiki": "Skepsis",
+		"lat": 39.82554,
+		"lon": 26.688003,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1361187",
+		"tur": "antik",
+		"ad": "Stratonikeia",
+		"sl": 13,
+		"trwiki": "Stratonikeia (Muğla)",
+		"lat": 37.31305556,
+		"lon": 28.06416667,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q94668",
+		"tur": "antik",
+		"ad": "Alahan Manastırı",
+		"sl": 12,
+		"trwiki": "Alahan Manastırı",
+		"lat": 36.77944444,
+		"lon": 33.36555556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q794830",
+		"tur": "antik",
+		"ad": "Aşıklı Höyük",
+		"sl": 12,
+		"trwiki": "Aşıklı Höyük",
+		"lat": 38.349,
+		"lon": 34.23,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aksaray"
+		]
+	},
+	{
+		"qid": "Q893292",
+		"tur": "gol",
+		"ad": "Boraboy Gölü",
+		"sl": 12,
+		"trwiki": "Boraboy Gölü",
+		"lat": 40.80388,
+		"lon": 36.15374,
+		"yukseklik": [
+			800
+		],
+		"alan": [],
+		"iller": [
+			"Amasya"
+		]
+	},
+	{
+		"qid": "Q2611551",
+		"tur": "baraj",
+		"ad": "Dicle Barajı ve Hidroelektrik Santrali",
+		"sl": 12,
+		"trwiki": "Dicle Barajı ve Hidroelektrik Santrali",
+		"lat": 38.23123,
+		"lon": 40.17661,
+		"yukseklik": [
+			663
+		],
+		"alan": [],
+		"iller": [
+			"Diyarbakır"
+		]
+	},
+	{
+		"qid": "Q1278759",
+		"tur": "gol",
+		"ad": "Eber Gölü",
+		"sl": 12,
+		"trwiki": "Eber Gölü",
+		"lat": 38.6432,
+		"lon": 31.1696,
+		"yukseklik": [
+			967
+		],
+		"alan": [
+			125
+		],
+		"iller": [
+			"Afyonkarahisar"
+		]
+	},
+	{
+		"qid": "Q18210713",
+		"tur": "antik",
+		"ad": "Hagios Mokios Sarnıcı",
+		"sl": 12,
+		"trwiki": "Hagios Mokios Sarnıcı",
+		"lat": 41.0103,
+		"lon": 28.9347,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q2372030",
+		"tur": "antik",
+		"ad": "Herakleia Cybistra",
+		"sl": 12,
+		"trwiki": "Herakleia Kibistra",
+		"lat": 37.505833333,
+		"lon": 34.051666666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q1420248",
+		"tur": "antik",
+		"ad": "Hoşap Kalesi",
+		"sl": 12,
+		"trwiki": "Hoşap Kalesi",
+		"lat": 38.31694444,
+		"lon": 43.80166667,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Van"
+		]
+	},
+	{
+		"qid": "Q733877",
+		"tur": "dag",
+		"ad": "Karadağ",
+		"sl": 12,
+		"trwiki": "Karadağ (Karaman)",
+		"lat": 37.3994,
+		"lon": 33.14711,
+		"yukseklik": [
+			2288
+		],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q4180162",
+		"tur": "dag",
+		"ad": "Karapınar Düzlüğü",
+		"sl": 12,
+		"trwiki": "Karapınar Düzlüğü",
+		"lat": 37.67,
+		"lon": 33.65,
+		"yukseklik": [
+			1302
+		],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q1643467",
+		"tur": "antik",
+		"ad": "Kibira",
+		"sl": 12,
+		"trwiki": "Kibira",
+		"lat": 37.1593,
+		"lon": 29.4963,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q2140586",
+		"tur": "antik",
+		"ad": "Komana Pontika",
+		"sl": 12,
+		"trwiki": "Komana Pontiki",
+		"lat": 40.377306,
+		"lon": 36.610679,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tokat"
+		]
+	},
+	{
+		"qid": "Q6587092",
+		"tur": "gol",
+		"ad": "Ladik Gölü",
+		"sl": 12,
+		"trwiki": "Ladik Gölü",
+		"lat": 40.90685,
+		"lon": 36.01331,
+		"yukseklik": [
+			950
+		],
+		"alan": [
+			8.7
+		],
+		"iller": [
+			"Samsun"
+		]
+	},
+	{
+		"qid": "Q780117",
+		"tur": "antik",
+		"ad": "Limyra",
+		"sl": 12,
+		"trwiki": "Limira",
+		"lat": 36.342806,
+		"lon": 30.1705,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q4775050",
+		"tur": "antik",
+		"ad": "Mezopotamya Antakyası",
+		"sl": 12,
+		"trwiki": "Konstantina",
+		"lat": 37.229021,
+		"lon": 39.755832,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Şanlıurfa"
+		]
+	},
+	{
+		"qid": "Q4810216",
+		"tur": "gol",
+		"ad": "Mogan Gölü",
+		"sl": 12,
+		"trwiki": "Mogan Gölü",
+		"lat": 39.76784,
+		"lon": 32.79193,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q609532",
+		"tur": "antik",
+		"ad": "Myrina",
+		"sl": 12,
+		"trwiki": "Mirina",
+		"lat": 38.84527778,
+		"lon": 26.98444444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q119771",
+		"tur": "antik",
+		"ad": "Notion",
+		"sl": 12,
+		"trwiki": "Notion (antik kent)",
+		"lat": 37.99277778,
+		"lon": 27.1975,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q186373",
+		"tur": "antik",
+		"ad": "Oinoanda",
+		"sl": 12,
+		"trwiki": "Oinoanda",
+		"lat": 36.813153,
+		"lon": 29.560692,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q2085773",
+		"tur": "antik",
+		"ad": "Philadelphia (Lidya)",
+		"sl": 12,
+		"trwiki": "Filadelfia (antik kent)",
+		"lat": 38.35,
+		"lon": 28.51666667,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q1518263",
+		"tur": "baraj",
+		"ad": "Seyhan Barajı ve Hidroelektrik Santrali",
+		"sl": 12,
+		"trwiki": "Seyhan Barajı ve Hidroelektrik Santrali",
+		"lat": 37.03934,
+		"lon": 35.33201,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q3620",
+		"tur": "antik",
+		"ad": "Şapinuva",
+		"sl": 12,
+		"trwiki": "Şapinuva",
+		"lat": 40.2550049,
+		"lon": 35.2374687,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çorum"
+		]
+	},
+	{
+		"qid": "Q3288771",
+		"tur": "antik",
+		"ad": "Theodosius Limanı",
+		"sl": 12,
+		"trwiki": "Theodosius Limanı",
+		"lat": 41.00466667,
+		"lon": 28.95222222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q962205",
+		"tur": "dag",
+		"ad": "Yamanlar Dağı",
+		"sl": 12,
+		"trwiki": "Yamanlar Dağı",
+		"lat": 38.5346,
+		"lon": 27.18697,
+		"yukseklik": [
+			1076
+		],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q26959195",
+		"tur": "antik",
+		"ad": "Yesemek Taş Ocağı ve Heykel Atölyesi",
+		"sl": 12,
+		"trwiki": "Yesemek Taşocağı ve Heykel Atölyesi",
+		"lat": 36.90444444,
+		"lon": 36.74583333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q8071903",
+		"tur": "kale",
+		"ad": "Zilkale",
+		"sl": 12,
+		"trwiki": "Zilkale",
+		"lat": 40.95925,
+		"lon": 40.96298,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Rize"
+		]
+	},
+	{
+		"qid": "Q340272",
+		"tur": "antik",
+		"ad": "Akhilleion (Troas)",
+		"sl": 11,
+		"trwiki": "Achilleion",
+		"lat": 39.91333333,
+		"lon": 26.15555556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q4702037",
+		"tur": "gol",
+		"ad": "Akyatan Gölü",
+		"sl": 11,
+		"trwiki": "Akyatan Gölü",
+		"lat": 36.6366,
+		"lon": 35.2551,
+		"yukseklik": [],
+		"alan": [
+			147
+		],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q1758695",
+		"tur": "antik",
+		"ad": "Allianoi",
+		"sl": 11,
+		"trwiki": "Allianoi",
+		"lat": 39.234846,
+		"lon": 27.305574,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q3656281",
+		"tur": "gol",
+		"ad": "Amik Gölü",
+		"sl": 11,
+		"trwiki": "Amik Gölü",
+		"lat": 36.3,
+		"lon": 36.3,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q372545",
+		"tur": "antik",
+		"ad": "Arabissus",
+		"sl": 11,
+		"trwiki": "Arabissus",
+		"lat": 38.239,
+		"lon": 36.906,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q15856901",
+		"tur": "dag",
+		"ad": "Bingöl Dağları",
+		"sl": 11,
+		"trwiki": "Bingöl Dağları",
+		"lat": 39.333,
+		"lon": 41.333,
+		"yukseklik": [
+			3250
+		],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1090270",
+		"tur": "baraj",
+		"ad": "Çatalan Barajı ve Hidroelektrik Santrali",
+		"sl": 11,
+		"trwiki": "Çatalan Barajı ve Hidroelektrik Santrali",
+		"lat": 37.1984,
+		"lon": 35.2827,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q779669",
+		"tur": "antik",
+		"ad": "Elaia (Aiolis)",
+		"sl": 11,
+		"trwiki": "Elaia (Aiolis)",
+		"lat": 38.941644,
+		"lon": 27.055256,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q165377",
+		"tur": "antik",
+		"ad": "Faustinopolis",
+		"sl": 11,
+		"trwiki": "Faustinopolis",
+		"lat": 37.65833333,
+		"lon": 34.72361111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Niğde"
+		]
+	},
+	{
+		"qid": "Q4893908",
+		"tur": "antik",
+		"ad": "Karyanda",
+		"sl": 11,
+		"trwiki": "Karyanda",
+		"lat": 37.133333,
+		"lon": 27.383333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q6596128",
+		"tur": "dag",
+		"ad": "Kösedağ",
+		"sl": 11,
+		"trwiki": "Kösedağ",
+		"lat": 39.8954171,
+		"lon": 42.643559,
+		"yukseklik": [
+			3445
+		],
+		"alan": [],
+		"iller": [
+			"Ağrı"
+		]
+	},
+	{
+		"qid": "Q157816",
+		"tur": "antik",
+		"ad": "Olba",
+		"sl": 11,
+		"trwiki": "Olba",
+		"lat": 36.581655,
+		"lon": 33.925406,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q1431866",
+		"tur": "antik",
+		"ad": "Syedra",
+		"sl": 11,
+		"trwiki": "Syedra",
+		"lat": 36.446481,
+		"lon": 32.148965,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q6011652",
+		"tur": "kale",
+		"ad": "Trabzon Kalesi",
+		"sl": 11,
+		"trwiki": "Trabzon Kalesi",
+		"lat": 41.00371,
+		"lon": 39.71978,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Trabzon"
+		]
+	},
+	{
+		"qid": "Q322910",
+		"tur": "antik",
+		"ad": "Abonuteikhos",
+		"sl": 10,
+		"trwiki": "Abonuteihos",
+		"lat": 41.976878,
+		"lon": 33.762407,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kastamonu"
+		]
+	},
+	{
+		"qid": "Q592270",
+		"tur": "kale",
+		"ad": "Altın Kapı (İstanbul)",
+		"sl": 10,
+		"trwiki": null,
+		"lat": 40.9928,
+		"lon": 28.9225,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q529237",
+		"tur": "antik",
+		"ad": "Anemurium Antik Kenti",
+		"sl": 10,
+		"trwiki": "Anemurium",
+		"lat": 36.024269,
+		"lon": 32.8026,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q704167",
+		"tur": "kale",
+		"ad": "Arsameia",
+		"sl": 10,
+		"trwiki": "Arsemia",
+		"lat": 37.94277778,
+		"lon": 38.65694444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adıyaman"
+		]
+	},
+	{
+		"qid": "Q808168",
+		"tur": "antik",
+		"ad": "Bargylia",
+		"sl": 10,
+		"trwiki": "Bargilya",
+		"lat": 37.195722,
+		"lon": 27.586569,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q256099",
+		"tur": "baraj",
+		"ad": "Borçka Barajı ve Hidroelektrik Santrali",
+		"sl": 10,
+		"trwiki": "Borçka Barajı ve Hidroelektrik Santrali",
+		"lat": 41.34959,
+		"lon": 41.68661,
+		"yukseklik": [
+			249
+		],
+		"alan": [],
+		"iller": [
+			"Artvin"
+		]
+	},
+	{
+		"qid": "Q1200190",
+		"tur": "baraj",
+		"ad": "Deriner Barajı ve Hidroelektrik Santrali",
+		"sl": 10,
+		"trwiki": "Deriner Barajı ve Hidroelektrik Santrali",
+		"lat": 41.16995,
+		"lon": 41.87027,
+		"yukseklik": [
+			1147
+		],
+		"alan": [],
+		"iller": [
+			"Artvin"
+		]
+	},
+	{
+		"qid": "Q4171154",
+		"tur": "gol",
+		"ad": "Durusu Gölü",
+		"sl": 10,
+		"trwiki": "Durugöl",
+		"lat": 41.3399,
+		"lon": 28.5711,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q1234913",
+		"tur": "antik",
+		"ad": "Elaeus",
+		"sl": 10,
+		"trwiki": "Elaeus",
+		"lat": 40.059722222,
+		"lon": 26.230555555,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q6920664",
+		"tur": "dag",
+		"ad": "Erek Dağı",
+		"sl": 10,
+		"trwiki": "Erek Dağı",
+		"lat": 38.45412,
+		"lon": 43.49522,
+		"yukseklik": [
+			3250
+		],
+		"alan": [],
+		"iller": [
+			"Van"
+		]
+	},
+	{
+		"qid": "Q1375099",
+		"tur": "antik",
+		"ad": "Euromos",
+		"sl": 10,
+		"trwiki": "Euromos",
+		"lat": 37.37416667,
+		"lon": 27.675,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q2635905",
+		"tur": "antik",
+		"ad": "Gaziura",
+		"sl": 10,
+		"trwiki": "Gaziura",
+		"lat": 40.404051,
+		"lon": 36.059111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q2260764",
+		"tur": "baraj",
+		"ad": "Hirfanlı Barajı ve Hidroelektrik Santrali",
+		"sl": 10,
+		"trwiki": "Hirfanlı Barajı ve Hidroelektrik Santrali",
+		"lat": 39.27281,
+		"lon": 33.5187,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kırşehir"
+		]
+	},
+	{
+		"qid": "Q1927376",
+		"tur": "baraj",
+		"ad": "Karkamış Barajı ve Hidroelektrik Santrali",
+		"sl": 10,
+		"trwiki": "Karkamış Barajı ve Hidroelektrik Santrali",
+		"lat": 36.87052,
+		"lon": 38.02989,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Şanlıurfa",
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q1163924",
+		"tur": "antik",
+		"ad": "Kelainai",
+		"sl": 10,
+		"trwiki": "Kelainai",
+		"lat": 38.07166667,
+		"lon": 30.16555556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Afyonkarahisar"
+		]
+	},
+	{
+		"qid": "Q1089366",
+		"tur": "baraj",
+		"ad": "Kesikköprü Barajı ve Hidroelektrik Santrali",
+		"sl": 10,
+		"trwiki": "Kesikköprü Barajı ve Hidroelektrik Santrali",
+		"lat": 39.3956,
+		"lon": 33.42092,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q1934539",
+		"tur": "baraj",
+		"ad": "Oymapınar Barajı ve Hidroelektrik Santrali",
+		"sl": 10,
+		"trwiki": "Oymapınar Barajı ve Hidroelektrik Santrali",
+		"lat": 36.90872,
+		"lon": 31.53168,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q3558595",
+		"tur": "antik",
+		"ad": "Perkote",
+		"sl": 10,
+		"trwiki": null,
+		"lat": 40.273913,
+		"lon": 26.588806,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q7256680",
+		"tur": "antik",
+		"ad": "Pteria (Kapadokya)",
+		"sl": 10,
+		"trwiki": "Pteria (Kapadokya)",
+		"lat": 39.74827,
+		"lon": 35.06565,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q362627",
+		"tur": "antik",
+		"ad": "Seleukia",
+		"sl": 10,
+		"trwiki": "Seleukia (Antalya)",
+		"lat": 36.873988,
+		"lon": 31.475921,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q1583181",
+		"tur": "antik",
+		"ad": "Sigeion",
+		"sl": 10,
+		"trwiki": "Sigeion",
+		"lat": 39.993701,
+		"lon": 26.184284,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q6111551",
+		"tur": "gol",
+		"ad": "Suğla Gölü",
+		"sl": 10,
+		"trwiki": "Suğla Gölü",
+		"lat": 37.33,
+		"lon": 32.005,
+		"yukseklik": [
+			1095
+		],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q8062008",
+		"tur": "baraj",
+		"ad": "Yusufeli Barajı ve Hidroelektrik Santrali",
+		"sl": 10,
+		"trwiki": "Yusufeli Barajı ve Hidroelektrik Santrali",
+		"lat": 40.816111111,
+		"lon": 41.644722222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Artvin"
+		]
+	},
+	{
+		"qid": "Q3177640",
+		"tur": "antik",
+		"ad": "Zeleia",
+		"sl": 10,
+		"trwiki": "Zeleia",
+		"lat": 40.203584,
+		"lon": 27.5972,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q345086",
+		"tur": "dag",
+		"ad": "Acıgöl-Nevşehir",
+		"sl": 9,
+		"trwiki": "Acıgöl-Nevşehir",
+		"lat": 38.537,
+		"lon": 34.621,
+		"yukseklik": [
+			1683
+		],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q2885384",
+		"tur": "baraj",
+		"ad": "Adnan Menderes Barajı",
+		"sl": 9,
+		"trwiki": "Adnan Menderes Barajı",
+		"lat": 37.4948,
+		"lon": 28.12865,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q1089383",
+		"tur": "baraj",
+		"ad": "Altınapa Barajı",
+		"sl": 9,
+		"trwiki": "Altınapa Barajı",
+		"lat": 37.88167,
+		"lon": 32.30483,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q447172",
+		"tur": "baraj",
+		"ad": "Altınkaya Barajı",
+		"sl": 9,
+		"trwiki": "Altınkaya Barajı ve Hidroelektrik Santrali",
+		"lat": 41.36344,
+		"lon": 35.72406,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Samsun"
+		]
+	},
+	{
+		"qid": "Q510000",
+		"tur": "antik",
+		"ad": "Andriake",
+		"sl": 9,
+		"trwiki": "Andriake",
+		"lat": 36.22961111,
+		"lon": 29.9585,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q579389",
+		"tur": "antik",
+		"ad": "Antiocheia ad Cragum",
+		"sl": 9,
+		"trwiki": "Antioheia tu Kragu",
+		"lat": 36.15726,
+		"lon": 32.41602,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q617520",
+		"tur": "antik",
+		"ad": "Apameia",
+		"sl": 9,
+		"trwiki": "Apamea (Fırat)",
+		"lat": 37.066666666,
+		"lon": 37.883611111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Şanlıurfa"
+		]
+	},
+	{
+		"qid": "Q54571",
+		"tur": "kale",
+		"ad": "Ayanis Kalesi",
+		"sl": 9,
+		"trwiki": "Ayanis Kalesi",
+		"lat": 38.70827,
+		"lon": 43.21118,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Van"
+		]
+	},
+	{
+		"qid": "Q805908",
+		"tur": "gol",
+		"ad": "Balıklıgöl",
+		"sl": 9,
+		"trwiki": "Balıklıgöl",
+		"lat": 37.14777778,
+		"lon": 38.78444444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Şanlıurfa"
+		]
+	},
+	{
+		"qid": "Q810848",
+		"tur": "baraj",
+		"ad": "Batman Barajı ve Hidroelektrik Santrali",
+		"sl": 9,
+		"trwiki": "Batman Barajı ve Hidroelektrik Santrali",
+		"lat": 38.16053,
+		"lon": 41.20252,
+		"yukseklik": [
+			621
+		],
+		"alan": [],
+		"iller": [
+			"Diyarbakır"
+		]
+	},
+	{
+		"qid": "Q1090561",
+		"tur": "baraj",
+		"ad": "Bayramiç Barajı",
+		"sl": 9,
+		"trwiki": "Bayramiç Barajı",
+		"lat": 39.82274,
+		"lon": 26.66722,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q6094056",
+		"tur": "antik",
+		"ad": "Bisanthe",
+		"sl": 9,
+		"trwiki": "Bisanthe",
+		"lat": 40.965959,
+		"lon": 27.518727,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tekirdağ"
+		]
+	},
+	{
+		"qid": "Q2260172",
+		"tur": "baraj",
+		"ad": "Buldan Barajı",
+		"sl": 9,
+		"trwiki": "Buldan Barajı",
+		"lat": 38.15681,
+		"lon": 28.84386,
+		"yukseklik": [
+			493
+		],
+		"alan": [],
+		"iller": [
+			"Denizli"
+		]
+	},
+	{
+		"qid": "Q1093331",
+		"tur": "antik",
+		"ad": "Citharizon",
+		"sl": 9,
+		"trwiki": "Citharizon",
+		"lat": 38.874,
+		"lon": 40.642,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1089508",
+		"tur": "baraj",
+		"ad": "Demirköprü Barajı",
+		"sl": 9,
+		"trwiki": "Demirköprü Barajı ve Hidroelektrik Santrali",
+		"lat": 38.61663,
+		"lon": 28.31172,
+		"yukseklik": [
+			237
+		],
+		"alan": [],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q738309",
+		"tur": "baraj",
+		"ad": "Derbent Barajı ve Hidroelektrik Santrali",
+		"sl": 9,
+		"trwiki": "Derbent Barajı ve Hidroelektrik Santrali",
+		"lat": 41.4613,
+		"lon": 35.84206,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Samsun"
+		]
+	},
+	{
+		"qid": "Q4810695",
+		"tur": "gol",
+		"ad": "Eymir Gölü",
+		"sl": 9,
+		"trwiki": "Eymir Gölü",
+		"lat": 39.82394,
+		"lon": 32.82442,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q677072",
+		"tur": "baraj",
+		"ad": "Gökçekaya Barajı ve Hidroelektrik Santrali",
+		"sl": 9,
+		"trwiki": "Gökçekaya Barajı ve Hidroelektrik Santrali",
+		"lat": 40.03315,
+		"lon": 31.01599,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Eskişehir"
+		]
+	},
+	{
+		"qid": "Q1588084",
+		"tur": "baraj",
+		"ad": "Hasan Uğurlu Barajı ve Hidroelektrik Santrali",
+		"sl": 9,
+		"trwiki": "Hasan Uğurlu Barajı ve Hidroelektrik Santrali",
+		"lat": 40.93615,
+		"lon": 36.64638,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Samsun"
+		]
+	},
+	{
+		"qid": "Q3515347",
+		"tur": "antik",
+		"ad": "Hrisopolis",
+		"sl": 9,
+		"trwiki": "Hrisopolis",
+		"lat": 41.02638889,
+		"lon": 29.01777778,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q1091457",
+		"tur": "baraj",
+		"ad": "Karacaören-1 Barajı ve Hidroelektrik Santrali",
+		"sl": 9,
+		"trwiki": "Karacaören-1 Barajı ve Hidroelektrik Santrali",
+		"lat": 37.37001,
+		"lon": 30.82912,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q5050393",
+		"tur": "kale",
+		"ad": "Kars Kalesi",
+		"sl": 9,
+		"trwiki": "Kars Kalesi",
+		"lat": 40.613611111,
+		"lon": 43.089722222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kars"
+		]
+	},
+	{
+		"qid": "Q6056994",
+		"tur": "dag",
+		"ad": "Kayış Dağı",
+		"sl": 9,
+		"trwiki": "Kayış Dağı",
+		"lat": 40.9711,
+		"lon": 29.1642,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q674535",
+		"tur": "baraj",
+		"ad": "Kılıçkaya Barajı ve Hidroelektrik Santrali",
+		"sl": 9,
+		"trwiki": "Kılıçkaya Barajı ve Hidroelektrik Santrali",
+		"lat": 40.24205,
+		"lon": 38.18708,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sivas"
+		]
+	},
+	{
+		"qid": "Q2506536",
+		"tur": "baraj",
+		"ad": "Kralkızı Barajı ve Hidroelektrik Santrali",
+		"sl": 9,
+		"trwiki": "Kralkızı Barajı ve Hidroelektrik Santrali",
+		"lat": 38.34897,
+		"lon": 40.02138,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Diyarbakır"
+		]
+	},
+	{
+		"qid": "Q4175805",
+		"tur": "dag",
+		"ad": "Kula Tepeleri",
+		"sl": 9,
+		"trwiki": "Kula Tepeleri",
+		"lat": 38.57621,
+		"lon": 28.54855,
+		"yukseklik": [
+			750
+		],
+		"alan": [],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q628719",
+		"tur": "antik",
+		"ad": "Larissa",
+		"sl": 9,
+		"trwiki": "Larissa (Aiolis)",
+		"lat": 38.689068,
+		"lon": 27.033411,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q3269712",
+		"tur": "antik",
+		"ad": "Lyrnessos",
+		"sl": 9,
+		"trwiki": "Lyrnessos",
+		"lat": 39.508231,
+		"lon": 27.082027,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q1425353",
+		"tur": "antik",
+		"ad": "Mallus",
+		"sl": 9,
+		"trwiki": "Mallus",
+		"lat": 36.757453,
+		"lon": 35.486763,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q15119905",
+		"tur": "antik",
+		"ad": "Mastaura",
+		"sl": 9,
+		"trwiki": "Mastaura",
+		"lat": 37.956332,
+		"lon": 28.341756,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q1497156",
+		"tur": "antik",
+		"ad": "Metropolis",
+		"sl": 9,
+		"trwiki": "Metropolis (antik kent)",
+		"lat": 38.125,
+		"lon": 27.3225,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1293474",
+		"tur": "antik",
+		"ad": "Pepuza",
+		"sl": 9,
+		"trwiki": "Pepuza",
+		"lat": 38.40805556,
+		"lon": 29.46138889,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Uşak"
+		]
+	},
+	{
+		"qid": "Q1089647",
+		"tur": "baraj",
+		"ad": "Porsuk Barajı",
+		"sl": 9,
+		"trwiki": "Porsuk Barajı",
+		"lat": 39.63537,
+		"lon": 30.27925,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Eskişehir"
+		]
+	},
+	{
+		"qid": "Q2225224",
+		"tur": "kale",
+		"ad": "Savranda Kalesi",
+		"sl": 9,
+		"trwiki": "Savranda Kalesi",
+		"lat": 37.148888888,
+		"lon": 36.459166666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Osmaniye"
+		]
+	},
+	{
+		"qid": "Q6923703",
+		"tur": "dag",
+		"ad": "Sis Dağı",
+		"sl": 9,
+		"trwiki": "Sis Dağı",
+		"lat": 40.8843506,
+		"lon": 39.1012645,
+		"yukseklik": [
+			2182
+		],
+		"alan": [],
+		"iller": [
+			"Giresun"
+		]
+	},
+	{
+		"qid": "Q11951926",
+		"tur": "antik",
+		"ad": "Tieion",
+		"sl": 9,
+		"trwiki": "Tieion",
+		"lat": 41.561257,
+		"lon": 32.023112,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q1434038",
+		"tur": "dag",
+		"ad": "Uludoruk",
+		"sl": 9,
+		"trwiki": "Uludoruk Buzulu",
+		"lat": 37.485662,
+		"lon": 44.004525,
+		"yukseklik": [
+			4135
+		],
+		"alan": [
+			8
+		],
+		"iller": []
+	},
+	{
+		"qid": "Q1432697",
+		"tur": "kale",
+		"ad": "Yılankale",
+		"sl": 9,
+		"trwiki": "Yılankale",
+		"lat": 37.01444444,
+		"lon": 35.74777778,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q1090380",
+		"tur": "baraj",
+		"ad": "Adıgüzel Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Adıgüzel Barajı ve Hidroelektrik Santrali",
+		"lat": 38.15901,
+		"lon": 29.20588,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Denizli"
+		]
+	},
+	{
+		"qid": "Q14800358",
+		"tur": "antik",
+		"ad": "Ainos",
+		"sl": 8,
+		"trwiki": "Ainos",
+		"lat": 40.725138,
+		"lon": 26.084782,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Edirne"
+		]
+	},
+	{
+		"qid": "Q1089548",
+		"tur": "baraj",
+		"ad": "Almus Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Almus Barajı ve Hidroelektrik Santrali",
+		"lat": 40.40797,
+		"lon": 36.90347,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tokat"
+		]
+	},
+	{
+		"qid": "Q117386",
+		"tur": "antik",
+		"ad": "Amos",
+		"sl": 8,
+		"trwiki": "Amos",
+		"lat": 36.75755556,
+		"lon": 28.26889444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q482135",
+		"tur": "antik",
+		"ad": "Amyzon",
+		"sl": 8,
+		"trwiki": "Amyzon",
+		"lat": 37.6087,
+		"lon": 27.711,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q619312",
+		"tur": "antik",
+		"ad": "Apollonia Ad Rhyndacum",
+		"sl": 8,
+		"trwiki": "Apollonia Ad Rhyndacum",
+		"lat": 40.180504,
+		"lon": 28.677067,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q20470564",
+		"tur": "gol",
+		"ad": "Arin Gölü",
+		"sl": 8,
+		"trwiki": "Arin Gölü",
+		"lat": 38.812,
+		"lon": 42.9892,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bitlis"
+		]
+	},
+	{
+		"qid": "Q1090378",
+		"tur": "baraj",
+		"ad": "Aslantaş Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Aslantaş Barajı ve Hidroelektrik Santrali",
+		"lat": 37.27288,
+		"lon": 36.27096,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Osmaniye"
+		]
+	},
+	{
+		"qid": "Q4810504",
+		"tur": "antik",
+		"ad": "Astakos",
+		"sl": 8,
+		"trwiki": "Astakos",
+		"lat": 40.714558,
+		"lon": 29.928794,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kocaeli"
+		]
+	},
+	{
+		"qid": "Q1089637",
+		"tur": "baraj",
+		"ad": "Atikhisar Barajı",
+		"sl": 8,
+		"trwiki": "Atikhisar Barajı",
+		"lat": 40.1243,
+		"lon": 26.52306,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q11936592",
+		"tur": "dag",
+		"ad": "Aydın Dağları",
+		"sl": 8,
+		"trwiki": "Aydın Dağları",
+		"lat": 38.02944444,
+		"lon": 28.0425,
+		"yukseklik": [
+			1828,
+			1031
+		],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q4817974",
+		"tur": "dag",
+		"ad": "Aydos Tepesi",
+		"sl": 8,
+		"trwiki": "Aydos Tepesi",
+		"lat": 40.93166667,
+		"lon": 29.25472222,
+		"yukseklik": [
+			537
+		],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q820828",
+		"tur": "baraj",
+		"ad": "Berke Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Berke Barajı ve Hidroelektrik Santrali",
+		"lat": 37.37291,
+		"lon": 36.46135,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kahramanmaraş"
+		]
+	},
+	{
+		"qid": "Q1090310",
+		"tur": "baraj",
+		"ad": "Beyler Barajı",
+		"sl": 8,
+		"trwiki": "Beyler Barajı",
+		"lat": 41.67736,
+		"lon": 33.79085,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kastamonu"
+		]
+	},
+	{
+		"qid": "Q30636395",
+		"tur": "gol",
+		"ad": "Bolluk Gölü",
+		"sl": 8,
+		"trwiki": "Bolluk Gölü",
+		"lat": 38.5217,
+		"lon": 32.9269,
+		"yukseklik": [
+			940
+		],
+		"alan": [
+			11.5
+		],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q20517059",
+		"tur": "dag",
+		"ad": "Büyük Ağrı Dağı",
+		"sl": 8,
+		"trwiki": null,
+		"lat": 39.702761111,
+		"lon": 44.300380555,
+		"yukseklik": [
+			5165
+		],
+		"alan": [],
+		"iller": [
+			"Iğdır"
+		]
+	},
+	{
+		"qid": "Q1054607",
+		"tur": "antik",
+		"ad": "Ceramus",
+		"sl": 8,
+		"trwiki": "Ceramus",
+		"lat": 37.041038,
+		"lon": 27.961103,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q1090368",
+		"tur": "baraj",
+		"ad": "Çamlıdere Barajı",
+		"sl": 8,
+		"trwiki": "Çamlıdere Barajı",
+		"lat": 40.38811,
+		"lon": 32.38213,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q12054159",
+		"tur": "kale",
+		"ad": "Çandır Kalesi",
+		"sl": 8,
+		"trwiki": "Çandır Kalesi",
+		"lat": 37.0193979,
+		"lon": 34.6149155,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q272701",
+		"tur": "gol",
+		"ad": "Çavuşçu Gölü",
+		"sl": 8,
+		"trwiki": "Çavuşçu Gölü",
+		"lat": 38.3458,
+		"lon": 31.8768,
+		"yukseklik": [
+			1026
+		],
+		"alan": [
+			27
+		],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q3078440",
+		"tur": "kale",
+		"ad": "Darb-ı Sak Kalesi",
+		"sl": 8,
+		"trwiki": "Darb-ı Sak Kalesi",
+		"lat": 36.532,
+		"lon": 36.3655,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q4161647",
+		"tur": "baraj",
+		"ad": "Dim Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Dim Barajı ve Hidroelektrik Santrali",
+		"lat": 36.55122,
+		"lon": 32.14035,
+		"yukseklik": [
+			147
+		],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q20470414",
+		"tur": "gol",
+		"ad": "Düden Gölü",
+		"sl": 8,
+		"trwiki": "Düden Gölü",
+		"lat": 39.0866,
+		"lon": 33.146,
+		"yukseklik": [
+			950
+		],
+		"alan": [
+			8
+		],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q1090594",
+		"tur": "baraj",
+		"ad": "Gelingüllü Barajı",
+		"sl": 8,
+		"trwiki": "Gelingüllü Barajı",
+		"lat": 39.60948,
+		"lon": 35.04353,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Yozgat"
+		]
+	},
+	{
+		"qid": "Q1513790",
+		"tur": "antik",
+		"ad": "Germa",
+		"sl": 8,
+		"trwiki": "Germia",
+		"lat": 39.3333,
+		"lon": 31.8333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Eskişehir"
+		]
+	},
+	{
+		"qid": "Q1090408",
+		"tur": "baraj",
+		"ad": "Gönen Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Gönen Barajı ve Hidroelektrik Santrali",
+		"lat": 39.96984,
+		"lon": 27.44474,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q5637609",
+		"tur": "antik",
+		"ad": "Hadas",
+		"sl": 8,
+		"trwiki": null,
+		"lat": 37.707,
+		"lon": 37.46,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q441686",
+		"tur": "antik",
+		"ad": "Hieria",
+		"sl": 8,
+		"trwiki": "Hieria",
+		"lat": 40.973,
+		"lon": 29.0435,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q16665138",
+		"tur": "dag",
+		"ad": "Işıklar Dağı",
+		"sl": 8,
+		"trwiki": "Işıklar Dağı",
+		"lat": 40.83967,
+		"lon": 27.31832,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tekirdağ"
+		]
+	},
+	{
+		"qid": "Q17621054",
+		"tur": "antik",
+		"ad": "Kadıkalesi",
+		"sl": 8,
+		"trwiki": "Kadıkalesi",
+		"lat": 37.79147,
+		"lon": 27.2703,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q6352143",
+		"tur": "kale",
+		"ad": "Kalepark",
+		"sl": 8,
+		"trwiki": "Kalepark",
+		"lat": 41.0075989,
+		"lon": 39.7344513,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Trabzon"
+		]
+	},
+	{
+		"qid": "Q1090372",
+		"tur": "baraj",
+		"ad": "Karacaören-2 Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Karacaören-2 Barajı ve Hidroelektrik Santrali",
+		"lat": 37.30672,
+		"lon": 30.80888,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q1089626",
+		"tur": "baraj",
+		"ad": "Kartalkaya Barajı",
+		"sl": 8,
+		"trwiki": "Kartalkaya Barajı",
+		"lat": 37.46892,
+		"lon": 37.23956,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kahramanmaraş"
+		]
+	},
+	{
+		"qid": "Q948243",
+		"tur": "antik",
+		"ad": "Kastabala",
+		"sl": 8,
+		"trwiki": "Kastabala",
+		"lat": 37.180698,
+		"lon": 36.188793,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Osmaniye"
+		]
+	},
+	{
+		"qid": "Q3566306",
+		"tur": "antik",
+		"ad": "Kebrene",
+		"sl": 8,
+		"trwiki": "Kebrini",
+		"lat": 39.744167,
+		"lon": 26.566389,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q974488",
+		"tur": "baraj",
+		"ad": "Kestel Barajı",
+		"sl": 8,
+		"trwiki": "Kestel Barajı",
+		"lat": 39.13215,
+		"lon": 27.19077,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q2885200",
+		"tur": "baraj",
+		"ad": "Kılavuzlu Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Kılavuzlu Barajı ve Hidroelektrik Santrali",
+		"lat": 37.62595,
+		"lon": 36.80302,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kahramanmaraş"
+		]
+	},
+	{
+		"qid": "Q6058053",
+		"tur": "kale",
+		"ad": "Kilitbahir Kalesi",
+		"sl": 8,
+		"trwiki": "Kilitbahir Kalesi",
+		"lat": 40.147656,
+		"lon": 26.379565,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1091833",
+		"tur": "baraj",
+		"ad": "Kirazdere Barajı",
+		"sl": 8,
+		"trwiki": "Kirazdere Barajı",
+		"lat": 40.6742,
+		"lon": 29.96943,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kocaeli"
+		]
+	},
+	{
+		"qid": "Q1090281",
+		"tur": "baraj",
+		"ad": "Kozan Barajı",
+		"sl": 8,
+		"trwiki": "Kozan Barajı",
+		"lat": 37.51849,
+		"lon": 35.83145,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q2003442",
+		"tur": "antik",
+		"ad": "Laodicea Combusta",
+		"sl": 8,
+		"trwiki": "Laodicea Combusta",
+		"lat": 38.192186,
+		"lon": 32.374024,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q1771677",
+		"tur": "dag",
+		"ad": "Madran Dağı",
+		"sl": 8,
+		"trwiki": "Madran Dağı",
+		"lat": 37.646111111,
+		"lon": 28.242777777,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q6728889",
+		"tur": "antik",
+		"ad": "Madyto",
+		"sl": 8,
+		"trwiki": "Madytus",
+		"lat": 40.186504,
+		"lon": 26.357002,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q2260223",
+		"tur": "baraj",
+		"ad": "Mamasın Barajı",
+		"sl": 8,
+		"trwiki": "Mamasın Barajı",
+		"lat": 38.40209,
+		"lon": 34.13211,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aksaray"
+		]
+	},
+	{
+		"qid": "Q1569719",
+		"tur": "baraj",
+		"ad": "Manavgat Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Manavgat Barajı ve Hidroelektrik Santrali",
+		"lat": 36.83473,
+		"lon": 31.51809,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q3303460",
+		"tur": "antik",
+		"ad": "Maşat Höyük",
+		"sl": 8,
+		"trwiki": "Maşat Höyük",
+		"lat": 40.14833333,
+		"lon": 35.76222222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tokat"
+		]
+	},
+	{
+		"qid": "Q30621465",
+		"tur": "dag",
+		"ad": "Medetsiz Dağı",
+		"sl": 8,
+		"trwiki": "Medetsiz Dağı",
+		"lat": 37.393128,
+		"lon": 34.630873,
+		"yukseklik": [
+			3524
+		],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q1548059",
+		"tur": "baraj",
+		"ad": "Menzelet Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Menzelet Barajı ve Hidroelektrik Santrali",
+		"lat": 37.67692,
+		"lon": 36.85041,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kahramanmaraş"
+		]
+	},
+	{
+		"qid": "Q649261",
+		"tur": "dag",
+		"ad": "Murat Dağı",
+		"sl": 8,
+		"trwiki": "Murat Dağı",
+		"lat": 38.93303,
+		"lon": 29.70973,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kütahya"
+		]
+	},
+	{
+		"qid": "Q2885244",
+		"tur": "baraj",
+		"ad": "Muratlı Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Muratlı Barajı ve Hidroelektrik Santrali",
+		"lat": 41.46651,
+		"lon": 41.71404,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Artvin"
+		]
+	},
+	{
+		"qid": "Q20988477",
+		"tur": "gol",
+		"ad": "Narlıgöl",
+		"sl": 8,
+		"trwiki": "Narlıgöl",
+		"lat": 38.34049,
+		"lon": 34.45672,
+		"yukseklik": [
+			1363
+		],
+		"alan": [],
+		"iller": [
+			"Niğde"
+		]
+	},
+	{
+		"qid": "Q307943",
+		"tur": "baraj",
+		"ad": "Özlüce Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Özlüce Barajı ve Hidroelektrik Santrali",
+		"lat": 39.13011,
+		"lon": 40.08808,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bingöl",
+			"Elazığ"
+		]
+	},
+	{
+		"qid": "Q2052134",
+		"tur": "kale",
+		"ad": "Parehi Manastırı",
+		"sl": 8,
+		"trwiki": "Parehi Manastırı",
+		"lat": 41.25194444,
+		"lon": 41.99,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Artvin"
+		]
+	},
+	{
+		"qid": "Q1040082",
+		"tur": "antik",
+		"ad": "Sarissa",
+		"sl": 8,
+		"trwiki": "Sarissa",
+		"lat": 39.30833333,
+		"lon": 36.90972222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sivas"
+		]
+	},
+	{
+		"qid": "Q1091806",
+		"tur": "baraj",
+		"ad": "Seferihisar Barajı",
+		"sl": 8,
+		"trwiki": "Seferihisar Barajı",
+		"lat": 38.21565,
+		"lon": 26.87756,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q6048583",
+		"tur": "gol",
+		"ad": "Seyfe Gölü",
+		"sl": 8,
+		"trwiki": "Seyfe Gölü",
+		"lat": 39.2152,
+		"lon": 34.39,
+		"yukseklik": [
+			1080
+		],
+		"alan": [],
+		"iller": [
+			"Kırşehir"
+		]
+	},
+	{
+		"qid": "Q206262",
+		"tur": "kale",
+		"ad": "Silifke Kalesi",
+		"sl": 8,
+		"trwiki": "Silifke Kalesi",
+		"lat": 36.37666667,
+		"lon": 33.91555556,
+		"yukseklik": [
+			160
+		],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q2885305",
+		"tur": "baraj",
+		"ad": "Suat Uğurlu Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Suat Uğurlu Barajı ve Hidroelektrik Santrali",
+		"lat": 41.07469,
+		"lon": 36.67102,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Samsun"
+		]
+	},
+	{
+		"qid": "Q379180",
+		"tur": "baraj",
+		"ad": "Tahtalı Barajı",
+		"sl": 8,
+		"trwiki": "Tahtalı Barajı",
+		"lat": 38.08857,
+		"lon": 27.04173,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q2723626",
+		"tur": "antik",
+		"ad": "Tebai",
+		"sl": 8,
+		"trwiki": "Thebai (Kilikya)",
+		"lat": 39.597431,
+		"lon": 27.020171,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q49313576",
+		"tur": "gol",
+		"ad": "Tortum Gölü",
+		"sl": 8,
+		"trwiki": "Tortum Gölü",
+		"lat": 40.6248,
+		"lon": 41.6356,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Erzurum"
+		]
+	},
+	{
+		"qid": "Q462630",
+		"tur": "antik",
+		"ad": "Tralleis",
+		"sl": 8,
+		"trwiki": "Tralleis",
+		"lat": 37.859993,
+		"lon": 27.835472,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q117411",
+		"tur": "antik",
+		"ad": "Tripolis ad Meaendrum",
+		"sl": 8,
+		"trwiki": "Tripolis ad Meaendrum",
+		"lat": 38.0388981,
+		"lon": 28.9510345,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Denizli"
+		]
+	},
+	{
+		"qid": "Q6045094",
+		"tur": "baraj",
+		"ad": "Yamula Barajı ve Hidroelektrik Santrali",
+		"sl": 8,
+		"trwiki": "Yamula Barajı ve Hidroelektrik Santrali",
+		"lat": 38.904,
+		"lon": 35.271,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q2885336",
+		"tur": "baraj",
+		"ad": "Yapraklı Barajı",
+		"sl": 8,
+		"trwiki": "Yapraklı Barajı",
+		"lat": 37.02934,
+		"lon": 29.45306,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q20475022",
+		"tur": "gol",
+		"ad": "Yarışlı Gölü",
+		"sl": 8,
+		"trwiki": "Yarışlı Gölü",
+		"lat": 37.5665,
+		"lon": 29.9661,
+		"yukseklik": [
+			854
+		],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q4779720",
+		"tur": "antik",
+		"ad": "Afrodisias (Tisan)",
+		"sl": 7,
+		"trwiki": "Afrodisias (Tisan)",
+		"lat": 36.1575,
+		"lon": 33.690555555,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q2717842",
+		"tur": "antik",
+		"ad": "Agora (Trakya)",
+		"sl": 7,
+		"trwiki": "Agora (Trakya)",
+		"lat": 40.513545,
+		"lon": 26.786353,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1090374",
+		"tur": "baraj",
+		"ad": "Akgedik Barajı",
+		"sl": 7,
+		"trwiki": "Akgedik Barajı",
+		"lat": 37.3296,
+		"lon": 27.82028,
+		"yukseklik": [
+			152
+		],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q420151",
+		"tur": "baraj",
+		"ad": "Akköprü Barajı ve Hidroelektrik Santrali",
+		"sl": 7,
+		"trwiki": "Akköprü Barajı ve Hidroelektrik Santrali",
+		"lat": 36.89782,
+		"lon": 28.90225,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q19753378",
+		"tur": "antik",
+		"ad": "Akmonya",
+		"sl": 7,
+		"trwiki": "Akmonya",
+		"lat": 38.658994,
+		"lon": 29.7714539,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Uşak"
+		]
+	},
+	{
+		"qid": "Q4701865",
+		"tur": "dag",
+		"ad": "Aktaş Dağı",
+		"sl": 7,
+		"trwiki": null,
+		"lat": 39.1,
+		"lon": 44.2,
+		"yukseklik": [
+			2715
+		],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1090529",
+		"tur": "baraj",
+		"ad": "Akyar Barajı",
+		"sl": 7,
+		"trwiki": "Akyar Barajı",
+		"lat": 40.58543,
+		"lon": 32.57966,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q2636923",
+		"tur": "kale",
+		"ad": "Alara Kasrı",
+		"sl": 7,
+		"trwiki": "Alara Kalesi",
+		"lat": 36.69861111,
+		"lon": 31.72944444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q1089550",
+		"tur": "baraj",
+		"ad": "Altınyazı Barajı",
+		"sl": 7,
+		"trwiki": "Altınyazı Barajı",
+		"lat": 41.07954,
+		"lon": 26.5872,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Edirne"
+		]
+	},
+	{
+		"qid": "Q2853228",
+		"tur": "antik",
+		"ad": "Antigonia",
+		"sl": 7,
+		"trwiki": "Antigonia (Suriye)",
+		"lat": 36.26335,
+		"lon": 36.230077,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q4775098",
+		"tur": "antik",
+		"ad": "Antiphellos",
+		"sl": 7,
+		"trwiki": "Antifellos",
+		"lat": 36.2,
+		"lon": 29.638333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q17173859",
+		"tur": "antik",
+		"ad": "Ariarathia",
+		"sl": 7,
+		"trwiki": "Ariarathia",
+		"lat": 38.722,
+		"lon": 36.391,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q656904",
+		"tur": "antik",
+		"ad": "Ariassos",
+		"sl": 7,
+		"trwiki": "Ariassos",
+		"lat": 37.181111111,
+		"lon": 30.4725,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q1091798",
+		"tur": "baraj",
+		"ad": "Ataköy Barajı ve Hidroelektrik Santrali",
+		"sl": 7,
+		"trwiki": "Ataköy Barajı ve Hidroelektrik Santrali",
+		"lat": 40.42489,
+		"lon": 36.88134,
+		"yukseklik": [
+			801
+		],
+		"alan": [],
+		"iller": [
+			"Tokat"
+		]
+	},
+	{
+		"qid": "Q1014724",
+		"tur": "kale",
+		"ad": "Aydos Kalesi",
+		"sl": 7,
+		"trwiki": "Aydos Kalesi",
+		"lat": 40.950056076,
+		"lon": 29.258625349,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q1090294",
+		"tur": "baraj",
+		"ad": "Bakacak Barajı",
+		"sl": 7,
+		"trwiki": "Bakacak Barajı",
+		"lat": 40.183517,
+		"lon": 27.022154,
+		"yukseklik": [
+			88
+		],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1090504",
+		"tur": "baraj",
+		"ad": "Balçova Barajı",
+		"sl": 7,
+		"trwiki": "Balçova Barajı",
+		"lat": 38.37281,
+		"lon": 27.03854,
+		"yukseklik": [
+			123
+		],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1089459",
+		"tur": "baraj",
+		"ad": "Bayındır Barajı",
+		"sl": 7,
+		"trwiki": "Bayındır Barajı",
+		"lat": 39.91497,
+		"lon": 32.99225,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q1090431",
+		"tur": "baraj",
+		"ad": "Berdan Barajı ve Hidroelektrik Santrali",
+		"sl": 7,
+		"trwiki": "Berdan Barajı ve Hidroelektrik Santrali",
+		"lat": 36.966016666,
+		"lon": 34.895261111,
+		"yukseklik": [
+			53
+		],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q820689",
+		"tur": "antik",
+		"ad": "Berissa",
+		"sl": 7,
+		"trwiki": "Berissa",
+		"lat": 40.0836,
+		"lon": 36.5072,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tokat"
+		]
+	},
+	{
+		"qid": "Q6027083",
+		"tur": "dag",
+		"ad": "Bilican Dağları",
+		"sl": 7,
+		"trwiki": "Bilican Dağları",
+		"lat": 38.966666666,
+		"lon": 42.166666666,
+		"yukseklik": [
+			2322
+		],
+		"alan": [],
+		"iller": [
+			"Muş"
+		]
+	},
+	{
+		"qid": "Q263669",
+		"tur": "antik",
+		"ad": "Blaundos",
+		"sl": 7,
+		"trwiki": "Blaundos",
+		"lat": 38.35916667,
+		"lon": 29.20944444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Uşak"
+		]
+	},
+	{
+		"qid": "Q979619",
+		"tur": "baraj",
+		"ad": "Büyükorhan Barajı",
+		"sl": 7,
+		"trwiki": "Büyükorhan Barajı",
+		"lat": 39.79392,
+		"lon": 28.91894,
+		"yukseklik": [
+			685
+		],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q6816371",
+		"tur": "antik",
+		"ad": "Cedrae",
+		"sl": 7,
+		"trwiki": "Cedrae",
+		"lat": 36.99154,
+		"lon": 28.205886,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q1090346",
+		"tur": "baraj",
+		"ad": "Çamlıgöze Barajı ve Hidroelektrik Santrali",
+		"sl": 7,
+		"trwiki": "Çamlıgöze Barajı ve Hidroelektrik Santrali",
+		"lat": 40.22902,
+		"lon": 38.07614,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sivas"
+		]
+	},
+	{
+		"qid": "Q1091496",
+		"tur": "baraj",
+		"ad": "Çatören Barajı",
+		"sl": 7,
+		"trwiki": "Çatören Barajı",
+		"lat": 39.3246,
+		"lon": 30.57815,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Eskişehir"
+		]
+	},
+	{
+		"qid": "Q1090556",
+		"tur": "baraj",
+		"ad": "Çavdarhisar Barajı",
+		"sl": 7,
+		"trwiki": "Çavdarhisar Barajı",
+		"lat": 39.176,
+		"lon": 29.58361,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kütahya"
+		]
+	},
+	{
+		"qid": "Q598946",
+		"tur": "baraj",
+		"ad": "Çaygören Barajı",
+		"sl": 7,
+		"trwiki": "Çaygören Barajı",
+		"lat": 39.27226,
+		"lon": 28.2176,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q1089296",
+		"tur": "baraj",
+		"ad": "Çubuk-1 Barajı",
+		"sl": 7,
+		"trwiki": "Çubuk-1 Barajı",
+		"lat": 40.00322,
+		"lon": 32.93058,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q2885387",
+		"tur": "baraj",
+		"ad": "Çubuk-2 Barajı",
+		"sl": 7,
+		"trwiki": "Çubuk-2 Barajı",
+		"lat": 40.2881,
+		"lon": 33.0204,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q1089262",
+		"tur": "baraj",
+		"ad": "Damsa Barajı",
+		"sl": 7,
+		"trwiki": "Damsa Barajı",
+		"lat": 38.55381,
+		"lon": 34.9217,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Nevşehir"
+		]
+	},
+	{
+		"qid": "Q1090606",
+		"tur": "baraj",
+		"ad": "Demirtaş Barajı",
+		"sl": 7,
+		"trwiki": "Demirtaş Barajı",
+		"lat": 40.28787,
+		"lon": 29.11372,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q1090323",
+		"tur": "baraj",
+		"ad": "Doğancı-1 Barajı",
+		"sl": 7,
+		"trwiki": "Doğancı-1 Barajı",
+		"lat": 40.11389,
+		"lon": 28.96308,
+		"yukseklik": [
+			323
+		],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q928318",
+		"tur": "antik",
+		"ad": "Drizipara",
+		"sl": 7,
+		"trwiki": "Drizipara",
+		"lat": 41.3082,
+		"lon": 27.607128,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tekirdağ"
+		]
+	},
+	{
+		"qid": "Q1090299",
+		"tur": "baraj",
+		"ad": "Düzağaç Akdeğirmen Barajı",
+		"sl": 7,
+		"trwiki": "Düzağaç Akdeğirmen Barajı",
+		"lat": 38.81823,
+		"lon": 30.21514,
+		"yukseklik": [
+			1098
+		],
+		"alan": [],
+		"iller": [
+			"Afyonkarahisar"
+		]
+	},
+	{
+		"qid": "Q1090589",
+		"tur": "baraj",
+		"ad": "Eğrekkaya Barajı",
+		"sl": 7,
+		"trwiki": "Eğrekkaya Barajı",
+		"lat": 40.49491,
+		"lon": 32.66586,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q1370995",
+		"tur": "antik",
+		"ad": "Etenna",
+		"sl": 7,
+		"trwiki": "Etenna",
+		"lat": 37.00166667,
+		"lon": 31.44916667,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q1090525",
+		"tur": "baraj",
+		"ad": "Gayt Barajı",
+		"sl": 7,
+		"trwiki": "Gayt Barajı",
+		"lat": 39.02415,
+		"lon": 40.3395,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bingöl"
+		]
+	},
+	{
+		"qid": "Q1090426",
+		"tur": "baraj",
+		"ad": "Geyik Barajı",
+		"sl": 7,
+		"trwiki": "Geyik Barajı",
+		"lat": 37.38224,
+		"lon": 27.88853,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q5201382",
+		"tur": "antik",
+		"ad": "Gideros",
+		"sl": 7,
+		"trwiki": "Gideros, Cide",
+		"lat": 41.85942,
+		"lon": 32.85803,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kastamonu"
+		]
+	},
+	{
+		"qid": "Q1090393",
+		"tur": "baraj",
+		"ad": "Gökçe Barajı",
+		"sl": 7,
+		"trwiki": "Gökçe Barajı",
+		"lat": 40.59959,
+		"lon": 29.20216,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Yalova"
+		]
+	},
+	{
+		"qid": "Q1091467",
+		"tur": "baraj",
+		"ad": "Gökçeada Barajı",
+		"sl": 7,
+		"trwiki": "Gökçeada Barajı",
+		"lat": 40.17917,
+		"lon": 25.8668,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1089498",
+		"tur": "baraj",
+		"ad": "Gölbaşı Barajı",
+		"sl": 7,
+		"trwiki": "Gölbaşı Barajı",
+		"lat": 40.21822,
+		"lon": 29.31869,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q14395861",
+		"tur": "gol",
+		"ad": "Gölcük Gölü",
+		"sl": 7,
+		"trwiki": "Gölcük Gölü (Isparta)",
+		"lat": 37.731,
+		"lon": 30.49424,
+		"yukseklik": [
+			1380
+		],
+		"alan": [
+			1.05
+		],
+		"iller": [
+			"Isparta"
+		]
+	},
+	{
+		"qid": "Q1089330",
+		"tur": "baraj",
+		"ad": "Gölköy Barajı",
+		"sl": 7,
+		"trwiki": "Gölköy Barajı",
+		"lat": 40.695,
+		"lon": 31.53285,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bolu"
+		]
+	},
+	{
+		"qid": "Q1090621",
+		"tur": "baraj",
+		"ad": "Güzelhisar Barajı",
+		"sl": 7,
+		"trwiki": "Güzelhisar Barajı",
+		"lat": 38.790952,
+		"lon": 27.105291,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q6030769",
+		"tur": "gol",
+		"ad": "Haçlı Gölü",
+		"sl": 7,
+		"trwiki": "Haçlı Gölü",
+		"lat": 39.0198,
+		"lon": 42.3001,
+		"yukseklik": [
+			1600
+		],
+		"alan": [],
+		"iller": [
+			"Muş"
+		]
+	},
+	{
+		"qid": "Q1301195",
+		"tur": "antik",
+		"ad": "Hadrianapolis (Paflagonya)",
+		"sl": 7,
+		"trwiki": "Hadrianopolis (Paflagonya)",
+		"lat": 40.92577778,
+		"lon": 32.49133333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Karabük",
+			"Çankırı"
+		]
+	},
+	{
+		"qid": "Q4822608",
+		"tur": "antik",
+		"ad": "Hamaxitos",
+		"sl": 7,
+		"trwiki": "Hamaxitos",
+		"lat": 39.543605,
+		"lon": 26.09471,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1089396",
+		"tur": "baraj",
+		"ad": "Hasanlar Barajı ve Hidroelektrik Santrali",
+		"sl": 7,
+		"trwiki": "Hasanlar Barajı ve Hidroelektrik Santrali",
+		"lat": 40.91025,
+		"lon": 31.27673,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Düzce"
+		]
+	},
+	{
+		"qid": "Q2732880",
+		"tur": "antik",
+		"ad": "İpsos",
+		"sl": 7,
+		"trwiki": "İpsos",
+		"lat": 38.856193,
+		"lon": 30.549206,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Afyonkarahisar"
+		]
+	},
+	{
+		"qid": "Q1720985",
+		"tur": "antik",
+		"ad": "Kadyanda",
+		"sl": 7,
+		"trwiki": "Kadyanda",
+		"lat": 36.7318,
+		"lon": 29.2432,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q10439273",
+		"tur": "antik",
+		"ad": "Kapadokya Kayseri'si",
+		"sl": 7,
+		"trwiki": null,
+		"lat": 38.7225,
+		"lon": 35.4875,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q2885173",
+		"tur": "baraj",
+		"ad": "Kapulukaya Barajı ve Hidroelektrik Santrali",
+		"sl": 7,
+		"trwiki": "Kapulukaya Barajı ve Hidroelektrik Santrali",
+		"lat": 39.73045,
+		"lon": 33.48368,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kırıkkale"
+		]
+	},
+	{
+		"qid": "Q1089374",
+		"tur": "baraj",
+		"ad": "Karaçomak Barajı",
+		"sl": 7,
+		"trwiki": "Karaçomak Barajı",
+		"lat": 41.31883,
+		"lon": 33.74466,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kastamonu"
+		]
+	},
+	{
+		"qid": "Q1090448",
+		"tur": "baraj",
+		"ad": "Karaova Barajı",
+		"sl": 7,
+		"trwiki": "Karaova Barajı",
+		"lat": 39.55897,
+		"lon": 33.91112,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kırşehir"
+		]
+	},
+	{
+		"qid": "Q6004690",
+		"tur": "gol",
+		"ad": "Karataş Gölü",
+		"sl": 7,
+		"trwiki": "Karataş Gölü",
+		"lat": 37.38596,
+		"lon": 29.97174,
+		"yukseklik": [
+			1050
+		],
+		"alan": [
+			11.9
+		],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q20667612",
+		"tur": "antik",
+		"ad": "Karussa",
+		"sl": 7,
+		"trwiki": "Karussa",
+		"lat": 41.8025,
+		"lon": 35.1956,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sinop"
+		]
+	},
+	{
+		"qid": "Q1740373",
+		"tur": "gol",
+		"ad": "Keşiş Gölü",
+		"sl": 7,
+		"trwiki": "Keşiş Gölü",
+		"lat": 38.47,
+		"lon": 43.6079,
+		"yukseklik": [
+			2550,
+			2544
+		],
+		"alan": [
+			7
+		],
+		"iller": [
+			"Van"
+		]
+	},
+	{
+		"qid": "Q612091",
+		"tur": "baraj",
+		"ad": "Kırklareli Barajı",
+		"sl": 7,
+		"trwiki": "Kırklareli Barajı",
+		"lat": 41.73896,
+		"lon": 27.27913,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kırklareli"
+		]
+	},
+	{
+		"qid": "Q743041",
+		"tur": "baraj",
+		"ad": "Kızıldamlar Barajı",
+		"sl": 7,
+		"trwiki": "Kızıldamlar Barajı",
+		"lat": 40.04078,
+		"lon": 30.11724,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bilecik"
+		]
+	},
+	{
+		"qid": "Q384511",
+		"tur": "baraj",
+		"ad": "Kozağacı Barajı",
+		"sl": 7,
+		"trwiki": "Kozağacı Barajı",
+		"lat": 37.02588,
+		"lon": 29.63593,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q917259",
+		"tur": "antik",
+		"ad": "Kremna",
+		"sl": 7,
+		"trwiki": "Kremna",
+		"lat": 37.50014,
+		"lon": 30.6911,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q959535",
+		"tur": "baraj",
+		"ad": "Kurtboğazı Barajı",
+		"sl": 7,
+		"trwiki": "Kurtboğazı Barajı",
+		"lat": 40.26986,
+		"lon": 32.7008,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q1091478",
+		"tur": "baraj",
+		"ad": "Kuzgun Barajı ve Hidroelektrik Santrali",
+		"sl": 7,
+		"trwiki": "Kuzgun Barajı ve Hidroelektrik Santrali",
+		"lat": 40.18675,
+		"lon": 41.06452,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Erzurum"
+		]
+	},
+	{
+		"qid": "Q16894345",
+		"tur": "kale",
+		"ad": "Loulon",
+		"sl": 7,
+		"trwiki": "Lulua Kalesi",
+		"lat": 37.583055555,
+		"lon": 34.698888888,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Niğde"
+		]
+	},
+	{
+		"qid": "Q1091839",
+		"tur": "baraj",
+		"ad": "Madra Barajı",
+		"sl": 7,
+		"trwiki": "Madra Barajı",
+		"lat": 39.23708,
+		"lon": 26.8427,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir",
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q4833452",
+		"tur": "dag",
+		"ad": "Madra Dağları",
+		"sl": 7,
+		"trwiki": "Madra Dağları",
+		"lat": 39.365,
+		"lon": 27.221666666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir",
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q980943",
+		"tur": "baraj",
+		"ad": "Maksutlu Barajı",
+		"sl": 7,
+		"trwiki": "Maksutlu Barajı",
+		"lat": 39.3778,
+		"lon": 36.49491,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sivas"
+		]
+	},
+	{
+		"qid": "Q11935066",
+		"tur": "antik",
+		"ad": "Maratesium",
+		"sl": 7,
+		"trwiki": "Maratesium",
+		"lat": 37.829287,
+		"lon": 27.254483,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q6036823",
+		"tur": "kale",
+		"ad": "Mardin Kalesi",
+		"sl": 7,
+		"trwiki": "Mardin Kalesi",
+		"lat": 37.3154406,
+		"lon": 40.7383929,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mardin"
+		]
+	},
+	{
+		"qid": "Q1089638",
+		"tur": "baraj",
+		"ad": "Medik Barajı",
+		"sl": 7,
+		"trwiki": "Medik Barajı",
+		"lat": 38.51037,
+		"lon": 38.06294,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Malatya"
+		]
+	},
+	{
+		"qid": "Q1089555",
+		"tur": "baraj",
+		"ad": "Mehmetli Barajı",
+		"sl": 7,
+		"trwiki": "Mehmetli Barajı",
+		"lat": 37.50775,
+		"lon": 36.02138,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Osmaniye"
+		]
+	},
+	{
+		"qid": "Q1090329",
+		"tur": "baraj",
+		"ad": "Nergizlik Barajı",
+		"sl": 7,
+		"trwiki": "Nergizlik Barajı",
+		"lat": 37.2988,
+		"lon": 35.04911,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q6922413",
+		"tur": "dag",
+		"ad": "Nif Dağı",
+		"sl": 7,
+		"trwiki": "Nif Dağı",
+		"lat": 38.387872,
+		"lon": 27.356461,
+		"yukseklik": [
+			1510
+		],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q13650859",
+		"tur": "dag",
+		"ad": "Omurga Dağı",
+		"sl": 7,
+		"trwiki": "Omurga Dağı",
+		"lat": 36.39666667,
+		"lon": 30.47305556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1090263",
+		"tur": "baraj",
+		"ad": "Ömerli Barajı",
+		"sl": 7,
+		"trwiki": "Ömerli Barajı",
+		"lat": 41.0609,
+		"lon": 29.35823,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q1090362",
+		"tur": "baraj",
+		"ad": "Örenler Barajı",
+		"sl": 7,
+		"trwiki": "Örenler Barajı",
+		"lat": 38.61344,
+		"lon": 30.22292,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Afyonkarahisar"
+		]
+	},
+	{
+		"qid": "Q6090377",
+		"tur": "gol",
+		"ad": "Palas Tuzla Gölü",
+		"sl": 7,
+		"trwiki": "Palas Tuzla Gölü",
+		"lat": 39.0214,
+		"lon": 35.815,
+		"yukseklik": [],
+		"alan": [
+			25
+		],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q1090318",
+		"tur": "baraj",
+		"ad": "Patnos Barajı",
+		"sl": 7,
+		"trwiki": "Patnos Barajı",
+		"lat": 39.273147,
+		"lon": 42.897472,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ağrı"
+		]
+	},
+	{
+		"qid": "Q18286282",
+		"tur": "antik",
+		"ad": "Pesus",
+		"sl": 7,
+		"trwiki": null,
+		"lat": 40.395248,
+		"lon": 26.790818,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q102128005",
+		"tur": "antik",
+		"ad": "Prusias ad Hypium",
+		"sl": 7,
+		"trwiki": "Prusias Ad Hypium",
+		"lat": 40.906111111,
+		"lon": 31.148055555,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Düzce"
+		]
+	},
+	{
+		"qid": "Q17266554",
+		"tur": "antik",
+		"ad": "Pygela",
+		"sl": 7,
+		"trwiki": "Pigela",
+		"lat": 37.91468,
+		"lon": 27.27665,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q584704",
+		"tur": "baraj",
+		"ad": "Sarayözü Barajı",
+		"sl": 7,
+		"trwiki": "Sarayözü Barajı",
+		"lat": 40.92021,
+		"lon": 35.19469,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Amasya"
+		]
+	},
+	{
+		"qid": "Q1089596",
+		"tur": "baraj",
+		"ad": "Sarıyar Barajı",
+		"sl": 7,
+		"trwiki": "Sarıyar Barajı ve Hidroelektrik Santrali",
+		"lat": 40.04,
+		"lon": 31.4143,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q1089269",
+		"tur": "baraj",
+		"ad": "Selevir Barajı",
+		"sl": 7,
+		"trwiki": "Selevir Barajı",
+		"lat": 38.51297,
+		"lon": 30.71782,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Afyonkarahisar"
+		]
+	},
+	{
+		"qid": "Q1089619",
+		"tur": "baraj",
+		"ad": "Sevişler Barajı",
+		"sl": 7,
+		"trwiki": "Sevişler Barajı",
+		"lat": 39.26299,
+		"lon": 27.55339,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q1089564",
+		"tur": "baraj",
+		"ad": "Seyitler Barajı",
+		"sl": 7,
+		"trwiki": "Seyitler Barajı",
+		"lat": 38.78704,
+		"lon": 30.78798,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Afyonkarahisar"
+		]
+	},
+	{
+		"qid": "Q1090245",
+		"tur": "baraj",
+		"ad": "Sır Barajı ve Hidroelektrik Santrali",
+		"sl": 7,
+		"trwiki": "Sır Barajı ve Hidroelektrik Santrali",
+		"lat": 37.50098,
+		"lon": 36.59599,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kahramanmaraş"
+		]
+	},
+	{
+		"qid": "Q966723",
+		"tur": "baraj",
+		"ad": "Sille Barajı",
+		"sl": 7,
+		"trwiki": "Sille Barajı",
+		"lat": 37.926388888,
+		"lon": 32.400277777,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q1674132",
+		"tur": "baraj",
+		"ad": "Silvan Barajı ve Hidroelektrik Santrali",
+		"sl": 7,
+		"trwiki": "Silvan Barajı ve Hidroelektrik Santrali",
+		"lat": 38.29371,
+		"lon": 41.02194,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Diyarbakır"
+		]
+	},
+	{
+		"qid": "Q1090477",
+		"tur": "baraj",
+		"ad": "Sultanköy Barajı",
+		"sl": 7,
+		"trwiki": "Sultanköy Barajı",
+		"lat": 41.03785,
+		"lon": 26.48178,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Edirne"
+		]
+	},
+	{
+		"qid": "Q376084",
+		"tur": "antik",
+		"ad": "Temnos",
+		"sl": 7,
+		"trwiki": "Temnos",
+		"lat": 38.671912,
+		"lon": 27.196998,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1090567",
+		"tur": "baraj",
+		"ad": "Tercan Barajı ve Hidroelektrik Santrali",
+		"sl": 7,
+		"trwiki": "Tercan Barajı ve Hidroelektrik Santrali",
+		"lat": 39.75157,
+		"lon": 40.40038,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Erzincan"
+		]
+	},
+	{
+		"qid": "Q1090453",
+		"tur": "baraj",
+		"ad": "Topçam Barajı",
+		"sl": 7,
+		"trwiki": "Topçam Barajı, Aydın",
+		"lat": 37.6898,
+		"lon": 28.00795,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q1090305",
+		"tur": "baraj",
+		"ad": "Ürkmez Barajı",
+		"sl": 7,
+		"trwiki": "Ürkmez Barajı",
+		"lat": 38.09354,
+		"lon": 26.95544,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1090288",
+		"tur": "baraj",
+		"ad": "Yenice Barajı ve Hidroelektrik Santrali",
+		"sl": 7,
+		"trwiki": "Yenice Barajı ve Hidroelektrik Santrali",
+		"lat": 40.06344,
+		"lon": 30.85664,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Eskişehir"
+		]
+	},
+	{
+		"qid": "Q4822239",
+		"tur": "dag",
+		"ad": "Yunt Dağları",
+		"sl": 7,
+		"trwiki": "Yunt Dağları",
+		"lat": 38.9075,
+		"lon": 27.3075,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1090485",
+		"tur": "baraj",
+		"ad": "4 Eylül Barajı",
+		"sl": 6,
+		"trwiki": "4 Eylül Barajı",
+		"lat": 39.83372,
+		"lon": 37.06221,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sivas"
+		]
+	},
+	{
+		"qid": "Q64827485",
+		"tur": "antik",
+		"ad": "Achaion Limen",
+		"sl": 6,
+		"trwiki": "Achaion Limen",
+		"lat": 38.858153,
+		"lon": 27.039491,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1089443",
+		"tur": "baraj",
+		"ad": "Adatepe Barajı",
+		"sl": 6,
+		"trwiki": "Adatepe Barajı",
+		"lat": 38.10748,
+		"lon": 36.73924,
+		"yukseklik": [
+			1373
+		],
+		"alan": [],
+		"iller": [
+			"Kahramanmaraş"
+		]
+	},
+	{
+		"qid": "Q736734",
+		"tur": "baraj",
+		"ad": "Afşar Barajı",
+		"sl": 6,
+		"trwiki": "Afşar Barajı",
+		"lat": 38.24613,
+		"lon": 28.60307,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Manisa"
+		]
+	},
+	{
+		"qid": "Q1014726",
+		"tur": "kale",
+		"ad": "Afyonkarahisar Kalesi",
+		"sl": 6,
+		"trwiki": "Afyonkarahisar Kalesi",
+		"lat": 38.75666667,
+		"lon": 30.53166667,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Afyonkarahisar"
+		]
+	},
+	{
+		"qid": "Q1090309",
+		"tur": "baraj",
+		"ad": "Ağcaşar Barajı",
+		"sl": 6,
+		"trwiki": "Ağcaşar Barajı",
+		"lat": 38.18485,
+		"lon": 35.39558,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q17633635",
+		"tur": "antik",
+		"ad": "Airai (İyonya)",
+		"sl": 6,
+		"trwiki": "Airai (İyonya)",
+		"lat": 38.203961,
+		"lon": 26.701321,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1089603",
+		"tur": "baraj",
+		"ad": "Akkaya Barajı",
+		"sl": 6,
+		"trwiki": "Akkaya Barajı",
+		"lat": 37.91875,
+		"lon": 34.60884,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Niğde"
+		]
+	},
+	{
+		"qid": "Q2885009",
+		"tur": "baraj",
+		"ad": "Akköy Barajı",
+		"sl": 6,
+		"trwiki": "Akköy Barajı",
+		"lat": 38.31834,
+		"lon": 35.02856,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q784158",
+		"tur": "baraj",
+		"ad": "Alaca Barajı",
+		"sl": 6,
+		"trwiki": "Alaca Barajı",
+		"lat": 40.10766,
+		"lon": 34.83855,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çorum"
+		]
+	},
+	{
+		"qid": "Q1090460",
+		"tur": "baraj",
+		"ad": "Alaçatı Barajı",
+		"sl": 6,
+		"trwiki": "Alaçatı Barajı",
+		"lat": 38.28284,
+		"lon": 26.40595,
+		"yukseklik": [
+			5
+		],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q2885348",
+		"tur": "baraj",
+		"ad": "Alakır Barajı",
+		"sl": 6,
+		"trwiki": "Alakır Barajı",
+		"lat": 36.42863,
+		"lon": 30.237,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q2885011",
+		"tur": "baraj",
+		"ad": "Alibey Barajı",
+		"sl": 6,
+		"trwiki": "Alibey Barajı",
+		"lat": 41.10098,
+		"lon": 28.92039,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q4734309",
+		"tur": "antik",
+		"ad": "Alopeconnesus",
+		"sl": 6,
+		"trwiki": "Alopeconnesus",
+		"lat": 40.313888888,
+		"lon": 26.249444444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1089311",
+		"tur": "baraj",
+		"ad": "Apa Barajı",
+		"sl": 6,
+		"trwiki": "Apa Barajı",
+		"lat": 37.36072,
+		"lon": 32.5461,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q1090334",
+		"tur": "baraj",
+		"ad": "Armağan Barajı",
+		"sl": 6,
+		"trwiki": "Armağan Barajı",
+		"lat": 41.88337,
+		"lon": 27.43628,
+		"yukseklik": [
+			421
+		],
+		"alan": [],
+		"iller": [
+			"Kırklareli"
+		]
+	},
+	{
+		"qid": "Q1091847",
+		"tur": "baraj",
+		"ad": "Arpaçay Barajı",
+		"sl": 6,
+		"trwiki": "Arpaçay Barajı",
+		"lat": 40.56281,
+		"lon": 43.64518,
+		"yukseklik": [
+			1452
+		],
+		"alan": [],
+		"iller": [
+			"Kars"
+		]
+	},
+	{
+		"qid": "Q1090275",
+		"tur": "baraj",
+		"ad": "Asartepe Barajı",
+		"sl": 6,
+		"trwiki": "Asartepe Barajı",
+		"lat": 40.14492,
+		"lon": 32.38595,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q4808759",
+		"tur": "antik",
+		"ad": "Assesos",
+		"sl": 6,
+		"trwiki": "Assesos",
+		"lat": 37.488611111,
+		"lon": 27.337222222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q16327781",
+		"tur": "antik",
+		"ad": "Astyra (Biga)",
+		"sl": 6,
+		"trwiki": "Astyra (Biga)",
+		"lat": 40.043192,
+		"lon": 26.682841,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q34876740",
+		"tur": "gol",
+		"ad": "Atatürk Baraj Gölü",
+		"sl": 6,
+		"trwiki": "Atatürk Baraj Gölü",
+		"lat": 37.5738,
+		"lon": 38.591,
+		"yukseklik": [
+			542
+		],
+		"alan": [
+			817
+		],
+		"iller": [
+			"Adıyaman",
+			"Şanlıurfa",
+			"Diyarbakır"
+		]
+	},
+	{
+		"qid": "Q20471086",
+		"tur": "gol",
+		"ad": "Aygır Gölü",
+		"sl": 6,
+		"trwiki": "Aygır Gölü (Kars)",
+		"lat": 40.763055555,
+		"lon": 43.003055555,
+		"yukseklik": [],
+		"alan": [
+			1.5
+		],
+		"iller": [
+			"Kars"
+		]
+	},
+	{
+		"qid": "Q1089288",
+		"tur": "baraj",
+		"ad": "Ayrancı Barajı",
+		"sl": 6,
+		"trwiki": "Ayrancı Barajı",
+		"lat": 37.33611,
+		"lon": 33.7266,
+		"yukseklik": [
+			1187
+		],
+		"alan": [],
+		"iller": [
+			"Karaman"
+		]
+	},
+	{
+		"qid": "Q4831853",
+		"tur": "baraj",
+		"ad": "Ayvacık Barajı",
+		"sl": 6,
+		"trwiki": "Ayvacık Barajı",
+		"lat": 39.60301,
+		"lon": 26.45279,
+		"yukseklik": [
+			336
+		],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1090627",
+		"tur": "baraj",
+		"ad": "Bademli Barajı",
+		"sl": 6,
+		"trwiki": "Bademli Barajı",
+		"lat": 37.43404,
+		"lon": 29.90946,
+		"yukseklik": [
+			1197
+		],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q1091809",
+		"tur": "baraj",
+		"ad": "Belpınar Barajı",
+		"sl": 6,
+		"trwiki": "Belpınar Barajı",
+		"lat": 40.18301,
+		"lon": 35.94927,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tokat"
+		]
+	},
+	{
+		"qid": "Q30634494",
+		"tur": "gol",
+		"ad": "Beymelek Lagünü",
+		"sl": 6,
+		"trwiki": "Beymelek Lagünü",
+		"lat": 36.2659,
+		"lon": 30.0532,
+		"yukseklik": [],
+		"alan": [
+			2.25
+		],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q65088734",
+		"tur": "kale",
+		"ad": "Bezabde",
+		"sl": 6,
+		"trwiki": null,
+		"lat": 37.402222222,
+		"lon": 42.066666666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Şırnak"
+		]
+	},
+	{
+		"qid": "Q6012869",
+		"tur": "dag",
+		"ad": "Binboğa Dağları",
+		"sl": 6,
+		"trwiki": "Binboğa Dağları",
+		"lat": 38.32126,
+		"lon": 36.63775,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kayseri",
+			"Kahramanmaraş"
+		]
+	},
+	{
+		"qid": "Q65088749",
+		"tur": "antik",
+		"ad": "Bithynium",
+		"sl": 6,
+		"trwiki": "Bithynium",
+		"lat": 40.753484,
+		"lon": 31.630039,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1090354",
+		"tur": "baraj",
+		"ad": "Bozkır Barajı",
+		"sl": 6,
+		"trwiki": "Bozkır Barajı (Ortaköy)",
+		"lat": 38.76439,
+		"lon": 34.08668,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aksaray"
+		]
+	},
+	{
+		"qid": "Q1090672",
+		"tur": "baraj",
+		"ad": "Boztepe Barajı",
+		"sl": 6,
+		"trwiki": "Boztepe Barajı (Tokat)",
+		"lat": 40.175833333,
+		"lon": 35.870833333,
+		"yukseklik": [
+			835
+		],
+		"alan": [],
+		"iller": [
+			"Tokat"
+		]
+	},
+	{
+		"qid": "Q1090509",
+		"tur": "baraj",
+		"ad": "Büyükçekmece Barajı",
+		"sl": 6,
+		"trwiki": "Büyükçekmece Barajı",
+		"lat": 41.02518,
+		"lon": 28.57071,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q5024669",
+		"tur": "antik",
+		"ad": "Calynda",
+		"sl": 6,
+		"trwiki": "Kalynda",
+		"lat": 36.750652,
+		"lon": 28.835859,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q17624165",
+		"tur": "antik",
+		"ad": "Carambis",
+		"sl": 6,
+		"trwiki": "Carambis",
+		"lat": 42.019566,
+		"lon": 33.344704,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q17057722",
+		"tur": "antik",
+		"ad": "Cromna",
+		"sl": 6,
+		"trwiki": "Cromna",
+		"lat": 41.84399,
+		"lon": 32.722092,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bartın"
+		]
+	},
+	{
+		"qid": "Q1090415",
+		"tur": "baraj",
+		"ad": "Çakmak Barajı",
+		"sl": 6,
+		"trwiki": "Çakmak Barajı (Samsun)",
+		"lat": 41.10984,
+		"lon": 36.63347,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Samsun"
+		]
+	},
+	{
+		"qid": "Q1089587",
+		"tur": "baraj",
+		"ad": "Çamgazi Barajı",
+		"sl": 6,
+		"trwiki": "Çamgazi Barajı",
+		"lat": 37.68175,
+		"lon": 38.14115,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adıyaman"
+		]
+	},
+	{
+		"qid": "Q1090440",
+		"tur": "baraj",
+		"ad": "Çavdır Barajı",
+		"sl": 6,
+		"trwiki": "Çavdır Barajı",
+		"lat": 37.0721,
+		"lon": 29.7296,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q1090278",
+		"tur": "baraj",
+		"ad": "Çayboğazı Barajı",
+		"sl": 6,
+		"trwiki": "Çayboğazı Barajı",
+		"lat": 36.52798,
+		"lon": 29.68262,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q28221175",
+		"tur": "kale",
+		"ad": "Çeşme Kalesi",
+		"sl": 6,
+		"trwiki": "Çeşme Kalesi",
+		"lat": 38.323611111,
+		"lon": 26.303611111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q4188870",
+		"tur": "kale",
+		"ad": "Çimpe Kalesi",
+		"sl": 6,
+		"trwiki": "Çimpe Kalesi",
+		"lat": 40.6444473,
+		"lon": 27.0113297,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale",
+			"Tekirdağ"
+		]
+	},
+	{
+		"qid": "Q1090514",
+		"tur": "baraj",
+		"ad": "Çorum Barajı",
+		"sl": 6,
+		"trwiki": "Çorum Barajı",
+		"lat": 40.5808,
+		"lon": 34.9888,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çorum"
+		]
+	},
+	{
+		"qid": "Q20476870",
+		"tur": "gol",
+		"ad": "Çöl Gölü",
+		"sl": 6,
+		"trwiki": "Çöl Gölü",
+		"lat": 39.2929,
+		"lon": 32.8922,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q1089390",
+		"tur": "baraj",
+		"ad": "Darıdere Barajı",
+		"sl": 6,
+		"trwiki": "Dodurga Barajı (Bilecik)",
+		"lat": 39.79232,
+		"lon": 29.96543,
+		"yukseklik": [
+			1049
+		],
+		"alan": [],
+		"iller": [
+			"Bilecik"
+		]
+	},
+	{
+		"qid": "Q1091506",
+		"tur": "baraj",
+		"ad": "Darlık Barajı",
+		"sl": 6,
+		"trwiki": "Darlık Barajı",
+		"lat": 41.11519,
+		"lon": 29.56829,
+		"yukseklik": [
+			55
+		],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q1090573",
+		"tur": "baraj",
+		"ad": "Demirdöven Barajı",
+		"sl": 6,
+		"trwiki": "Demirdöven Barajı",
+		"lat": 40.03932,
+		"lon": 41.73688,
+		"yukseklik": [
+			1785
+		],
+		"alan": [],
+		"iller": [
+			"Erzurum"
+		]
+	},
+	{
+		"qid": "Q61076554",
+		"tur": "gol",
+		"ad": "Deniz Gölü",
+		"sl": 6,
+		"trwiki": "Deniz Gölü",
+		"lat": 40.817777777,
+		"lon": 41.160555555,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Artvin"
+		]
+	},
+	{
+		"qid": "Q1089643",
+		"tur": "baraj",
+		"ad": "Devegeçidi Barajı",
+		"sl": 6,
+		"trwiki": "Devegeçidi Barajı",
+		"lat": 38.05662,
+		"lon": 39.98641,
+		"yukseklik": [
+			751
+		],
+		"alan": [],
+		"iller": [
+			"Diyarbakır"
+		]
+	},
+	{
+		"qid": "Q15806224",
+		"tur": "antik",
+		"ad": "Dokimeion",
+		"sl": 6,
+		"trwiki": "Dokimeion",
+		"lat": 38.86666667,
+		"lon": 30.75,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Afyonkarahisar"
+		]
+	},
+	{
+		"qid": "Q1091540",
+		"tur": "baraj",
+		"ad": "Dumluca Barajı",
+		"sl": 6,
+		"trwiki": "Dumluca Barajı",
+		"lat": 37.4162,
+		"lon": 40.1417,
+		"yukseklik": [
+			682
+		],
+		"alan": [],
+		"iller": [
+			"Mardin"
+		]
+	},
+	{
+		"qid": "Q1089455",
+		"tur": "baraj",
+		"ad": "Elmalı-2 Barajı",
+		"sl": 6,
+		"trwiki": "Elmalı-2 Barajı",
+		"lat": 41.07625,
+		"lon": 29.11718,
+		"yukseklik": [
+			53
+		],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q1089645",
+		"tur": "baraj",
+		"ad": "Enne Barajı",
+		"sl": 6,
+		"trwiki": "Enne Barajı",
+		"lat": 39.47254,
+		"lon": 29.86604,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kütahya"
+		]
+	},
+	{
+		"qid": "Q1355896",
+		"tur": "baraj",
+		"ad": "Ermenek Barajı",
+		"sl": 6,
+		"trwiki": "Ermenek Barajı ve Hidroelektrik Santrali",
+		"lat": 36.56817,
+		"lon": 32.96784,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Karaman"
+		]
+	},
+	{
+		"qid": "Q267399",
+		"tur": "baraj",
+		"ad": "Erzincan Barajı",
+		"sl": 6,
+		"trwiki": "Erzincan Barajı",
+		"lat": 39.80395,
+		"lon": 39.29377,
+		"yukseklik": [
+			1481
+		],
+		"alan": [],
+		"iller": [
+			"Erzincan"
+		]
+	},
+	{
+		"qid": "Q1402177",
+		"tur": "kale",
+		"ad": "Feke Kalesi",
+		"sl": 6,
+		"trwiki": null,
+		"lat": 37.8602728,
+		"lon": 35.9518576,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q568043",
+		"tur": "antik",
+		"ad": "Gargara",
+		"sl": 6,
+		"trwiki": "Gargara (antik şehir)",
+		"lat": 39.5870819,
+		"lon": 26.5375042,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1090633",
+		"tur": "baraj",
+		"ad": "Gazibey Barajı",
+		"sl": 6,
+		"trwiki": "Gazibey Barajı",
+		"lat": 39.33042,
+		"lon": 36.66543,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sivas"
+		]
+	},
+	{
+		"qid": "Q1089450",
+		"tur": "baraj",
+		"ad": "Gebere Barajı",
+		"sl": 6,
+		"trwiki": "Gebere Barajı",
+		"lat": 38.04547,
+		"lon": 34.63741,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Niğde"
+		]
+	},
+	{
+		"qid": "Q1090638",
+		"tur": "baraj",
+		"ad": "Gezende Barajı",
+		"sl": 6,
+		"trwiki": "Gezende Barajı ve Hidroelektrik Santrali",
+		"lat": 36.528508,
+		"lon": 33.194423,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q1090497",
+		"tur": "baraj",
+		"ad": "Gödet Barajı",
+		"sl": 6,
+		"trwiki": "Gödet Barajı",
+		"lat": 37.11638,
+		"lon": 33.27801,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Karaman"
+		]
+	},
+	{
+		"qid": "Q1090421",
+		"tur": "baraj",
+		"ad": "Gölova Barajı",
+		"sl": 6,
+		"trwiki": "Gölova Barajı",
+		"lat": 40.04501,
+		"lon": 38.62259,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sivas"
+		]
+	},
+	{
+		"qid": "Q18639253",
+		"tur": "kale",
+		"ad": "Gözne Kalesi",
+		"sl": 6,
+		"trwiki": "Gözne Kalesi",
+		"lat": 36.99222222,
+		"lon": 34.57416667,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q34872751",
+		"tur": "dag",
+		"ad": "Göztepe Dağı",
+		"sl": 6,
+		"trwiki": "Göztepe Dağı",
+		"lat": 39.1135,
+		"lon": 41.8463,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muş"
+		]
+	},
+	{
+		"qid": "Q969347",
+		"tur": "antik",
+		"ad": "Gryneion",
+		"sl": 6,
+		"trwiki": "Gryneion",
+		"lat": 38.874665,
+		"lon": 27.069173,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1090359",
+		"tur": "baraj",
+		"ad": "Güldürcek Barajı",
+		"sl": 6,
+		"trwiki": "Güldürcek Barajı",
+		"lat": 40.56885,
+		"lon": 32.95041,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çankırı"
+		]
+	},
+	{
+		"qid": "Q1089599",
+		"tur": "baraj",
+		"ad": "Gülüç Barajı",
+		"sl": 6,
+		"trwiki": "Gülüç Barajı",
+		"lat": 41.24391,
+		"lon": 31.48362,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Zonguldak"
+		]
+	},
+	{
+		"qid": "Q1089615",
+		"tur": "baraj",
+		"ad": "Gümüşler Barajı",
+		"sl": 6,
+		"trwiki": "Gümüşler Barajı",
+		"lat": 38.009063,
+		"lon": 34.75868,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Niğde"
+		]
+	},
+	{
+		"qid": "Q1090317",
+		"tur": "baraj",
+		"ad": "Hasanağa Barajı",
+		"sl": 6,
+		"trwiki": "Hasanağa Barajı",
+		"lat": 40.16151,
+		"lon": 28.79295,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q474357",
+		"tur": "kale",
+		"ad": "Hemite Kalesi",
+		"sl": 6,
+		"trwiki": "Hemite Kalesi",
+		"lat": 37.18861111,
+		"lon": 36.09444444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Osmaniye"
+		]
+	},
+	{
+		"qid": "Q2964401",
+		"tur": "kale",
+		"ad": "Homa (Bizans kalesi)",
+		"sl": 6,
+		"trwiki": null,
+		"lat": 40,
+		"lon": 30,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q11926875",
+		"tur": "antik",
+		"ad": "Isaura Palaea",
+		"sl": 6,
+		"trwiki": "Isaura Palaia",
+		"lat": 37.190126,
+		"lon": 32.24503,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1091821",
+		"tur": "baraj",
+		"ad": "İkizcetepeler Barajı",
+		"sl": 6,
+		"trwiki": "İkizcetepeler Barajı",
+		"lat": 39.49176,
+		"lon": 27.93926,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q1090536",
+		"tur": "baraj",
+		"ad": "İvriz Barajı",
+		"sl": 6,
+		"trwiki": "İvriz Barajı",
+		"lat": 37.4457,
+		"lon": 34.1598,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q1675450",
+		"tur": "antik",
+		"ad": "Juliopolis Nekropolü",
+		"sl": 6,
+		"trwiki": "Juliopolis Nekropolü",
+		"lat": 40.066666666,
+		"lon": 31.666666666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q5015603",
+		"tur": "antik",
+		"ad": "Kaberia",
+		"sl": 6,
+		"trwiki": "Kaberia",
+		"lat": 40.609983,
+		"lon": 36.951027,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1089277",
+		"tur": "baraj",
+		"ad": "Kadıköy Barajı",
+		"sl": 6,
+		"trwiki": "Kadıköy Barajı",
+		"lat": 40.79326,
+		"lon": 26.77318,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Edirne"
+		]
+	},
+	{
+		"qid": "Q2885168",
+		"tur": "baraj",
+		"ad": "Kalecik Barajı, Osmaniye",
+		"sl": 6,
+		"trwiki": "Kalecik Barajı, Osmaniye",
+		"lat": 37.14762,
+		"lon": 36.45931,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Osmaniye"
+		]
+	},
+	{
+		"qid": "Q12873003",
+		"tur": "antik",
+		"ad": "Karaduvar (Anchiale)",
+		"sl": 6,
+		"trwiki": "Anchiale",
+		"lat": 36.809722222,
+		"lon": 34.699444444,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q935562",
+		"tur": "baraj",
+		"ad": "Karaidemir Barajı",
+		"sl": 6,
+		"trwiki": "Karaidemir Barajı",
+		"lat": 40.95351,
+		"lon": 27.0071,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tekirdağ"
+		]
+	},
+	{
+		"qid": "Q14623443",
+		"tur": "kale",
+		"ad": "Karaman Kalesi",
+		"sl": 6,
+		"trwiki": "Karaman Kalesi",
+		"lat": 37.182,
+		"lon": 33.206027777,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Karaman"
+		]
+	},
+	{
+		"qid": "Q368593",
+		"tur": "baraj",
+		"ad": "Kayaboğazı Barajı",
+		"sl": 6,
+		"trwiki": "Kayaboğazı Barajı",
+		"lat": 39.41687,
+		"lon": 29.61708,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kütahya"
+		]
+	},
+	{
+		"qid": "Q1089575",
+		"tur": "baraj",
+		"ad": "Kayacık Barajı",
+		"sl": 6,
+		"trwiki": "Kayacık Barajı",
+		"lat": 36.82274,
+		"lon": 37.56847,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q1090293",
+		"tur": "baraj",
+		"ad": "Kaymaz Barajı",
+		"sl": 6,
+		"trwiki": "Kaymaz Barajı",
+		"lat": 39.54322,
+		"lon": 31.21754,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Eskişehir"
+		]
+	},
+	{
+		"qid": "Q6104716",
+		"tur": "kale",
+		"ad": "Kayseri Kalesi",
+		"sl": 6,
+		"trwiki": "Kayseri Kalesi",
+		"lat": 38.7211,
+		"lon": 35.4888,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q1738167",
+		"tur": "antik",
+		"ad": "Kelenderis",
+		"sl": 6,
+		"trwiki": "Kelenderis",
+		"lat": 36.14416667,
+		"lon": 33.32277778,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q1089503",
+		"tur": "baraj",
+		"ad": "Kemer Barajı ve Hidroelektrik Santrali",
+		"sl": 6,
+		"trwiki": "Kemer Barajı ve Hidroelektrik Santrali",
+		"lat": 37.57218,
+		"lon": 28.52498,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q19611707",
+		"tur": "dag",
+		"ad": "Kızılkaya Dağı",
+		"sl": 6,
+		"trwiki": "Kızılkaya Dağı",
+		"lat": 37.79681,
+		"lon": 35.15572,
+		"yukseklik": [
+			3771,
+			3767
+		],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1089629",
+		"tur": "baraj",
+		"ad": "Kızılsu Barajı",
+		"sl": 6,
+		"trwiki": "Kızılsu Barajı",
+		"lat": 37.33763,
+		"lon": 30.56289,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q1090262",
+		"tur": "baraj",
+		"ad": "Koçköprü Barajı ve Hidroelektrik Santrali",
+		"sl": 6,
+		"trwiki": "Koçköprü Barajı ve Hidroelektrik Santrali",
+		"lat": 39.12195,
+		"lon": 43.32905,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Van"
+		]
+	},
+	{
+		"qid": "Q7265250",
+		"tur": "kale",
+		"ad": "Kol Kalesi",
+		"sl": 6,
+		"trwiki": "Kol Kalesi",
+		"lat": 41.4415441,
+		"lon": 42.6306921,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ardahan"
+		]
+	},
+	{
+		"qid": "Q6427503",
+		"tur": "antik",
+		"ad": "Kolonai",
+		"sl": 6,
+		"trwiki": "Kolonai",
+		"lat": 39.68972222,
+		"lon": 26.16333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q2885191",
+		"tur": "baraj",
+		"ad": "Korkuteli Barajı",
+		"sl": 6,
+		"trwiki": "Korkuteli Barajı",
+		"lat": 37.081,
+		"lon": 30.16556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q1090542",
+		"tur": "baraj",
+		"ad": "Kovalı Barajı",
+		"sl": 6,
+		"trwiki": "Kovalı Barajı",
+		"lat": 38.17018,
+		"lon": 35.14736,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q1090386",
+		"tur": "baraj",
+		"ad": "Kozlu Barajı",
+		"sl": 6,
+		"trwiki": "Kozlu Barajı",
+		"lat": 41.42037,
+		"lon": 31.8018,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Zonguldak"
+		]
+	},
+	{
+		"qid": "Q6920276",
+		"tur": "dag",
+		"ad": "Kragos Dağı",
+		"sl": 6,
+		"trwiki": null,
+		"lat": 36.384,
+		"lon": 29.185,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1139057",
+		"tur": "antik",
+		"ad": "Krateia",
+		"sl": 6,
+		"trwiki": "Krateia",
+		"lat": 40.812102,
+		"lon": 32.1649185,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q8043784",
+		"tur": "kale",
+		"ad": "Kserigordos",
+		"sl": 6,
+		"trwiki": "Kserigordos",
+		"lat": 40.3925,
+		"lon": 29.804166666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1090471",
+		"tur": "baraj",
+		"ad": "Kunduzlar Barajı",
+		"sl": 6,
+		"trwiki": "Kunduzlar Barajı",
+		"lat": 39.35644,
+		"lon": 30.56824,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Eskişehir"
+		]
+	},
+	{
+		"qid": "Q1720231",
+		"tur": "antik",
+		"ad": "Loryma",
+		"sl": 6,
+		"trwiki": "Loryma",
+		"lat": 36.566111111,
+		"lon": 28.015277777,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q4833832",
+		"tur": "dag",
+		"ad": "Madur Dağı",
+		"sl": 6,
+		"trwiki": "Madur Dağı",
+		"lat": 40.780555555,
+		"lon": 39.812222222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q11934549",
+		"tur": "antik",
+		"ad": "Magarsa",
+		"sl": 6,
+		"trwiki": "Magarsa",
+		"lat": 36.54423,
+		"lon": 35.34619,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q2885225",
+		"tur": "baraj",
+		"ad": "Manyas Barajı ve Hidroelektrik Santrali",
+		"sl": 6,
+		"trwiki": "Manyas Barajı ve Hidroelektrik Santrali",
+		"lat": 39.97474,
+		"lon": 27.7817,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q1089569",
+		"tur": "baraj",
+		"ad": "May Barajı",
+		"sl": 6,
+		"trwiki": "May Barajı",
+		"lat": 37.50912,
+		"lon": 32.5653,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q6065286",
+		"tur": "gol",
+		"ad": "Meke Krater Gölü",
+		"sl": 6,
+		"trwiki": "Meke Krater Gölü",
+		"lat": 37.686111111,
+		"lon": 33.640280555,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q1926306",
+		"tur": "kale",
+		"ad": "Meydancık Kalesi",
+		"sl": 6,
+		"trwiki": "Meydancık Kalesi",
+		"lat": 36.273333,
+		"lon": 33.441111,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q1090286",
+		"tur": "baraj",
+		"ad": "Mumcular Barajı",
+		"sl": 6,
+		"trwiki": "Mumcular Barajı",
+		"lat": 37.11775,
+		"lon": 27.65996,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q1090491",
+		"tur": "baraj",
+		"ad": "Mursal Barajı ve Hidroelektrik Santrali",
+		"sl": 6,
+		"trwiki": "Mursal Barajı ve Hidroelektrik Santrali",
+		"lat": 39.14352,
+		"lon": 37.98099,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sivas"
+		]
+	},
+	{
+		"qid": "Q1091516",
+		"tur": "baraj",
+		"ad": "Murtaza Barajı",
+		"sl": 6,
+		"trwiki": "Murtaza Barajı",
+		"lat": 38.15162,
+		"lon": 34.58167,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Niğde"
+		]
+	},
+	{
+		"qid": "Q1089406",
+		"tur": "baraj",
+		"ad": "Musaözü Barajı",
+		"sl": 6,
+		"trwiki": "Musaözü Barajı",
+		"lat": 39.69722,
+		"lon": 30.32395,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Eskişehir"
+		]
+	},
+	{
+		"qid": "Q6984286",
+		"tur": "antik",
+		"ad": "Neandreia",
+		"sl": 6,
+		"trwiki": "Neandreia",
+		"lat": 39.7236265,
+		"lon": 26.273117,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q11938576",
+		"tur": "antik",
+		"ad": "Neonteikhos",
+		"sl": 6,
+		"trwiki": "Neonteichos",
+		"lat": 38.661,
+		"lon": 27.0891,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1432010",
+		"tur": "antik",
+		"ad": "Nisa",
+		"sl": 6,
+		"trwiki": "Nisa (Likya)",
+		"lat": 36.44138889,
+		"lon": 29.64222222,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q3343437",
+		"tur": "antik",
+		"ad": "Nora (Kapadokya)",
+		"sl": 6,
+		"trwiki": "Nora (Kapadokya)",
+		"lat": 38.2719285,
+		"lon": 34.3745905,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1089302",
+		"tur": "baraj",
+		"ad": "Onaç-1 Barajı",
+		"sl": 6,
+		"trwiki": "Onaç-1 Barajı",
+		"lat": 37.48105,
+		"lon": 30.56858,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q7101665",
+		"tur": "antik",
+		"ad": "Orestias",
+		"sl": 6,
+		"trwiki": "Orestias",
+		"lat": 41.676944444,
+		"lon": 26.555555555,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Edirne"
+		]
+	},
+	{
+		"qid": "Q7123145",
+		"tur": "antik",
+		"ad": "Paktye",
+		"sl": 6,
+		"trwiki": "Pactya",
+		"lat": 40.485384,
+		"lon": 26.780688,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q1090325",
+		"tur": "baraj",
+		"ad": "Palandöken Barajı",
+		"sl": 6,
+		"trwiki": "Palandöken Barajı",
+		"lat": 39.65751,
+		"lon": 41.02229,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Erzurum"
+		]
+	},
+	{
+		"qid": "Q1963565",
+		"tur": "antik",
+		"ad": "Paşabeleni",
+		"sl": 6,
+		"trwiki": "Paşabeleni",
+		"lat": 36.099828,
+		"lon": 32.978168,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q1091549",
+		"tur": "baraj",
+		"ad": "Polat Barajı",
+		"sl": 6,
+		"trwiki": "Polat Barajı",
+		"lat": 38.1265,
+		"lon": 37.77977,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Malatya"
+		]
+	},
+	{
+		"qid": "Q1090445",
+		"tur": "baraj",
+		"ad": "Sarıbeyler Barajı",
+		"sl": 6,
+		"trwiki": "Sarıbeyler Barajı",
+		"lat": 39.4081,
+		"lon": 27.6089,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q612307",
+		"tur": "baraj",
+		"ad": "Sarımehmet Barajı",
+		"sl": 6,
+		"trwiki": "Sarımehmet Barajı",
+		"lat": 38.7929,
+		"lon": 43.74345,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Van"
+		]
+	},
+	{
+		"qid": "Q1090533",
+		"tur": "baraj",
+		"ad": "Sazlıdere Barajı",
+		"sl": 6,
+		"trwiki": "Sazlıdere Barajı",
+		"lat": 41.105833333,
+		"lon": 28.718333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q16890425",
+		"tur": "antik",
+		"ad": "Serrion Teichos",
+		"sl": 6,
+		"trwiki": "Serrion Teichos",
+		"lat": 40.750541,
+		"lon": 27.324357,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tekirdağ"
+		]
+	},
+	{
+		"qid": "Q1090355",
+		"tur": "baraj",
+		"ad": "Seve Barajı",
+		"sl": 6,
+		"trwiki": "Seve Barajı",
+		"lat": 36.73561,
+		"lon": 37.24263,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kilis"
+		]
+	},
+	{
+		"qid": "Q6009704",
+		"tur": "kale",
+		"ad": "Sinop Kalesi",
+		"sl": 6,
+		"trwiki": "Sinop Kalesi",
+		"lat": 42.0237,
+		"lon": 35.1506,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sinop"
+		]
+	},
+	{
+		"qid": "Q2303817",
+		"tur": "kale",
+		"ad": "Soterioupolis",
+		"sl": 6,
+		"trwiki": "Soterioupolis",
+		"lat": 43.166667,
+		"lon": 40.333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q7624208",
+		"tur": "kale",
+		"ad": "Strobilos",
+		"sl": 6,
+		"trwiki": "Strobilos",
+		"lat": 36.9806,
+		"lon": 27.3167,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q1090549",
+		"tur": "baraj",
+		"ad": "Sücüllü Barajı",
+		"sl": 6,
+		"trwiki": "Sücüllü Barajı",
+		"lat": 38.36973,
+		"lon": 31.14034,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Isparta"
+		]
+	},
+	{
+		"qid": "Q1089321",
+		"tur": "baraj",
+		"ad": "Sürgü Barajı",
+		"sl": 6,
+		"trwiki": "Sürgü Barajı",
+		"lat": 38.03491,
+		"lon": 37.87954,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Malatya"
+		]
+	},
+	{
+		"qid": "Q14544632",
+		"tur": "kale",
+		"ad": "Şanlıurfa Kalesi",
+		"sl": 6,
+		"trwiki": "Şanlıurfa Kalesi",
+		"lat": 37.1454,
+		"lon": 38.784,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Şanlıurfa"
+		]
+	},
+	{
+		"qid": "Q91682094",
+		"tur": "kale",
+		"ad": "Şile Kalesi",
+		"sl": 6,
+		"trwiki": "Şile Kalesi",
+		"lat": 41.18144,
+		"lon": 29.60912,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q648039",
+		"tur": "baraj",
+		"ad": "Tahtaköprü Barajı",
+		"sl": 6,
+		"trwiki": "Tahtaköprü Barajı",
+		"lat": 36.8568,
+		"lon": 36.68802,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q1089592",
+		"tur": "baraj",
+		"ad": "Tatlarin Barajı",
+		"sl": 6,
+		"trwiki": "Tatlarin Barajı",
+		"lat": 38.61969,
+		"lon": 34.48964,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Nevşehir"
+		]
+	},
+	{
+		"qid": "Q585514",
+		"tur": "baraj",
+		"ad": "Tayfur Barajı",
+		"sl": 6,
+		"trwiki": "Tayfur Barajı",
+		"lat": 40.384480555,
+		"lon": 26.487580555,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q50812205",
+		"tur": "antik",
+		"ad": "Teimiussa",
+		"sl": 6,
+		"trwiki": "Teimiussa",
+		"lat": 36.1971,
+		"lon": 29.8502,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q12878026",
+		"tur": "antik",
+		"ad": "Thymbra",
+		"sl": 6,
+		"trwiki": "Thymbra (antik kent)",
+		"lat": 39.8898773,
+		"lon": 26.2882175,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q17631591",
+		"tur": "antik",
+		"ad": "Tisna",
+		"sl": 6,
+		"trwiki": "Tisna",
+		"lat": 38.772883,
+		"lon": 27.065592,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1282166",
+		"tur": "kale",
+		"ad": "Tokmar Kalesi",
+		"sl": 6,
+		"trwiki": "Tokmar Kalesi",
+		"lat": 36.25638889,
+		"lon": 33.77055556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q97316427",
+		"tur": "kale",
+		"ad": "Tortum Kalesi",
+		"sl": 6,
+		"trwiki": "Tortum Kalesi",
+		"lat": 40.340555555,
+		"lon": 41.469888888,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Erzurum"
+		]
+	},
+	{
+		"qid": "Q2450857",
+		"tur": "antik",
+		"ad": "Trebenna",
+		"sl": 6,
+		"trwiki": "Trebenna",
+		"lat": 36.865717,
+		"lon": 30.475731,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Antalya"
+		]
+	},
+	{
+		"qid": "Q30680477",
+		"tur": "gol",
+		"ad": "Tuzla Gölü",
+		"sl": 6,
+		"trwiki": "Tuzla Gölü (Karataş)",
+		"lat": 36.7031,
+		"lon": 35.0459,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adana"
+		]
+	},
+	{
+		"qid": "Q1090401",
+		"tur": "baraj",
+		"ad": "Uluborlu Barajı",
+		"sl": 6,
+		"trwiki": "Uluborlu Barajı",
+		"lat": 38.05865,
+		"lon": 30.41457,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Isparta"
+		]
+	},
+	{
+		"qid": "Q1090302",
+		"tur": "baraj",
+		"ad": "Uluköy Barajı",
+		"sl": 6,
+		"trwiki": "Uluköy Barajı",
+		"lat": 40.7787,
+		"lon": 36.3944,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Amasya"
+		]
+	},
+	{
+		"qid": "Q31190767",
+		"tur": "gol",
+		"ad": "Uyuz Gölü",
+		"sl": 6,
+		"trwiki": "Uyuz Gölü",
+		"lat": 39.24036,
+		"lon": 32.92485,
+		"yukseklik": [
+			1200
+		],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q939312",
+		"tur": "baraj",
+		"ad": "Uzunlu Barajı",
+		"sl": 6,
+		"trwiki": "Uzunlu Barajı",
+		"lat": 39.25554,
+		"lon": 35.41848,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Yozgat"
+		]
+	},
+	{
+		"qid": "Q1090579",
+		"tur": "baraj",
+		"ad": "Yahyasaray Barajı",
+		"sl": 6,
+		"trwiki": "Yahyasaray Barajı",
+		"lat": 39.50443,
+		"lon": 35.71828,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Yozgat"
+		]
+	},
+	{
+		"qid": "Q478485",
+		"tur": "baraj",
+		"ad": "Yapıaltın Barajı",
+		"sl": 6,
+		"trwiki": "Yapıaltın Barajı",
+		"lat": 39.29776,
+		"lon": 36.41563,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sivas"
+		]
+	},
+	{
+		"qid": "Q1090436",
+		"tur": "baraj",
+		"ad": "Yarseli Barajı",
+		"sl": 6,
+		"trwiki": "Yarseli Barajı",
+		"lat": 36.19373,
+		"lon": 36.32697,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q1090615",
+		"tur": "baraj",
+		"ad": "Yayladağı Barajı",
+		"sl": 6,
+		"trwiki": "Yayladağı Barajı",
+		"lat": 35.94549,
+		"lon": 36.06046,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Hatay"
+		]
+	},
+	{
+		"qid": "Q1090339",
+		"tur": "baraj",
+		"ad": "Yaylakavak Barajı",
+		"sl": 6,
+		"trwiki": "Yaylakavak Barajı",
+		"lat": 37.57603,
+		"lon": 27.80433,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q1091559",
+		"tur": "baraj",
+		"ad": "Yedikır Barajı",
+		"sl": 6,
+		"trwiki": "Yedikır Barajı",
+		"lat": 40.7756,
+		"lon": 35.5703,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Amasya"
+		]
+	},
+	{
+		"qid": "Q4700698",
+		"tur": "baraj",
+		"ad": "Akhasan Barajı",
+		"sl": 5,
+		"trwiki": "Akhasan Barajı",
+		"lat": 40.74212,
+		"lon": 32.7961,
+		"yukseklik": [
+			1256
+		],
+		"alan": [],
+		"iller": [
+			"Çankırı"
+		]
+	},
+	{
+		"qid": "Q2636533",
+		"tur": "baraj",
+		"ad": "Alaköprü",
+		"sl": 5,
+		"trwiki": "Alaköprü Barajı ve Hidroelektrik Santrali",
+		"lat": 36.18176,
+		"lon": 32.89491,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q4734770",
+		"tur": "baraj",
+		"ad": "Alpaslan-1 Barajı ve Hidroelektrik Santrali",
+		"sl": 5,
+		"trwiki": "Alpaslan-1 Barajı ve Hidroelektrik Santrali",
+		"lat": 39.04911,
+		"lon": 41.81866,
+		"yukseklik": [
+			1410
+		],
+		"alan": [],
+		"iller": [
+			"Muş"
+		]
+	},
+	{
+		"qid": "Q1129642",
+		"tur": "baraj",
+		"ad": "Altunhisar Barajı",
+		"sl": 5,
+		"trwiki": "Altunhisar Barajı",
+		"lat": 37.98013,
+		"lon": 34.38971,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Niğde"
+		]
+	},
+	{
+		"qid": "Q21524009",
+		"tur": "kale",
+		"ad": "Amasya Kalesi",
+		"sl": 5,
+		"trwiki": "Amasya Kalesi",
+		"lat": 40.65528,
+		"lon": 35.82667,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Amasya"
+		]
+	},
+	{
+		"qid": "Q6034823",
+		"tur": "kale",
+		"ad": "Ardahan Kalesi",
+		"sl": 5,
+		"trwiki": "Ardahan Kalesi",
+		"lat": 41.118333333,
+		"lon": 42.703027777,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Ardahan"
+		]
+	},
+	{
+		"qid": "Q15191796",
+		"tur": "baraj",
+		"ad": "Artvin Barajı ve Hidroelektrik Santrali",
+		"sl": 5,
+		"trwiki": "Artvin Barajı ve Hidroelektrik Santrali",
+		"lat": 40.9324,
+		"lon": 41.76922,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q4843099",
+		"tur": "baraj",
+		"ad": "Bahçelik Barajı ve Hidroelektrik Santrali",
+		"sl": 5,
+		"trwiki": "Bahçelik Barajı ve Hidroelektrik Santrali",
+		"lat": 38.676628,
+		"lon": 36.291866,
+		"yukseklik": [
+			1465
+		],
+		"alan": [],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q6042116",
+		"tur": "kale",
+		"ad": "Bayburt Kalesi",
+		"sl": 5,
+		"trwiki": "Bayburt Kalesi",
+		"lat": 40.2636,
+		"lon": 40.2294,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bayburt"
+		]
+	},
+	{
+		"qid": "Q28196026",
+		"tur": "kale",
+		"ad": "Beçin Kalesi",
+		"sl": 5,
+		"trwiki": "Beçin Kalesi",
+		"lat": 37.275,
+		"lon": 27.78916667,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q55605154",
+		"tur": "kale",
+		"ad": "Belenkeşlik Kalesi",
+		"sl": 5,
+		"trwiki": "Belenkeşlik Kalesi",
+		"lat": 36.972222222,
+		"lon": 34.553333333,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q4900451",
+		"tur": "baraj",
+		"ad": "Beşkarış Barajı",
+		"sl": 5,
+		"trwiki": "Beşkarış Barajı",
+		"lat": 38.95808,
+		"lon": 30.15145,
+		"yukseklik": [
+			1149
+		],
+		"alan": [],
+		"iller": [
+			"Kütahya"
+		]
+	},
+	{
+		"qid": "Q4899840",
+		"tur": "baraj",
+		"ad": "Beydağ Barajı",
+		"sl": 5,
+		"trwiki": "Beydağ Barajı",
+		"lat": 38.10546,
+		"lon": 28.21506,
+		"yukseklik": [
+			186
+		],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q4952946",
+		"tur": "baraj",
+		"ad": "Boğazköy Barajı",
+		"sl": 5,
+		"trwiki": "Boğazköy Barajı",
+		"lat": 40.17378,
+		"lon": 29.5245,
+		"yukseklik": [
+			267
+		],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q895864",
+		"tur": "baraj",
+		"ad": "Boyabat Barajı",
+		"sl": 5,
+		"trwiki": "Boyabat Barajı",
+		"lat": 41.33864,
+		"lon": 35.00183,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q6050068",
+		"tur": "kale",
+		"ad": "Bozcaada Kalesi",
+		"sl": 5,
+		"trwiki": "Bozcaada Kalesi",
+		"lat": 39.83333333,
+		"lon": 26.06666667,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale"
+		]
+	},
+	{
+		"qid": "Q97207430",
+		"tur": "kale",
+		"ad": "Canca Kalesi",
+		"sl": 5,
+		"trwiki": "Canca Kalesi",
+		"lat": 40.4697723,
+		"lon": 39.4526978,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gümüşhane"
+		]
+	},
+	{
+		"qid": "Q1089584",
+		"tur": "baraj",
+		"ad": "Cip Barajı",
+		"sl": 5,
+		"trwiki": "Cip Barajı",
+		"lat": 38.6781,
+		"lon": 39.06769,
+		"yukseklik": [
+			1036
+		],
+		"alan": [],
+		"iller": [
+			"Elazığ"
+		]
+	},
+	{
+		"qid": "Q2885099",
+		"tur": "baraj",
+		"ad": "Cizre Barajı",
+		"sl": 5,
+		"trwiki": null,
+		"lat": 37.362926,
+		"lon": 42.154713,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q6970952",
+		"tur": "kale",
+		"ad": "Cizre Kalesi",
+		"sl": 5,
+		"trwiki": "Cizre Kalesi",
+		"lat": 37.328909801,
+		"lon": 42.192779996,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Şırnak"
+		]
+	},
+	{
+		"qid": "Q8077464",
+		"tur": "baraj",
+		"ad": "Çaltıkoru Barajı",
+		"sl": 5,
+		"trwiki": "Çaltıkoru Barajı",
+		"lat": 39.24326,
+		"lon": 27.33538,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q1090465",
+		"tur": "baraj",
+		"ad": "Çamköy Barajı",
+		"sl": 5,
+		"trwiki": "Çamköy Barajı",
+		"lat": 39.46305,
+		"lon": 28.16657,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Balıkesir"
+		]
+	},
+	{
+		"qid": "Q683722",
+		"tur": "baraj",
+		"ad": "Çat Barajı",
+		"sl": 5,
+		"trwiki": "Çat Barajı",
+		"lat": 38.06828,
+		"lon": 38.31223,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Adıyaman"
+		]
+	},
+	{
+		"qid": "Q745032",
+		"tur": "baraj",
+		"ad": "Çatak Barajı",
+		"sl": 5,
+		"trwiki": "Çatak Barajı",
+		"lat": 41.78451,
+		"lon": 33.66721,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kastamonu"
+		]
+	},
+	{
+		"qid": "Q1089635",
+		"tur": "baraj",
+		"ad": "Çoğun Barajı",
+		"sl": 5,
+		"trwiki": "Çoğun Barajı",
+		"lat": 39.32432,
+		"lon": 34.11852,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kırşehir"
+		]
+	},
+	{
+		"qid": "Q2885382",
+		"tur": "baraj",
+		"ad": "Çokal Barajı",
+		"sl": 5,
+		"trwiki": "Çokal Barajı",
+		"lat": 40.68314,
+		"lon": 27.00745,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çanakkale",
+			"Tekirdağ"
+		]
+	},
+	{
+		"qid": "Q5243719",
+		"tur": "kale",
+		"ad": "Dağlı Kalesi",
+		"sl": 5,
+		"trwiki": "Dağlı Kalesi",
+		"lat": 36.7067106,
+		"lon": 34.2547833,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q2885109",
+		"tur": "baraj",
+		"ad": "Derebucak Barajı",
+		"sl": 5,
+		"trwiki": "Derebucak Barajı",
+		"lat": 37.36419,
+		"lon": 31.54255,
+		"yukseklik": [
+			1332
+		],
+		"alan": [],
+		"iller": [
+			"Konya"
+		]
+	},
+	{
+		"qid": "Q2885116",
+		"tur": "baraj",
+		"ad": "Dodurga Barajı",
+		"sl": 5,
+		"trwiki": "Dodurga Barajı",
+		"lat": 41.52456,
+		"lon": 34.97371,
+		"yukseklik": [
+			512
+		],
+		"alan": [],
+		"iller": [
+			"Sinop"
+		]
+	},
+	{
+		"qid": "Q426801",
+		"tur": "baraj",
+		"ad": "Germeçtepe Barajı",
+		"sl": 5,
+		"trwiki": "Germeçtepe Barajı",
+		"lat": 41.44736,
+		"lon": 33.63532,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kastamonu"
+		]
+	},
+	{
+		"qid": "Q6041896",
+		"tur": "kale",
+		"ad": "Giresun Kalesi",
+		"sl": 5,
+		"trwiki": "Giresun Kalesi",
+		"lat": 40.921458,
+		"lon": 38.391831,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Giresun"
+		]
+	},
+	{
+		"qid": "Q1090269",
+		"tur": "baraj",
+		"ad": "Gökpınar Barajı",
+		"sl": 5,
+		"trwiki": "Gökpınar Barajı",
+		"lat": 37.78598,
+		"lon": 29.12839,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Denizli"
+		]
+	},
+	{
+		"qid": "Q64066667",
+		"tur": "kale",
+		"ad": "Gülek Kalesi",
+		"sl": 5,
+		"trwiki": "Gülek Kalesi",
+		"lat": 37.27,
+		"lon": 34.791389,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q126915860",
+		"tur": "kale",
+		"ad": "Güvercinada Kalesi",
+		"sl": 5,
+		"trwiki": "Güvercinada Kalesi",
+		"lat": 37.863638888,
+		"lon": 27.247666666,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aydın"
+		]
+	},
+	{
+		"qid": "Q1090600",
+		"tur": "baraj",
+		"ad": "Hacıhıdır Barajı",
+		"sl": 5,
+		"trwiki": "Hacıhıdır Barajı",
+		"lat": 37.71367,
+		"lon": 39.19243,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Şanlıurfa"
+		]
+	},
+	{
+		"qid": "Q746356",
+		"tur": "baraj",
+		"ad": "Hancağız Barajı",
+		"sl": 5,
+		"trwiki": "Hancağız Barajı",
+		"lat": 36.96019,
+		"lon": 37.89137,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gaziantep"
+		]
+	},
+	{
+		"qid": "Q8080114",
+		"tur": "baraj",
+		"ad": "İmranlı Barajı",
+		"sl": 5,
+		"trwiki": "İmranlı Barajı",
+		"lat": 39.88038,
+		"lon": 38.16778,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Sivas"
+		]
+	},
+	{
+		"qid": "Q6370304",
+		"tur": "baraj",
+		"ad": "Kargı Barajı",
+		"sl": 5,
+		"trwiki": "Kargı Barajı ve Hidroelektrik Santrali",
+		"lat": 39.96617,
+		"lon": 31.74012,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Eskişehir",
+			"Ankara"
+		]
+	},
+	{
+		"qid": "Q6379011",
+		"tur": "baraj",
+		"ad": "Kavakdere Barajı",
+		"sl": 5,
+		"trwiki": "Kavakdere Barajı",
+		"lat": 38.17724,
+		"lon": 26.9016,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q2885179",
+		"tur": "baraj",
+		"ad": "Kayalıköy Barajı",
+		"sl": 5,
+		"trwiki": "Kayalıköy Barajı",
+		"lat": 41.78852,
+		"lon": 27.13546,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kırklareli"
+		]
+	},
+	{
+		"qid": "Q1090518",
+		"tur": "baraj",
+		"ad": "Kızılcapınar Barajı ve Hidroelektrik Santrali",
+		"sl": 5,
+		"trwiki": "Kızılcapınar Barajı ve Hidroelektrik Santrali",
+		"lat": 41.24109,
+		"lon": 31.6167,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Zonguldak"
+		]
+	},
+	{
+		"qid": "Q6453946",
+		"tur": "baraj",
+		"ad": "Köprübaşı Barajı ve Hidroelektrik Santrali",
+		"sl": 5,
+		"trwiki": "Köprübaşı Barajı ve Hidroelektrik Santrali",
+		"lat": 40.98916,
+		"lon": 31.90812,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bolu"
+		]
+	},
+	{
+		"qid": "Q2885194",
+		"tur": "baraj",
+		"ad": "Kültepe Barajı",
+		"sl": 5,
+		"trwiki": "Kültepe Barajı",
+		"lat": 38.81525,
+		"lon": 34.16922,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Aksaray"
+		]
+	},
+	{
+		"qid": "Q6454185",
+		"tur": "baraj",
+		"ad": "Kürtün Barajı ve Hidroelektrik Santrali",
+		"sl": 5,
+		"trwiki": "Kürtün Barajı ve Hidroelektrik Santrali",
+		"lat": 40.68178,
+		"lon": 39.12786,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gümüşhane"
+		]
+	},
+	{
+		"qid": "Q6747679",
+		"tur": "kale",
+		"ad": "Mancınık Kalesi",
+		"sl": 5,
+		"trwiki": "Mancınık Kalesi",
+		"lat": 36.51666667,
+		"lon": 34.05,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q6772114",
+		"tur": "kale",
+		"ad": "Marmaris Kalesi",
+		"sl": 5,
+		"trwiki": "Marmaris Kalesi",
+		"lat": 36.8506,
+		"lon": 28.2744,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Muğla"
+		]
+	},
+	{
+		"qid": "Q6943631",
+		"tur": "kale",
+		"ad": "Mut Kalesi",
+		"sl": 5,
+		"trwiki": "Mut Kalesi",
+		"lat": 36.64444444,
+		"lon": 33.43388889,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Mersin"
+		]
+	},
+	{
+		"qid": "Q3707521",
+		"tur": "baraj",
+		"ad": "Nilüfer Barajı",
+		"sl": 5,
+		"trwiki": "Nilüfer Barajı",
+		"lat": 40.01166,
+		"lon": 29.11627,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Bursa"
+		]
+	},
+	{
+		"qid": "Q7075372",
+		"tur": "baraj",
+		"ad": "Obruk Barajı ve Hidroelektrik Santrali",
+		"sl": 5,
+		"trwiki": "Obruk Barajı ve Hidroelektrik Santrali",
+		"lat": 40.77027778,
+		"lon": 34.78805556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": []
+	},
+	{
+		"qid": "Q1748415",
+		"tur": "baraj",
+		"ad": "Onaç-2 Barajı",
+		"sl": 5,
+		"trwiki": "Onaç-2 Barajı",
+		"lat": 37.49146,
+		"lon": 30.56969,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Burdur"
+		]
+	},
+	{
+		"qid": "Q6025389",
+		"tur": "kale",
+		"ad": "Pertek Kalesi",
+		"sl": 5,
+		"trwiki": "Pertek Kalesi",
+		"lat": 38.84444427,
+		"lon": 39.27166748,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tunceli"
+		]
+	},
+	{
+		"qid": "Q65285170",
+		"tur": "kale",
+		"ad": "Peterek Kalesi",
+		"sl": 5,
+		"trwiki": "Peterek Kalesi",
+		"lat": 40.746005,
+		"lon": 41.480952,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Artvin"
+		]
+	},
+	{
+		"qid": "Q980626",
+		"tur": "kale",
+		"ad": "Romanus Kapısı",
+		"sl": 5,
+		"trwiki": null,
+		"lat": 41.021655,
+		"lon": 28.926297,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İstanbul"
+		]
+	},
+	{
+		"qid": "Q6100078",
+		"tur": "kale",
+		"ad": "Samsun Kalesi",
+		"sl": 5,
+		"trwiki": "Samsun Kalesi",
+		"lat": 41.29416667,
+		"lon": 36.3325,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Samsun"
+		]
+	},
+	{
+		"qid": "Q2885282",
+		"tur": "baraj",
+		"ad": "Sarımsaklı Barajı",
+		"sl": 5,
+		"trwiki": "Sarımsaklı Barajı",
+		"lat": 38.88967,
+		"lon": 35.73369,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kayseri"
+		]
+	},
+	{
+		"qid": "Q65285189",
+		"tur": "kale",
+		"ad": "Satleli",
+		"sl": 5,
+		"trwiki": "Satleli Kalesi",
+		"lat": 41.259132,
+		"lon": 42.328017,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Artvin"
+		]
+	},
+	{
+		"qid": "Q1091820",
+		"tur": "baraj",
+		"ad": "Sıddıklı Barajı",
+		"sl": 5,
+		"trwiki": "Sıddıklı Barajı",
+		"lat": 39.14035,
+		"lon": 33.91083,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kırşehir"
+		]
+	},
+	{
+		"qid": "Q1091814",
+		"tur": "baraj",
+		"ad": "Sorgun Barajı",
+		"sl": 5,
+		"trwiki": "Sorgun Barajı",
+		"lat": 37.83617,
+		"lon": 31.10064,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Isparta"
+		]
+	},
+	{
+		"qid": "Q1090254",
+		"tur": "baraj",
+		"ad": "Söğüt Barajı",
+		"sl": 5,
+		"trwiki": "Söğüt Barajı",
+		"lat": 39.42369,
+		"lon": 30.19146,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kütahya"
+		]
+	},
+	{
+		"qid": "Q516948",
+		"tur": "baraj",
+		"ad": "Sultansuyu Barajı",
+		"sl": 5,
+		"trwiki": "Sultansuyu Barajı",
+		"lat": 38.31867,
+		"lon": 38.05183,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Malatya"
+		]
+	},
+	{
+		"qid": "Q61073234",
+		"tur": "kale",
+		"ad": "Suriye-Türkiye sınır duvarı",
+		"sl": 5,
+		"trwiki": "Suriye-Türkiye sınır duvarı",
+		"lat": null,
+		"lon": null,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Kilis",
+			"Mardin",
+			"Hatay",
+			"Şanlıurfa",
+			"Gaziantep",
+			"Şırnak"
+		]
+	},
+	{
+		"qid": "Q2885309",
+		"tur": "baraj",
+		"ad": "Süloğlu Barajı",
+		"sl": 5,
+		"trwiki": "Süloğlu Barajı",
+		"lat": 41.79005,
+		"lon": 26.91709,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Edirne"
+		]
+	},
+	{
+		"qid": "Q6099157",
+		"tur": "kale",
+		"ad": "Tokat Kalesi",
+		"sl": 5,
+		"trwiki": "Tokat Kalesi",
+		"lat": 40.3175,
+		"lon": 36.54805556,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Tokat"
+		]
+	},
+	{
+		"qid": "Q2885318",
+		"tur": "baraj",
+		"ad": "Tortum Barajı",
+		"sl": 5,
+		"trwiki": "Tortum Barajı",
+		"lat": 40.65662,
+		"lon": 41.65962,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Artvin"
+		]
+	},
+	{
+		"qid": "Q1328922",
+		"tur": "baraj",
+		"ad": "Torul Barajı",
+		"sl": 5,
+		"trwiki": "Torul Barajı ve Hidroelektrik Santrali",
+		"lat": 40.63527778,
+		"lon": 39.23138889,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Gümüşhane"
+		]
+	},
+	{
+		"qid": "Q2885343",
+		"tur": "baraj",
+		"ad": "Yenihayat Barajı",
+		"sl": 5,
+		"trwiki": "Yenihayat Barajı",
+		"lat": 40.392744444,
+		"lon": 34.6671,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Çorum"
+		]
+	},
+	{
+		"qid": "Q2577512",
+		"tur": "baraj",
+		"ad": "Yortanlı Barajı",
+		"sl": 5,
+		"trwiki": "Yortanlı Barajı",
+		"lat": 39.22844,
+		"lon": 27.32446,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"İzmir"
+		]
+	},
+	{
+		"qid": "Q921621",
+		"tur": "baraj",
+		"ad": "Zernek Barajı ve Hidroelektrik Santrali",
+		"sl": 5,
+		"trwiki": "Zernek Barajı ve Hidroelektrik Santrali",
+		"lat": 38.35561,
+		"lon": 43.65681,
+		"yukseklik": [],
+		"alan": [],
+		"iller": [
+			"Van"
+		]
+	}
+]

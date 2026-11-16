@@ -1,0 +1,64 @@
+# Türkiye derin (SORU-100K Aşama 2, aile 1) seçimi: soru olmaya değer dağ, göl, baraj, antik kent, kale.
+# Biçim: QID | tür | soruda görünen ad | il (TEK ve kesin) | zorluk | ipucu (isteğe bağlı) | yasak çeldirici (isteğe bağlı, virgüllü)
+# Kurallar:
+# - İl elle doğrulanır; Wikidata'nın il bağı eksik ya da tek yanlı olabilir (Hazar Gölü ilsiz, Ağrı Dağı Iğdır'sız).
+# - Birden çok ile yayılan (Van Gölü, Tuz Gölü, Beyşehir, Burdur, Çıldır, Akşehir, Bafa, Sapanca gölleri; Ağrı, Hasan,
+#   Kaçkar, Murat, Medetsiz, Sis dağları; dağ sıraları) "hangi ilde" sorusu olmaz: seçilmez.
+# - Adı karışan seçilmez (iki Nemrut Dağı: Adıyaman ve Bitlis; Kösedağ: Ağrı'daki dağ, Sivas'taki savaş).
+# - Adı bir ilçeyle aynıysa o ilçenin ili çeldirici olmaz (Babadağ dağı Muğla'da; Babadağ ilçesi Denizli'de).
+# - Yükseklik sorusu yok: kaynaklar arasında 5–55 m fark var (Kaçkar 3932/3937, Erciyes 3916/3917, Nemrut 2150/2206).
+# - İpucu kesin bilgi, sıfat öbeği; ilin adını içermez, bankadaki başka sorunun cevabını açmaz (tools/soru/ipucu_acik.mjs).
+# --- dağ
+Q126804 | dag | Erciyes Dağı | Kayseri | 1 | Kayak merkezi olan sönmüş yanardağ
+Q925688 | dag | Uludağ | Bursa | 1 | Eski adı Keşiş Dağı olan
+Q532698 | dag | Spil Dağı | Manisa | 2 | Ağlayan Kaya'nın bulunduğu
+Q1433508 | dag | Süphan Dağı | Bitlis | 2
+Q1143135 | dag | Cudi Dağı | Şırnak | 2 | Tufan rivayetleriyle anılan
+Q1953975 | dag | Musa Dağı | Hatay | 2
+Q3022142 | dag | Demirkazık Dağı | Niğde | 3 | Aladağlar'ın en yüksek zirvesi
+Q2388359 | dag | Tahtalı Dağı | Antalya | 2 | Antik adı Olimpos olan
+Q1091987 | dag | Cilo Dağı | Hakkari | 2 | Uludoruk zirvesiyle bilinen
+Q6018069 | dag | Artos Dağı | Van | 3
+Q1559343 | dag | Göllü Dağ | Niğde | 3
+Q4837427 | dag | Babadağ | Muğla | 2 | Yamaç paraşütüyle ünlü | Denizli
+Q6920390 | dag | Davraz Dağı | Isparta | 2 | Kayak merkeziyle bilinen
+Q962205 | dag | Yamanlar Dağı | İzmir | 3
+Q6920664 | dag | Erek Dağı | Van | 3
+Q6922413 | dag | Nif Dağı | İzmir | 3
+Q16665138 | dag | Işıklar Dağı | Tekirdağ | 3 | Antik adı Ganos olan
+Q6056994 | dag | Kayış Dağı | İstanbul | 2
+# --- göl
+Q1334148 | gol | Eğirdir Gölü | Isparta | 1
+Q192369 | gol | İznik Gölü | Bursa | 1
+Q421825 | gol | Aktaş Gölü | Ardahan | 3 | Gürcistan sınırındaki
+Q30681483 | gol | Akdoğan Gölü | Muş | 3
+Q3234128 | gol | Salda Gölü | Burdur | 1 | Turkuaz suyuyla ünlü
+Q1095336 | gol | Uzungöl | Trabzon | 1
+Q2661366 | gol | Köyceğiz Gölü | Muğla | 2
+Q305501 | gol | Abant Gölü | Bolu | 1
+Q2380189 | gol | Hazar Gölü | Elazığ | 2 | Sular altında bir şehir kalıntısı bulunan
+Q1891954 | gol | Manyas Kuşgölü | Balıkesir | 2 | Kuş Cenneti Milli Parkı'nın bulunduğu
+Q2988251 | gol | Nemrut Gölü | Bitlis | 2 | Bir yanardağın kraterindeki
+Q1366366 | gol | Erçek Gölü | Van | 3
+Q2478029 | gol | Nazik Gölü | Bitlis | 3
+Q1797436 | gol | Küçükçekmece Gölü | İstanbul | 2
+Q601695 | gol | Marmara Gölü | Manisa | 3
+Q4809067 | gol | Uluabat Gölü | Bursa | 2 | Antik adı Apolyont olan
+Q1021881 | gol | Büyükçekmece Gölü | İstanbul | 2
+Q1676200 | gol | Işıklı Gölü | Denizli | 3
+Q893292 | gol | Boraboy Gölü | Amasya | 3
+Q1278759 | gol | Eber Gölü | Afyonkarahisar | 3
+Q6587092 | gol | Ladik Gölü | Samsun | 3
+Q4810216 | gol | Mogan Gölü | Ankara | 2
+Q4810695 | gol | Eymir Gölü | Ankara | 2 | ODTÜ arazisindeki
+Q4702037 | gol | Akyatan Gölü | Adana | 3
+Q4171154 | gol | Durusu Gölü | İstanbul | 2 | Eski adı Terkos olan
+Q6111551 | gol | Suğla Gölü | Konya | 3
+Q805908 | gol | Balıklıgöl | Şanlıurfa | 1 | Kutsal sayılan balıklarıyla bilinen
+Q20470564 | gol | Arin Gölü | Bitlis | 3
+Q49313576 | gol | Tortum Gölü | Erzurum | 2 | Heyelanla oluşmuş
+Q6048583 | gol | Seyfe Gölü | Kırşehir | 3
+Q14395861 | gol | Gölcük Gölü | Isparta | 3 | Krater gölü olan
+Q6065286 | gol | Meke Krater Gölü | Konya | 2 | "Dünyanın nazar boncuğu" denen
+Q20988477 | gol | Narlıgöl | Niğde | 3
+Q1740373 | gol | Keşiş Gölü | Van | 3

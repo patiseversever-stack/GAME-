@@ -1,0 +1,14 @@
+# Türkiye derin (SORU-100K Aşama 2, aile 1): Türkiye'deki (P17 Q43) Q8502 sınıfından ya da alt sınıfından nesneler.
+# Site bağlantısı (tanınırlık için kaba ölçü), trwiki başlığı, koordinat, yükseklik (P2044), alan (P2046),
+# bağlı olduğu il(ler) (P131 zinciri; Türkiye ili Q48336). Birden çok il ya da yükseklik değeri birden çok satır verir.
+SELECT ?f ?ad ?sl ?trwiki ?koord ?yuk ?alan ?il ?ilAd WHERE {
+  ?f wdt:P31/wdt:P279* wd:Q8502 ; wdt:P17 wd:Q43 ; wikibase:sitelinks ?sl .
+  FILTER(?sl >= 6)
+  ?f rdfs:label ?ad . FILTER(lang(?ad) = "tr")
+  OPTIONAL { ?w schema:about ?f ; schema:isPartOf <https://tr.wikipedia.org/> ; schema:name ?trwiki }
+  OPTIONAL { ?f wdt:P625 ?koord }
+  OPTIONAL { ?f wdt:P2044 ?yuk }
+  OPTIONAL { ?f wdt:P2046 ?alan }
+  OPTIONAL { ?f wdt:P131* ?il . ?il wdt:P31 wd:Q48336 . ?il rdfs:label ?ilAd . FILTER(lang(?ilAd) = "tr") }
+}
+ORDER BY DESC(?sl) ?f

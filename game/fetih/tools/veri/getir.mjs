@@ -1,6 +1,6 @@
 // Açık veri toplayıcı: Wikidata SPARQL sorgularını (sorgu/*.rq) çalıştırır, sonucu temizleyip ham/*.json üretir.
-// Kullanım (oyun kökünden):  node tools/veri/getir.mjs [ilce] [kisi] [--onbellek <klasör>] [--npm <paket klasörü>]
-//   ilce / kisi       yalnız o bölümü üret (ikisi de yoksa hepsi)
+// Kullanım (oyun kökünden):  node tools/veri/getir.mjs [ilce] [kisi] [derin] [--onbellek <klasör>] [--npm <paket klasörü>]
+//   ilce / kisi / derin  yalnız o bölümü üret (hiçbiri yoksa hepsi)
 //   --onbellek <dir>  SPARQL yanıtlarını bu klasöre yaz; dosya varsa ağdan yeniden çekme (yalnız geliştirme için;
 //                     sorgu değişince ya da Wikidata güncellenince klasörü boşaltın)
 //   --npm <dir>       turkey-neighbourhoods@4.0.3 paketinin açılmış klasörü (package/ ya da package/src/data);
@@ -964,6 +964,42 @@ async function kisiBolumu() {
 	};
 }
 
+// ---------------------------------------------------------------- Türkiye derin (Aşama 2, aile 1)
+// Dağ, göl, baraj, antik kent, kale: Wikidata'dan aday listesi. Soru olmaya değer olanı ve doğru ili elle seçilir
+// (tools/veri/aile/derin_secim.txt): Wikidata'nın il bağı eksik ya da tek yanlı olabilir (Ağrı Dağı yalnız Ağrı'ya bağlı,
+// Iğdır yok), sınıfı yanlış olabilir ("Karapınar Düzlüğü" dağ sınıfında). Çıktı: ham/derin.json.
+const DERIN_SINIF = [
+	['dag', 'Q8502', 6], // dağ
+	['dag', 'Q8072', 6], // yanardağ
+	['gol', 'Q23397', 6], // göl (baraj gölü dahil)
+	['baraj', 'Q12323', 5], // baraj
+	['antik', 'Q15661340', 6], // antik kent
+	['antik', 'Q839954', 12], // arkeolojik alan (çok geniş sınıf: eşik yüksek)
+	['kale', 'Q23413', 5], // kale
+	['kale', 'Q57821', 5], // hisar
+];
+async function derinBolumu() {
+	const byQ = new Map();
+	for (const [tur, sinif, enaz] of DERIN_SINIF) {
+		const satir = await sparql('derin_nesne', { '#SINIF#': sinif, '#ENAZ#': enaz }, { dolu: true });
+		for (const r of satir) {
+			const q = r.f.replace(/^.*\//, '');
+			let o = byQ.get(q);
+			if (!o) byQ.set(q, (o = { qid: q, tur, ad: r.ad, sl: Number(r.sl), trwiki: r.trwiki || null, lat: null, lon: null, yukseklik: [], alan: [], iller: [] }));
+			const m = /Point\(([-\d.]+) ([-\d.]+)\)/.exec(r.koord || '');
+			if (m && o.lat == null) (o.lon = Number(m[1])), (o.lat = Number(m[2]));
+			if (r.yuk != null && !o.yukseklik.includes(Number(r.yuk))) o.yukseklik.push(Number(r.yuk));
+			if (r.alan != null && !o.alan.includes(Number(r.alan))) o.alan.push(Number(r.alan));
+			if (r.ilAd && !o.iller.includes(r.ilAd)) o.iller.push(r.ilAd);
+		}
+	}
+	const liste = [...byQ.values()].sort((a, b) => b.sl - a.sl || a.ad.localeCompare(b.ad, 'tr'));
+	yaz('derin.json', liste);
+	const say = {};
+	for (const o of liste) say[o.tur] = (say[o.tur] || 0) + 1;
+	return { nesne: liste.length, tur: say };
+}
+
 // ---------------------------------------------------------------- ana akış
 const ozet = { uretim: new Date().toISOString().slice(0, 10), kaynak: 'Wikidata Query Service (CC0)' };
 const ozetDosya = join(HAM, 'ozet.json');
@@ -979,5 +1015,9 @@ if (yap('ilce')) {
 if (yap('kisi')) {
 	doluTemizle('kisi_');
 	ozet.kisi = await kisiBolumu();
+}
+if (yap('derin')) {
+	doluTemizle('derin_');
+	ozet.derin = await derinBolumu();
 }
 yaz('ozet.json', ozet);

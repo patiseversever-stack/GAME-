@@ -123,5 +123,15 @@
 		],
 		"elleAd": 11,
 		"dislanan": 27
+	},
+	"derin": {
+		"nesne": 740,
+		"tur": {
+			"antik": 308,
+			"dag": 55,
+			"gol": 61,
+			"kale": 71,
+			"baraj": 245
+		}
 	}
 }
