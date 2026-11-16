@@ -403,6 +403,16 @@ const CSS = /* css */ `
   .yn-bl-cv .c{padding:4px 10px 5px;font-size:13.5px}
   .yn-bl-cv .c svg{width:13px;height:13px}
 }
+/* en kısa telefon (320×568): uzunluk sözleşmesinin sınırındaki soru (4 uzun doğru, 3 satır açıklama) cevapta alttaki oyuncu
+   satırını kesiyordu (stres denetimi); bir kademe daha sıkı (~25 px) */
+@media (max-height:600px){
+  .yn-bl-son{gap:4px;padding:6px 8px 8px}
+  .yn-bl-cv{gap:4px}
+  .yn-bl-cv .c{padding:3px 9px 4px;font-size:13px}
+  .yn-bl-not{font-size:11.5px;line-height:1.25;padding:3px 8px 4px}
+  .yn-bl-tr{min-height:24px}
+  .yn-bl-tl{gap:4px 10px}
+}
 @keyframes ynBlSlot{0%{transform:scale(1.6)}100%{transform:none}}
 @keyframes ynBlShake{20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
 @keyframes ynBlSkyShake{25%{transform:translate(3px,-2px)}50%{transform:translate(-3px,2px)}75%{transform:translate(2px,1px)}}

@@ -11,7 +11,7 @@ await import('../../test/kanca.mjs');
 const { BANK } = await import('../../src/data/bank.js');
 const { yeniBank } = await import('../../src/quiz/mac.js');
 const { DENEME_SAMPLES } = await import('../../src/quiz/deneme.js');
-const { SINIR, gez, metinler, ihlaller } = await import('../../src/quiz/sinirlar.js');
+const { SINIR, gez, metinler, ihlaller, kelimeSiniri } = await import('../../src/quiz/sinirlar.js');
 
 const [out, tipA] = process.argv.slice(2);
 if (!out) {
@@ -70,7 +70,7 @@ for (const t of tipler) {
 			return; // çengel ve kelime avı kelimeleri yerleşime bağlı: değişmez
 		}
 		// kelime sınırı mevcut metnin son kelimesiyle birleşmesin diye dolgu boşlukla başlar
-		ekle(dolgu(n, S.uzunKelime));
+		ekle(dolgu(n, kelimeSiniri(S, alan)));
 	});
 	const ih = ihlaller(q);
 	const eksik = metinler(q).filter(([alan, s]) => alan !== 'kelime' && L(s) < S[alan] - 1);

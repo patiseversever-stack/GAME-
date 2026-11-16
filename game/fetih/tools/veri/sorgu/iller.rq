@@ -1,8 +1,6 @@
-# Türkiye'nin 81 ili (Q48336 "province of Turkey"): Türkçe ad, koordinat, plaka kodu.
-SELECT ?il ?ad ?lat ?lon ?plaka WHERE {
+# Türkiye'nin 81 ili (Q48336 "province of Turkey") ve Türkçe adları (oyundaki yazımla eşlenir).
+SELECT ?il ?ad WHERE {
   ?il wdt:P31 wd:Q48336 .
   OPTIONAL { ?il rdfs:label ?ad FILTER(LANG(?ad) = "tr") }
-  OPTIONAL { ?il p:P625/psv:P625 [ wikibase:geoLatitude ?lat ; wikibase:geoLongitude ?lon ] }
-  OPTIONAL { ?il wdt:P395 ?plaka }
 }
-ORDER BY ?il ?lat ?lon ?plaka
+ORDER BY ?il

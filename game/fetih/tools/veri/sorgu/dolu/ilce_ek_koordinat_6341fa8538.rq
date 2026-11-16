@@ -1,0 +1,9 @@
+# İlçe öğelerinde koordinat yoksa trwiki sayfasının bağlı olduğu kasaba/şehir öğesinin koordinatı.
+# wd:Q94637 wd:Q130470 wd:Q132385 wd:Q172902 wd:Q217047 wd:Q241631 wd:Q792913 wd:Q921953 wd:Q1004646 wd:Q1004659 wd:Q1020643 wd:Q1023262 wd:Q1023304 wd:Q1023328 wd:Q1199986 wd:Q1947503 wd:Q1958579 yerine getir.mjs öğeleri koyar; doldurulmuş hali sorgu/dolu/ilce_ek_koordinat_<özet>.rq.
+SELECT ?t ?lat ?lon ?derece WHERE {
+  VALUES ?t { wd:Q94637 wd:Q130470 wd:Q132385 wd:Q172902 wd:Q217047 wd:Q241631 wd:Q792913 wd:Q921953 wd:Q1004646 wd:Q1004659 wd:Q1020643 wd:Q1023262 wd:Q1023304 wd:Q1023328 wd:Q1199986 wd:Q1947503 wd:Q1958579 }
+  ?t p:P625 ?s .
+  ?s psv:P625 [ wikibase:geoLatitude ?lat ; wikibase:geoLongitude ?lon ; wikibase:geoGlobe wd:Q2 ] ; wikibase:rank ?derece .
+  FILTER(?derece != wikibase:DeprecatedRank)
+}
+ORDER BY ?t ?derece ?lat ?lon

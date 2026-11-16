@@ -82,7 +82,8 @@ const CSS = /* css */ `
 .dn-mc .smk{animation:mcSmoke .9s ease-out forwards}
 .dn-mc .fire{animation:mcFlick .12s linear infinite alternate}
 .dn-mc .torch{animation:mcFlick .18s linear infinite alternate}
-.mc-res{display:none;flex-direction:column;gap:6px}
+/* eğik (skewX -8°) satırın köşeleri kutudan ~3 px taşar: liste iç boşlukla içeride (320'de kart kenarı kesmesin) */
+.mc-res{display:none;flex-direction:column;gap:6px;padding-inline:4px}
 .dn-mc.done .mc-res{display:flex}
 .mc-res div{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 12px 0 0;transform:skewX(-8deg);background:#0a0b14;box-shadow:inset 0 0 0 2px rgba(255,255,255,.75);animation:mcRow .35s calc(var(--k) * 120ms + .6s) cubic-bezier(.2,.9,.3,1.2) both}
 .mc-res div>*{transform:skewX(8deg)}

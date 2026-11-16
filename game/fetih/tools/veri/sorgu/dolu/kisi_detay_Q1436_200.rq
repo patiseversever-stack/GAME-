@@ -1,0 +1,38 @@
+# Kişi ayrıntıları; wd:Q1436 wd:Q2153 wd:Q2512 wd:Q2551 wd:Q7723 wd:Q10287 wd:Q13898 wd:Q14279 wd:Q31164 wd:Q37682 wd:Q40262 wd:Q43137 wd:Q44131 wd:Q47595 wd:Q48973 wd:Q49752 wd:Q50678 wd:Q54168 wd:Q54527 wd:Q55407 wd:Q57352 wd:Q57413 wd:Q57418 wd:Q57467 wd:Q57521 wd:Q57675 wd:Q68880 wd:Q71029 wd:Q76167 wd:Q76432 wd:Q76632 wd:Q76749 wd:Q76797 wd:Q76970 wd:Q77078 wd:Q80758 wd:Q82786 wd:Q82934 wd:Q84238 wd:Q92759 wd:Q93188 wd:Q95076 wd:Q102551 wd:Q103396 wd:Q103767 wd:Q104205 wd:Q104454 wd:Q104779 wd:Q107462 wd:Q124086 wd:Q133544 wd:Q134452 wd:Q134687 wd:Q139637 wd:Q148475 wd:Q149315 wd:Q150642 wd:Q150916 wd:Q151735 wd:Q153018 wd:Q153224 wd:Q153700 wd:Q157690 wd:Q157899 wd:Q159876 wd:Q160165 wd:Q160219 wd:Q160341 wd:Q160907 wd:Q160935 wd:Q161443 wd:Q161916 wd:Q166646 wd:Q167610 wd:Q168041 wd:Q168741 wd:Q169288 wd:Q170389 wd:Q170654 wd:Q171112 wd:Q171556 wd:Q172035 wd:Q172261 wd:Q172445 wd:Q173086 wd:Q173714 wd:Q174346 wd:Q178071 wd:Q178799 wd:Q179025 wd:Q179777 wd:Q180004 wd:Q180636 wd:Q181363 wd:Q181707 wd:Q181728 wd:Q181875 wd:Q182128 wd:Q182489 wd:Q182655 wd:Q182882 wd:Q183509 wd:Q183703 wd:Q183848 wd:Q184169 wd:Q184563 wd:Q185165 wd:Q185223 wd:Q185389 wd:Q186256 wd:Q186709 wd:Q186896 wd:Q187550 wd:Q187966 wd:Q188176 wd:Q189400 wd:Q189454 wd:Q189797 wd:Q189987 wd:Q190089 wd:Q190302 wd:Q190766 wd:Q191023 wd:Q191103 wd:Q191850 wd:Q192279 wd:Q199491 wd:Q199496 wd:Q200355 wd:Q200392 wd:Q200582 wd:Q200678 wd:Q201732 wd:Q207431 wd:Q212657 wd:Q213393 wd:Q214642 wd:Q215022 wd:Q217495 wd:Q217619 wd:Q218503 wd:Q219484 wd:Q220976 wd:Q224029 wd:Q227721 wd:Q227961 wd:Q227965 wd:Q227976 wd:Q229828 wd:Q231886 wd:Q231911 wd:Q238947 wd:Q245030 wd:Q270691 wd:Q270739 wd:Q273715 wd:Q276525 wd:Q280098 wd:Q288441 wd:Q291169 wd:Q309702 wd:Q311147 wd:Q314831 wd:Q314975 wd:Q315271 wd:Q320531 wd:Q352159 wd:Q383197 wd:Q443868 wd:Q482955 wd:Q483376 wd:Q483709 wd:Q484365 wd:Q486096 wd:Q489039 wd:Q508711 wd:Q510523 wd:Q549981 wd:Q718601 wd:Q819016 wd:Q927550 wd:Q950958 wd:Q962283 wd:Q1004037 wd:Q1855372 wd:Q1978163 wd:Q2107268 wd:Q2642828 wd:Q2725555 wd:Q2740012 wd:Q4273363 wd:Q4352055 wd:Q6761526 wd:Q8338725 wd:Q13107337 wd:Q15055683 wd:Q15118973 wd:Q16193885 wd:Q16665941 wd:Q57415743 yerine getir.mjs en çok 400 kişilik bir öbek koyar.
+# tur: dogum/olum (P569/P570: değer, hassasiyet, takvim, kerte, P1480 kaynak durumu), meslek (P106),
+#      ulke (P27), etiket (tr/en/mul), aciklama (tr/en), trwiki (sayfa başlığı). Kaldırılmış (deprecated) deyimler alınmaz.
+SELECT ?p ?tur ?s ?zaman ?hassasiyet ?takvim ?derece ?nitelik ?hedef ?dil ?metin ?enMetin WHERE {
+  VALUES ?p { wd:Q1436 wd:Q2153 wd:Q2512 wd:Q2551 wd:Q7723 wd:Q10287 wd:Q13898 wd:Q14279 wd:Q31164 wd:Q37682 wd:Q40262 wd:Q43137 wd:Q44131 wd:Q47595 wd:Q48973 wd:Q49752 wd:Q50678 wd:Q54168 wd:Q54527 wd:Q55407 wd:Q57352 wd:Q57413 wd:Q57418 wd:Q57467 wd:Q57521 wd:Q57675 wd:Q68880 wd:Q71029 wd:Q76167 wd:Q76432 wd:Q76632 wd:Q76749 wd:Q76797 wd:Q76970 wd:Q77078 wd:Q80758 wd:Q82786 wd:Q82934 wd:Q84238 wd:Q92759 wd:Q93188 wd:Q95076 wd:Q102551 wd:Q103396 wd:Q103767 wd:Q104205 wd:Q104454 wd:Q104779 wd:Q107462 wd:Q124086 wd:Q133544 wd:Q134452 wd:Q134687 wd:Q139637 wd:Q148475 wd:Q149315 wd:Q150642 wd:Q150916 wd:Q151735 wd:Q153018 wd:Q153224 wd:Q153700 wd:Q157690 wd:Q157899 wd:Q159876 wd:Q160165 wd:Q160219 wd:Q160341 wd:Q160907 wd:Q160935 wd:Q161443 wd:Q161916 wd:Q166646 wd:Q167610 wd:Q168041 wd:Q168741 wd:Q169288 wd:Q170389 wd:Q170654 wd:Q171112 wd:Q171556 wd:Q172035 wd:Q172261 wd:Q172445 wd:Q173086 wd:Q173714 wd:Q174346 wd:Q178071 wd:Q178799 wd:Q179025 wd:Q179777 wd:Q180004 wd:Q180636 wd:Q181363 wd:Q181707 wd:Q181728 wd:Q181875 wd:Q182128 wd:Q182489 wd:Q182655 wd:Q182882 wd:Q183509 wd:Q183703 wd:Q183848 wd:Q184169 wd:Q184563 wd:Q185165 wd:Q185223 wd:Q185389 wd:Q186256 wd:Q186709 wd:Q186896 wd:Q187550 wd:Q187966 wd:Q188176 wd:Q189400 wd:Q189454 wd:Q189797 wd:Q189987 wd:Q190089 wd:Q190302 wd:Q190766 wd:Q191023 wd:Q191103 wd:Q191850 wd:Q192279 wd:Q199491 wd:Q199496 wd:Q200355 wd:Q200392 wd:Q200582 wd:Q200678 wd:Q201732 wd:Q207431 wd:Q212657 wd:Q213393 wd:Q214642 wd:Q215022 wd:Q217495 wd:Q217619 wd:Q218503 wd:Q219484 wd:Q220976 wd:Q224029 wd:Q227721 wd:Q227961 wd:Q227965 wd:Q227976 wd:Q229828 wd:Q231886 wd:Q231911 wd:Q238947 wd:Q245030 wd:Q270691 wd:Q270739 wd:Q273715 wd:Q276525 wd:Q280098 wd:Q288441 wd:Q291169 wd:Q309702 wd:Q311147 wd:Q314831 wd:Q314975 wd:Q315271 wd:Q320531 wd:Q352159 wd:Q383197 wd:Q443868 wd:Q482955 wd:Q483376 wd:Q483709 wd:Q484365 wd:Q486096 wd:Q489039 wd:Q508711 wd:Q510523 wd:Q549981 wd:Q718601 wd:Q819016 wd:Q927550 wd:Q950958 wd:Q962283 wd:Q1004037 wd:Q1855372 wd:Q1978163 wd:Q2107268 wd:Q2642828 wd:Q2725555 wd:Q2740012 wd:Q4273363 wd:Q4352055 wd:Q6761526 wd:Q8338725 wd:Q13107337 wd:Q15055683 wd:Q15118973 wd:Q16193885 wd:Q16665941 wd:Q57415743 }
+  {
+    ?p p:P569 ?s . ?s wikibase:rank ?derece ;
+       psv:P569 [ wikibase:timeValue ?zaman ; wikibase:timePrecision ?hassasiyet ; wikibase:timeCalendarModel ?takvim ] .
+    OPTIONAL { ?s pq:P1480 ?nitelik }
+    BIND("dogum" AS ?tur)
+  } UNION {
+    ?p p:P570 ?s . ?s wikibase:rank ?derece ;
+       psv:P570 [ wikibase:timeValue ?zaman ; wikibase:timePrecision ?hassasiyet ; wikibase:timeCalendarModel ?takvim ] .
+    OPTIONAL { ?s pq:P1480 ?nitelik }
+    BIND("olum" AS ?tur)
+  } UNION {
+    ?p p:P106 ?s . ?s ps:P106 ?hedef ; wikibase:rank ?derece .
+    OPTIONAL { ?hedef rdfs:label ?metin FILTER(LANG(?metin) = "tr") }
+    OPTIONAL { ?hedef rdfs:label ?enMetin FILTER(LANG(?enMetin) = "en") }
+    BIND("meslek" AS ?tur)
+  } UNION {
+    ?p p:P27 ?s . ?s ps:P27 ?hedef ; wikibase:rank ?derece .
+    OPTIONAL { ?hedef rdfs:label ?metin FILTER(LANG(?metin) = "tr") }
+    OPTIONAL { ?hedef rdfs:label ?enMetin FILTER(LANG(?enMetin) = "en") }
+    BIND("ulke" AS ?tur)
+  } UNION {
+    ?p rdfs:label ?metin . BIND(LANG(?metin) AS ?dil) FILTER(?dil IN ("tr", "en", "mul"))
+    BIND("etiket" AS ?tur)
+  } UNION {
+    ?p schema:description ?metin . BIND(LANG(?metin) AS ?dil) FILTER(?dil IN ("tr", "en"))
+    BIND("aciklama" AS ?tur)
+  } UNION {
+    ?a schema:about ?p ; schema:isPartOf <https://tr.wikipedia.org/> ; schema:name ?metin .
+    BIND("trwiki" AS ?tur)
+  }
+  FILTER(!BOUND(?derece) || ?derece != wikibase:DeprecatedRank)
+}
+ORDER BY ?p ?tur ?s ?hedef ?nitelik ?dil ?metin ?enMetin

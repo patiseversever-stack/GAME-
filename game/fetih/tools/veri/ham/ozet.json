@@ -1,0 +1,119 @@
+{
+	"uretim": "2026-11-16",
+	"kaynak": "Wikidata Query Service (CC0)",
+	"kisi": {
+		"kisiSayisi": 5000,
+		"esikSitelinks": 65,
+		"sonBant": [
+			63,
+			67
+		],
+		"uygunToplam": 5615,
+		"dislanan": {
+			"MÖ doğumlu": 144,
+			"doğum tarihi yok": 50,
+			"doğum tarihi yıldan kaba": 75
+		},
+		"turkGenelListede": 71,
+		"turkGenelListedeOsmanli": 50,
+		"trListeSayisi": 1645,
+		"trListe40ve_uzeri": 197,
+		"trDislanan": {
+			"doğum tarihi yıldan kaba": 33,
+			"doğum tarihi yok": 19
+		},
+		"tartismali": 523,
+		"tartismaliYil": 187,
+		"trTartismaliYil": 90,
+		"tartismaNedenleri": {
+			"farklı yıllar": 182,
+			"P1480: muhtemelen": 11,
+			"aynı yıl, farklı ay/gün": 161,
+			"P1480: yaklaşık (circa)": 208,
+			"Jülyen/Gregoryen takvim farkı (aynı gün)": 26,
+			"P1480: yaklaşık": 1,
+			"en iyi kerteli değer yıldan kaba, daha kesin değer alt kertede": 16,
+			"farklı onyıl/yüzyıl": 11,
+			"P1480: olası": 2,
+			"farklı yıllar (takvim modelleri farklı: Jülyen/Gregoryen olabilir)": 8,
+			"P1480: tartışmalı": 3,
+			"P1480: hesap hatası": 1
+		},
+		"birdenCokDogumDegeri": 707,
+		"trTartismali": 154,
+		"etiketYok": 309,
+		"etiketYokMulVar": 309,
+		"etiketIngilizceAyni": 3351,
+		"etiketYokVeIngilizceAyni": 189,
+		"trEtiketYok": 4,
+		"trEtiketIngilizceAyni": 1202,
+		"etiketSupheliOrnek": [
+			"Q76 Barack Obama: Türkçe etiket yok (mul kullanıldı); İngilizce etiketle aynı",
+			"Q22686 Donald Trump: Türkçe etiket yok (mul kullanıldı); İngilizce etiketle aynı",
+			"Q692 William Shakespeare: Türkçe etiket yok (mul kullanıldı); İngilizce etiketle aynı",
+			"Q352 Adolf Hitler: Türkçe etiket İngilizce etiketle aynı",
+			"Q2831 Michael Jackson: Türkçe etiket yok (mul kullanıldı); İngilizce etiketle aynı",
+			"Q937 Albert Einstein: Türkçe etiket yok (mul kullanıldı); İngilizce etiketle aynı",
+			"Q7747 Vladimir Putin: Türkçe etiket İngilizce etiketle aynı",
+			"Q9061 Karl Marx: Türkçe etiket yok (mul kullanıldı); İngilizce etiketle aynı"
+		],
+		"tartismaliOrnek": [
+			"Q935 Isaac Newton 1643: farklı yıllar [1642 | 1643-01-04]",
+			"Q9458 Muhammed 571: farklı yıllar [570 | 571-04-22 *]",
+			"Q855 Josef Stalin 1878: farklı yıllar [1878-12-18 * | 1879-12-21]",
+			"Q255 Ludwig van Beethoven 1770: P1480: muhtemelen, aynı yıl, farklı ay/gün [1770 | 1770-12-16 * | 1770-12-17]",
+			"Q1067 Dante 1265: P1480: yaklaşık (circa) []",
+			"Q9068 Voltaire 1694: aynı yıl, farklı ay/gün [1694-02-20 | 1694-11-21 *]",
+			"Q5682 Miguel de Cervantes 1547: P1480: yaklaşık (circa) [1547 | 1547-10-09 *]",
+			"Q7200 Aleksandr Puşkin 1799: Jülyen/Gregoryen takvim farkı (aynı gün) [1799 | 1799-06-06 | 1799-06-07]"
+		],
+		"meslekYok": 82,
+		"aciklamaYok": 992,
+		"ulkeYok": 163
+	},
+	"ilce": {
+		"ikinciKaynak": "npm turkey-neighbourhoods@4.0.3 (MIT)",
+		"ilceSayisi": 973,
+		"ayniAdliIlce": 49,
+		"ayniAdSayisi": 24,
+		"npmFark": 4,
+		"npmFarkOrnek": [
+			"yazım: Ankara/Balâ ↔ npm Bala",
+			"yazım: Gaziantep/Şehitkâmil ↔ npm Şehitkamil",
+			"yazım: Samsun/Ondokuzmayıs ↔ npm 19 Mayıs",
+			"yazım: Tekirdağ/Marmara Ereğlisi ↔ npm Marmaraereğlisi"
+		],
+		"koordinatSupheli": [
+			"Aksaray/Sarıyahşi (Q116701049): il sınırının 6 km dışında (Ankara içinde)",
+			"Eskişehir/İnönü (Q49110548): il sınırının 7 km dışında (Bilecik içinde)",
+			"Sakarya/Kaynarca (Q49105381): il sınırının 10 km dışında (Kocaeli içinde)",
+			"Van/Bahçesaray (Q49101082): il sınırının 6 km dışında (Siirt içinde)",
+			"Yalova/Altınova (Q49100567): il sınırının 8 km dışında (Kocaeli içinde)",
+			"İstanbul/Adalar (Q14814766): il sınırının 6 km dışında (denizde/yurt dışında)",
+			"İstanbul/Tuzla (Q938548): il sınırının 5 km dışında (Kocaeli içinde)"
+		],
+		"koordinatDuzeltilen": [
+			"Ankara/Gölbaşı (Q49103874): ilçe öğesindeki 37.79, 37.65 ilin 340 km dışında; kasaba öğesinin koordinatı alındı",
+			"Eskişehir/Odunpazarı (Q49107201): ilçe öğesindeki 39.89718, 41.26911 ilin 800 km dışında; kasaba öğesinin koordinatı alındı"
+		],
+		"sinirDagilimi": {
+			"ic": 945,
+			"0-5": 21,
+			"5-10": 7,
+			"10-25": 0,
+			"25+": 0
+		},
+		"trwikiYok": [
+			"Kocaeli/Başiskele",
+			"Kütahya/Aslanapa",
+			"Kütahya/Emet",
+			"Tokat/Tokat"
+		],
+		"nufusVar": 254,
+		"nufusSorunlu": [
+			"Konya/Kulu Q1948486: 44.004 (2018)"
+		],
+		"elleAd": 11,
+		"dislanan": 27
+	}
+}

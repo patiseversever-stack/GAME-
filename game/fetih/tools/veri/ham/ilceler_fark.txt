@@ -1,0 +1,127 @@
+# Wikidata ilçe listesi ile ikinci kaynağın karşılaştırması
+# İkinci kaynak: npm turkey-neighbourhoods@4.0.3 (MIT lisanslı; src/data/districtsByCityCode.json). Yalnız karşılaştırma için.
+# Üreten: tools/veri/getir.mjs. npm'de 51 ilin merkez ilçesi "Merkez" adıyla geçer; il adını taşıyan ilçeyle eşlenir.
+
+Toplam: Wikidata 973, npm 973
+İl başına sayı farkı: yok
+İl adı yazımı (npm ↔ oyun): birebir aynı (81 il)
+İl adı yazımı (Wikidata ↔ oyun): birebir aynı (81 il)
+
+FARK SAYISI: 4 (yazım 4, yalnız Wikidata'da 0, yalnız npm'de 0)
+Eşleşen: 918 birebir, 51 merkez ilçe
+
+## Yazım farkı (aynı ilçe, farklı yazılmış): il | Wikidata | npm | Wikidata QID
+Ankara | Balâ | Bala | Q264105
+Gaziantep | Şehitkâmil | Şehitkamil | Q388703
+Samsun | Ondokuzmayıs | 19 Mayıs | Q10802916
+Tekirdağ | Marmara Ereğlisi | Marmaraereğlisi | Q2025428
+
+## Yalnız Wikidata'da: il | ad | QID
+
+## Yalnız npm'de: il | ad
+
+## Elle düzeltilen Wikidata kayıtları (getir.mjs: ILCE_AD, ILCE_IL, ILCE_HARIC); karşılaştırmada ortaya çıktı
+ad   Q2205869 → Yahyalı: Türkçe etiket yazım hatalı ("Yahyal İlçesi")
+ad   Q2318164 → Kahramankazan: Türkçe etiket eski ad ("Kazan"); 2016'da Kahramankazan oldu
+ad   Q14329111 → Selçuklu: Türkçe etiket yanlış ("Selçuklular"); İngilizce etiket Selçuklu
+ad   Q49103932 → Güney: Türkçe etiket yanlış ("Güney Bölgesi"); İngilizce etiket "Güney district"
+ad   Q49105637 → Kulu: Türkçe etiket "Wikimedia yineleme sayfası"; HASC kodu TR.KO.KU ve koordinatı Kulu ilçesi
+ad   Q49103426 → Eyüpsultan: etiket eski ad ("Eyüp"); 2017'de Eyüpsultan oldu
+ad   Q2932699 → Altınordu: Türkçe etiket "Ordu (Altınordu) ilçesi": 2012'de merkez ilçe Altınordu adını aldı
+ad   Q2641900 → Aziziye: etiket eski ad ("Ilıca"); 2012'de Aziziye oldu
+ad   Q49109678 → Tuşba: Türkçe etiket "Tuşpa" (Urartu kentinin adı); ilçenin resmî adı Tuşba
+ad   Q1012887 → Ereğli: Türkçe etiket "Karadeniz Ereğli" (yaygın ad); ilçenin resmî adı Ereğli, Konya'da da Ereğli var
+ad   Q15961692 → Ereğli: Türkçe etiket "Karadeniz Ereğli ilçesi"; resmî ad Ereğli
+il   Q141623322 → İstanbul: Şile ilçe öğesinde P131 yok
+hariç Q116788474: Burmageçit bir köy/belde; ilçe sınıfına yanlış konmuş
+
+## "district of Turkey" (Q1147395) sınıfındaki öğe sayısı ve 973'e iniş
+Sınıftaki öğe: 1053; dışlanan: 27; aynı ilde aynı adlı öğe birleştirmesi: 53 öğe → 973 ilçe
+Büyükşehir illeri (30): Adana, Ankara, Antalya, Aydın, Balıkesir, Bursa, Denizli, Diyarbakır, Erzurum, Eskişehir, Gaziantep, Hatay, Kahramanmaraş, Kayseri, Kocaeli, Konya, Malatya, Manisa, Mardin, Mersin, Muğla, Ordu, Sakarya, Samsun, Tekirdağ, Trabzon, Van, İstanbul, İzmir, Şanlıurfa
+
+## Dışlanan öğeler: QID | etiket | il | site bağlantısı | neden
+Q1837083 | Eskişehir | Eskişehir | 1 | büyükşehirde 2013'te kaldırılmış eski merkez ilçe
+Q1911844 | Balıkesir (ilçe) | Balıkesir | 2 | büyükşehirde 2013'te kaldırılmış eski merkez ilçe
+Q1911954 | Denizli (ilçe) | Denizli | 2 | büyükşehirde 2013'te kaldırılmış eski merkez ilçe
+Q2002154 | Van (ilçe) | Van | 4 | eski birim: yerine geçen birim (P1366) Q49109678; yerine geçen birim (P1366) Q49110550
+Q2268414 | Mersin | Mersin | 1 | büyükşehirde 2013'te kaldırılmış eski merkez ilçe
+Q2317435 | Erzurum (ilçe) | Erzurum | 2 | büyükşehirde 2013'te kaldırılmış eski merkez ilçe
+Q2339523 | Merkez (Şanlıurfa) | Şanlıurfa | 3 | eski birim: yerine geçen birim (P1366) Q49103423; yerine geçen birim (P1366) Q49103997; yerine geçen birim (P1366) Q49105274
+Q2626596 | Kahramanmaraş | Kahramanmaraş | 3 | eski birim: yerine geçen birim (P1366) Q49103124; yerine geçen birim (P1366) Q49107333
+Q2738695 | Merkez (Diyarbakır) | Diyarbakır | 2 | eski birim: yerine geçen birim (P1366) Q12710074; yerine geçen birim (P1366) Q15989052; yerine geçen birim (P1366) Q15989058; yerine geçen birim (P1366) Q15989061
+Q2988113 | Samsun | Samsun | 1 | büyükşehirde 2013'te kaldırılmış eski merkez ilçe
+Q3032978 | Muğla (ilçe) | Muğla | 0 | büyükşehirde 2013'te kaldırılmış eski merkez ilçe
+Q13429760 | Merkez (Antalya) | Antalya | 2 | eski birim: yerine geçen birim (P1366) Q15995623; yerine geçen birim (P1366) Q15995624; yerine geçen birim (P1366) Q3710598; yerine geçen birim (P1366) Q49103145; yerine geçen birim (P1366) Q49106734
+Q25399093 | Distretto di Malatya | - | 2 | il bilgisi yok (P131 eksik)
+Q49100834 | Arife İlçesi | - | 1 | il bilgisi yok (P131 eksik)
+Q49102614 | Dadaşkent ilçesi | - | 1 | il bilgisi yok (P131 eksik)
+Q49106411 | Merkez (Balıkesir) | - | 1 | il bilgisi yok (P131 eksik)
+Q49106419 | Merkez (Denizli) | - | 1 | il bilgisi yok (P131 eksik)
+Q49106425 | Merkez (Eskişehir) | - | 1 | il bilgisi yok (P131 eksik)
+Q49106432 | Merkez (Kocaeli) | - | 1 | il bilgisi yok (P131 eksik)
+Q49106435 | Merkez İlçesi (Malatya) | - | 1 | il bilgisi yok (P131 eksik)
+Q49106437 | Manisa (ilçe) | Manisa | 3 | büyükşehirde 2013'te kaldırılmış eski merkez ilçe
+Q49106444 | Merkez (Sakarya) | - | 1 | il bilgisi yok (P131 eksik)
+Q49106447 | Merkez İlçesi (Samsun) | - | 1 | il bilgisi yok (P131 eksik)
+Q49106454 | Merkez İlçesi (Trabzon) | - | 1 | il bilgisi yok (P131 eksik)
+Q49109450 | Taşmış ilçesi | - | 1 | il bilgisi yok (P131 eksik)
+Q49280669 | Malatya | Malatya | 1 | büyükşehirde 2013'te kaldırılmış eski merkez ilçe
+Q116788474 | Burmageçit, Tunceli | Tunceli | 2 | elle: Burmageçit bir köy/belde; ilçe sınıfına yanlış konmuş
+
+## Birden çok öğeden birleştirilen ilçeler (ilçe öğesi + kasaba öğesi ya da yinelenen öğe): il | ad | QID'ler
+Adana | Karataş | Q376854, Q1966556
+Adana | Tufanbeyli | Q1004480, Q49109651
+Afyonkarahisar | Şuhut | Q1947545, Q2095388
+Aksaray | Ağaçören | Q2478072, Q116730136
+Aksaray | Ortaköy | Q1434794, Q13966389
+Ankara | Nallıhan | Q1947523, Q49106812
+Antalya | Kepez | Q727065, Q15995623
+Antalya | İbradı | Q343150, Q343180
+Artvin | Hopa | Q657127, Q15960754
+Aydın | Didim | Q958144, Q49102835
+Aydın | Efeler | Q1911792, Q16836589
+Balıkesir | Ayvalık | Q793383, Q2438701
+Balıkesir | Erdek | Q177298, Q109660219
+Bilecik | Bilecik | Q208006, Q2499235
+Bilecik | Yenipazar | Q2023432, Q3056035
+Bilecik | İnhisar | Q2368737, Q49110545
+Burdur | Bucak | Q581187, Q13635219
+Burdur | Kemer | Q1023156, Q49105421
+Burdur | Yeşilova | Q2677717, Q116824790
+Bursa | Mudanya | Q856171, Q2458104
+Diyarbakır | Sur | Q664716, Q12710074
+Elazığ | Maden | Q1023303, Q3032160
+Eskişehir | Seyitgazi | Q1572971, Q1873555
+Eskişehir | Çifteler | Q2248704, Q2396990
+Giresun | Şebinkarahisar | Q388662, Q1860390
+Hatay | İskenderun | Q174341, Q3107609
+Kastamonu | Ağlı | Q2491340, Q117230984
+Konya | Beyşehir | Q127389, Q1958793
+Konya | Ilgın | Q1914881, Q2196201
+Konya | Kulu | Q1948486, Q49105637
+Konya | Taşkent | Q349367, Q49109446
+Kırklareli | Pınarhisar | Q1003885, Q55686004
+Kırklareli | Vize | Q364021, Q49109915
+Malatya | Hekimhan | Q990206, Q2453246
+Mardin | Dargeçit | Q1004605, Q116169636
+Muğla | Dalaman | Q847295, Q1966353
+Muğla | Datça | Q947051, Q1838640
+Muğla | Fethiye | Q207998, Q1966463
+Muğla | Milas | Q924252, Q1966485
+Sakarya | Adapazarı | Q175323, Q1966518
+Sivas | Yıldızeli | Q1011921, Q2235001
+Tekirdağ | Şarköy | Q388544, Q2193311
+Tunceli | Tunceli | Q202195, Q4924439
+Uşak | Banaz | Q669172, Q49101138
+Uşak | Ulubey | Q1816898, Q49109754
+Zonguldak | Ereğli | Q1012887, Q15961692
+Çanakkale | Ayvacık | Q793377, Q2574078
+Çanakkale | Gelibolu | Q216907, Q1966963
+İstanbul | Zeytinburnu | Q197095, Q49371639
+İzmir | Aliağa | Q996748, Q1909973
+İzmir | Bergama | Q737822, Q1911139
+İzmir | Kemalpaşa | Q1014125, Q2527260
+Şanlıurfa | Birecik | Q849497, Q49101346
+
+## Atlanan nüfus değerleri (tam sayı değil ya da 1.000'den küçük): il/ilçe öğe: değer (yıl)
+Konya/Kulu Q1948486: 44.004 (2018)

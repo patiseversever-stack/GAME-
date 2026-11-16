@@ -1,0 +1,10 @@
+# Türkiye (Q43) ya da Osmanlı İmparatorluğu (Q12560) vatandaşı, Türkçe Vikipedi sayfası olan,
+# en az 15 site bağlantılı insanlar.
+SELECT DISTINCT ?p ?sl WHERE {
+  VALUES ?u { wd:Q43 wd:Q12560 }
+  ?p wdt:P27 ?u .
+  ?p wdt:P31 wd:Q5 ; wikibase:sitelinks ?sl .
+  FILTER(?sl >= 15)
+  ?a schema:about ?p ; schema:isPartOf <https://tr.wikipedia.org/> .
+}
+ORDER BY DESC(?sl) ?p

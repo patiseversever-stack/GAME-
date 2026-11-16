@@ -37,6 +37,12 @@ else
 		console.log(`${t} (${a._soru} soru)`);
 		for (const k of ALAN) if (a[k]) console.log(`   ${k.padEnd(10)} ${String(a[k].n).padStart(4)}  ${a[k].id}  «${a[k].s.length > 70 ? a[k].s.slice(0, 67) + '…' : a[k].s}»`);
 	}
+// --yaz tabloyu bankanın en uzun değerleriyle BAŞTAN yazar: stres denetimine dayanan elle ayarlar (düşürülmüş sınırlar,
+// <alan>Kelime) silinir. Yalnız bilinçli olarak --zorla ile.
+if (process.argv.includes('--yaz') && !process.argv.includes('--zorla')) {
+	console.log('\n--yaz stres denetimine dayanan elle ayarları siler; gerçekten isteniyorsa --yaz --zorla');
+	process.exit(2);
+}
 if (process.argv.includes('--yaz')) {
 	const p = 'src/quiz/sinirlar.js';
 	const src = readFileSync(p, 'utf8');

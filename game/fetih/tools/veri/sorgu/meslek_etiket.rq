@@ -1,0 +1,9 @@
+# Mesleklerin etiketleri ve diğer adları (skos:altLabel), açıklamalarla eşleştirmek için
+# (ör. Fransızca etiket "artiste peintre", diğer ad "peintre"). #QIDLER# yerine getir.mjs bir öbek meslek koyar.
+SELECT ?m ?dil ?metin WHERE {
+  VALUES ?m { #QIDLER# }
+  { ?m rdfs:label ?metin } UNION { ?m skos:altLabel ?metin }
+  BIND(LANG(?metin) AS ?dil)
+  FILTER(?dil IN ("tr", "en", "de", "fr", "es", "it", "nl", "pt"))
+}
+ORDER BY ?m ?dil ?metin

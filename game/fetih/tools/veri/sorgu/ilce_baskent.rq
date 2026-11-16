@@ -1,0 +1,7 @@
+# İlçe öğelerinin başkenti (P36): ilçe merkezi olan kasaba/şehir öğesi ve trwiki sayfası.
+SELECT ?d ?t ?trwiki ?sl WHERE {
+  ?d wdt:P31 wd:Q1147395 ; wdt:P36 ?t .
+  ?t wikibase:sitelinks ?sl .
+  OPTIONAL { ?w schema:about ?t ; schema:isPartOf <https://tr.wikipedia.org/> ; schema:name ?trwiki }
+}
+ORDER BY ?d ?t

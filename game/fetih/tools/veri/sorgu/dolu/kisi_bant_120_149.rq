@@ -1,0 +1,9 @@
+# Türkçe Vikipedi sayfası olan insanlar (Q5), site bağlantısı sayısı belli değerlerde.
+# 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 yerine getir.mjs bir sayı bandı koyar (ör. 150 151 … 600); sitelinks'e aralık süzgeci çok yavaş,
+# tek tek değerle dizin araması hızlıdır. Bantlar yukarıdan aşağı, 5.000 kişi dolana dek sorulur.
+SELECT ?p ?sl WHERE {
+  VALUES ?sl { 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 }
+  ?p wikibase:sitelinks ?sl ; wdt:P31 wd:Q5 .
+  ?a schema:about ?p ; schema:isPartOf <https://tr.wikipedia.org/> .
+}
+ORDER BY DESC(?sl) ?p

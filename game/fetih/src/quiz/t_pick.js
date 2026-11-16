@@ -23,7 +23,10 @@ const CSS = /* css */ `
 /* yüzen boşluk ilk satırın altından başlar ve yalnız kendi kutusu kadar yer tutar (shape-outside: border-box): satırlar
    yüzen öğenin margin kutusu kadar kısalır, margin-top'lu boşluk ilk satırı da daraltıyordu; dar levhada tek uzun kelime
    ("TUTUNAMAYANLAR") o daralmış satıra sığmayınca boşluğun altına, değerin üstüne iniyordu */
-.fl-hl .nm::before{content:'';float:right;width:38px;height:92px;margin-top:1.1em;shape-outside:border-box}
+/* boşluk VS elmasının dikey konumunda ve boyunda (JS --fy/--fh ölçer): elmasın üstündeki satırlar tam genişlikte; eskiden
+   ilk satırın hemen altından 92 px iniyordu ve 320 genişlikte uzun ikinci kelime ("İMPARATORLUĞU") yanına sığmayıp
+   boşluğun altına, değerin üstüne düşüyordu (stres denetimi) */
+.fl-hl .nm::before{content:'';float:right;width:38px;height:var(--fh,92px);margin-top:var(--fy,1.1em);shape-outside:border-box}
 .fl-hl.b .nm::before{float:left}
 .fl-hl.b .nm{left:30px;right:14px}
 .fl-hl .vl{position:absolute;left:14px;right:30px;bottom:16px;display:flex;align-items:baseline;gap:5px;min-height:44px;white-space:nowrap}
@@ -326,6 +329,13 @@ export const hilo = {
 				const r = rects()[0];
 				return !!r && r.top - nm.getBoundingClientRect().top > 4;
 			};
+			// yüzen boşluk VS elmasının hizasında: elmas levha kutusunun dikey ortasında, 46 px kare 45° dönük (köşegen ~65 px)
+			// ve 5 px halka; kendi canlandırması (ölçekle giriş) sürerken ölçülmesin diye kutunun geometrisinden hesaplanır
+			const bx = box.getBoundingClientRect();
+			const yari = (46 * Math.SQRT2) / 2 + 6;
+			const nt = nm.getBoundingClientRect().top;
+			nm.style.setProperty('--fy', `${Math.max(0, Math.round(bx.top + bx.height / 2 - yari - nt))}px`);
+			nm.style.setProperty('--fh', `${Math.round(yari * 2)}px`);
 			let px = 28;
 			nm.style.fontSize = `${px}px`;
 			// en çok 12 px'e kadar (eskiden 15: o boyda da sığmayan isim değerin üstüne biniyordu)

@@ -1,0 +1,9 @@
+# İlçe öğelerinde koordinat yoksa trwiki sayfasının bağlı olduğu kasaba/şehir öğesinin koordinatı.
+# #QIDLER# yerine getir.mjs öğeleri koyar; doldurulmuş hali sorgu/dolu/ilce_ek_koordinat_<özet>.rq.
+SELECT ?t ?lat ?lon ?derece WHERE {
+  VALUES ?t { #QIDLER# }
+  ?t p:P625 ?s .
+  ?s psv:P625 [ wikibase:geoLatitude ?lat ; wikibase:geoLongitude ?lon ; wikibase:geoGlobe wd:Q2 ] ; wikibase:rank ?derece .
+  FILTER(?derece != wikibase:DeprecatedRank)
+}
+ORDER BY ?t ?derece ?lat ?lon

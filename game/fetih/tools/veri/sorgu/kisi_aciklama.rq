@@ -1,0 +1,9 @@
+# Kişilerin başka dillerdeki Wikidata açıklamaları (meslek sıralaması için: hangi meslek kaç dilde açıklamada geçiyor).
+# #QIDLER# yerine getir.mjs bir öbek kişi koyar.
+SELECT ?p ?dil ?metin WHERE {
+  VALUES ?p { #QIDLER# }
+  ?p schema:description ?metin .
+  BIND(LANG(?metin) AS ?dil)
+  FILTER(?dil IN ("de", "fr", "es", "it", "nl", "pt"))
+}
+ORDER BY ?p ?dil ?metin

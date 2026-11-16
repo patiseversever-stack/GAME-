@@ -1,11 +1,11 @@
 # "district of Turkey" (Q1147395) örnekleri: site bağlantısı sayısı, trwiki başlığı,
-# kapatılma (P576), yerine geçen (P1366) ve P31 deyiminin bitiş tarihi (P582).
-SELECT ?d ?sl ?trwiki ?kapanis ?yerine ?p31bitis WHERE {
-  ?d p:P31 ?s31 . ?s31 ps:P31 wd:Q1147395 .
+# kapatılma (P576), yerine geçen (P1366), ilçe sınıfı deyiminin bitiş tarihi (P582) ve kertesi.
+SELECT ?d ?sl ?trwiki ?kapanis ?yerine ?p31bitis ?p31kerte WHERE {
+  ?d p:P31 ?s31 . ?s31 ps:P31 wd:Q1147395 ; wikibase:rank ?p31kerte .
   ?d wikibase:sitelinks ?sl .
   OPTIONAL { ?s31 pq:P582 ?p31bitis }
   OPTIONAL { ?w schema:about ?d ; schema:isPartOf <https://tr.wikipedia.org/> ; schema:name ?trwiki }
   OPTIONAL { ?d wdt:P576 ?kapanis }
   OPTIONAL { ?d wdt:P1366 ?yerine }
 }
-ORDER BY ?d ?yerine ?kapanis ?p31bitis
+ORDER BY ?d ?yerine ?kapanis ?p31bitis ?p31kerte

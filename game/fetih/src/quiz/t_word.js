@@ -77,7 +77,7 @@ const CSS = /* css */ `
 .xw-c.bad{color:#fff;background:linear-gradient(180deg,#ff6a5a,#d42a1c);box-shadow:0 3px 0 #6e0c05}
 .xw-c.ok sup,.xw-c.bad sup{color:rgba(255,255,255,.85)}
 .xw-grid.shake{animation:anShake .45s}
-.xw-clue{display:flex;align-items:stretch;gap:9px;width:100%;max-width:460px}
+.xw-clue{display:flex;align-items:stretch;gap:9px;width:100%;max-width:460px;box-sizing:border-box;padding-inline:4px}
 .xw-txt{flex:1;min-width:0;display:flex;align-items:center;gap:11px;min-height:54px;padding:7px 14px;transform:skewX(-8deg);background:#0a0b14;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.92),0 4px 14px rgba(0,0,0,.5)}
 .xw-txt>*{transform:skewX(8deg)}

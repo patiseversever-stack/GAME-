@@ -1,0 +1,12 @@
+# Önceki adımlarda trwiki sayfası bulunamayan ilçeler için başlıkla arama.
+# #BASLIKLAR# yerine getir.mjs aday başlıkları koyar ("Ad, İl", "Ad (ilçe)", "Ad"); doldurulmuş hali
+# sorgu/dolu/ilce_trwiki_baslik_<özet>.rq dosyasına yazılır. Anlam ayrımı sayfası mı, koordinatı ve P131'i ne?
+SELECT ?baslik ?t ?sl ?anlam ?lat ?lon ?ust ?ustIl WHERE {
+  VALUES ?baslik { #BASLIKLAR# }
+  ?w schema:name ?baslik ; schema:isPartOf <https://tr.wikipedia.org/> ; schema:about ?t .
+  ?t wikibase:sitelinks ?sl .
+  BIND(EXISTS { ?t wdt:P31 wd:Q4167410 } AS ?anlam)
+  OPTIONAL { ?t p:P625/psv:P625 [ wikibase:geoLatitude ?lat ; wikibase:geoLongitude ?lon ] }
+  OPTIONAL { ?t wdt:P131 ?ust . OPTIONAL { ?ustIl wdt:P36 ?ust ; wdt:P31 wd:Q48336 . } }
+}
+ORDER BY ?baslik ?t ?lat ?lon ?ust ?ustIl

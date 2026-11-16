@@ -302,6 +302,10 @@ const measure = () => {
 		const cs = getComputedStyle(e);
 		const kutu = cs.backgroundColor !== 'rgba(0, 0, 0, 0)' || cs.backgroundImage !== 'none' || parseFloat(cs.borderTopWidth) > 0 || cs.boxShadow !== 'none';
 		if (!kutu) continue;
+		// bilerek taşan süs katmanı (ufuk, halka, ışık süpürmesi, saha çizgisi: mutlak konumlu, yazısız, dokunulmaz) sayılmaz;
+		// akıştaki kutular (harf kutusu, kart, şık) ve dokunulabilir öğeler sayılır
+		const dokun = e.matches('button,[role=button],.fl-opt,.fl-tile,a,input');
+		if (!dokun && /absolute|fixed/.test(cs.position) && !e.textContent.trim()) continue;
 		const c = clipOf(e);
 		const yana = Math.max(0, c.left - r.left) + Math.max(0, r.right - c.right);
 		if (yana > 2 && !kayan(e, 'x')) kirpik.add(`yana kırpılan kutu: ${ad(e)} (${Math.round(yana)} px)`);

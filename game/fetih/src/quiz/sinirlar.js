@@ -156,7 +156,7 @@ export const SINIR = {
 	kimim: { kok: 36, ipucu: 98, uzunKelime: 22 },
 	kusbakisi: { kok: 61, sik: 27, uzunKelime: 16 },
 	mancinik: { kok: 80, uzunKelime: 18 },
-	match: { kok: 49, sik: 34, uzunKelime: 18 },
+	match: { kok: 49, sik: 34, uzunKelime: 18, sikKelime: 16 }, // stres 320: şıkta 18 harflik kelime sütunda heceden bölünüyordu
 	mayin: { kok: 48, not: 91, ipucu: 40, uzunKelime: 17 },
 	num: { kok: 80, uzunKelime: 18 },
 	odd: { kok: 60, sik: 23, not: 108, uzunKelime: 21 },
@@ -174,6 +174,9 @@ export const SINIR = {
 	// SINIR_TABLOSU_BITIR
 };
 
+/** Alanın bölünmeden yazılan en uzun kelime sınırı: `<alan>Kelime` (dar alana özel, ör. eşleştirme sütunu) yoksa `uzunKelime`. */
+export const kelimeSiniri = (S, alan) => S?.[alan + 'Kelime'] ?? S?.uzunKelime;
+
 /** Sorunun sözleşmeyi aştığı yerler: [{ alan, uzunluk, sinir, metin }] (boşsa uyar). */
 export function ihlaller(q) {
 	const S = SINIR[q.type];
@@ -182,9 +185,10 @@ export function ihlaller(q) {
 	for (const [alan, s] of metinler(q)) {
 		const n = L(s);
 		if (S[alan] != null && n > S[alan]) out.push({ alan, uzunluk: n, sinir: S[alan], metin: s });
-		if (alan !== 'kelime' && S.uzunKelime != null) {
+		const kw = kelimeSiniri(S, alan);
+		if (alan !== 'kelime' && kw != null) {
 			const w = Math.max(0, ...s.split(/[\s/–—-]+/).map(L));
-			if (w > S.uzunKelime) out.push({ alan: alan + ' kelimesi', uzunluk: w, sinir: S.uzunKelime, metin: s });
+			if (w > kw) out.push({ alan: alan + ' kelimesi', uzunluk: w, sinir: kw, metin: s });
 		}
 	}
 	return out;

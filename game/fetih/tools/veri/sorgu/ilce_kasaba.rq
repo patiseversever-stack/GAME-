@@ -1,0 +1,10 @@
+# İlçe öğesinin trwiki sayfası çoğu zaman ilçe öğesine değil, aynı adlı kasaba/şehir öğesine bağlıdır.
+# Doğrudan bir ile bağlı (P131 → il) ve trwiki sayfası olan tüm öğeler; ada göre eşleştirme getir.mjs'de yapılır.
+SELECT ?il ?t ?trwiki ?sl WHERE {
+  hint:Query hint:optimizer "None" .
+  ?il wdt:P31 wd:Q48336 .
+  ?t wdt:P131 ?il .
+  ?w schema:about ?t ; schema:isPartOf <https://tr.wikipedia.org/> ; schema:name ?trwiki .
+  ?t wikibase:sitelinks ?sl .
+}
+ORDER BY ?il ?t
