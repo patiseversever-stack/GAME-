@@ -1,0 +1,8 @@
+# İlçe öğelerinin koordinatları (P625), kerte (rank) ile. Kaldırılmış (deprecated) olanlar dışarıda.
+SELECT ?d ?lat ?lon ?derece WHERE {
+  ?d wdt:P31 wd:Q1147395 ; p:P625 ?s .
+  ?s psv:P625 [ wikibase:geoLatitude ?lat ; wikibase:geoLongitude ?lon ; wikibase:geoGlobe wd:Q2 ] ;
+     wikibase:rank ?derece .
+  FILTER(?derece != wikibase:DeprecatedRank)
+}
+ORDER BY ?d ?derece ?lat ?lon

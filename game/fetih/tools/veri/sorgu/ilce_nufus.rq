@@ -1,0 +1,8 @@
+# İlçe öğelerinin nüfus deyimleri (P1082), tarih (P585) ve kerte ile.
+SELECT ?d ?nufus ?tarih ?derece WHERE {
+  ?d wdt:P31 wd:Q1147395 ; p:P1082 ?s .
+  ?s ps:P1082 ?nufus ; wikibase:rank ?derece .
+  OPTIONAL { ?s pq:P585 ?tarih }
+  FILTER(?derece != wikibase:DeprecatedRank)
+}
+ORDER BY ?d ?tarih ?nufus ?derece

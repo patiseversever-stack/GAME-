@@ -1,0 +1,10 @@
+# İlçe öğelerinin P131 (bağlı olduğu idari birim) deyimleri; hedef il mi (Q48336), ilçe mi?
+SELECT ?d ?hedef ?derece ?baslangic ?bitis ?hedefIl ?hedefIlce WHERE {
+  ?d wdt:P31 wd:Q1147395 ; p:P131 ?s .
+  ?s ps:P131 ?hedef ; wikibase:rank ?derece .
+  OPTIONAL { ?s pq:P580 ?baslangic }
+  OPTIONAL { ?s pq:P582 ?bitis }
+  BIND(EXISTS { ?hedef wdt:P31 wd:Q48336 } AS ?hedefIl)
+  BIND(EXISTS { ?hedef wdt:P31 wd:Q1147395 } AS ?hedefIlce)
+}
+ORDER BY ?d ?hedef ?derece ?baslangic ?bitis

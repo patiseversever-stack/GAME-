@@ -1,0 +1,8 @@
+# Büyükşehir belediyesi olan iller (Q2716259 "metropolitan municipality in Turkey").
+# Bu illerde il adını taşıyan "merkez ilçe" 2013'te kaldırıldı (6360 sayılı Kanun).
+SELECT DISTINCT ?il WHERE {
+  ?b wdt:P31 wd:Q2716259 .
+  { ?b wdt:P1001 ?il } UNION { ?b wdt:P131 ?il }
+  ?il wdt:P31 wd:Q48336 .
+}
+ORDER BY ?il

@@ -1,0 +1,8 @@
+# İlçe öğelerinin etiketleri. Türkçe etiketi olmayan öğeler için yedek diller de alınır.
+SELECT ?d ?dil ?etiket WHERE {
+  ?d wdt:P31 wd:Q1147395 .
+  ?d rdfs:label ?etiket .
+  BIND(LANG(?etiket) AS ?dil)
+  FILTER(?dil IN ("tr", "mul", "en", "de", "fr", "it", "es", "nl", "ceb", "az"))
+}
+ORDER BY ?d ?dil ?etiket
