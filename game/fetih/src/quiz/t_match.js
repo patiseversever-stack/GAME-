@@ -109,6 +109,32 @@ export const match = {
 		let done = false;
 		const paths = new Map();
 
+		// sığdır: şıktaki en uzun kelime şık genişliğini aşıyorsa yazı (en çok 11 px'e dek) küçülür; kelime heceden bölünmez
+		// (overflow-wrap:anywhere yalnız son çare). Stres denetimi: 320'de 15 harflik geniş kelime ("Müşkülpesentlik") sütunda
+		// bölünüyordu. Kart sonradan küçülürse (cevapta ortak sığdırma) yeniden ölçülür.
+		const olcer = document.createElement('canvas').getContext('2d');
+		const sigdir = () => {
+			for (const b of [...L, ...Rt]) {
+				const t = b.firstChild?.nodeType === 3 ? b.firstChild.textContent : b.textContent;
+				const words = t.split(/\s+/).filter(Boolean);
+				b.style.fontSize = '';
+				const cs = getComputedStyle(b);
+				const ic = b.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2;
+				if (!(ic > 0) || !words.length) continue;
+				let px = parseFloat(cs.fontSize) || 16;
+				const genis = () => {
+					olcer.font = `${cs.fontWeight} ${px}px ${cs.fontFamily}`;
+					return Math.max(...words.map((w) => olcer.measureText(w).width));
+				};
+				let k = 0;
+				while (px > 11 && genis() > ic && k++ < 20) px -= 0.5;
+				if (k) b.style.fontSize = `${px}px`;
+			}
+		};
+		sigdir();
+		const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => requestAnimationFrame(sigdir)) : null;
+		ro?.observe(root);
+
 		// bağ uçları: kartların iç kenarındaki yuvaların ortası (çizgi kartların altından yuvaya girer)
 		const anchor = (b, side) => ({ x: side === 'l' ? b.offsetLeft + b.offsetWidth : b.offsetLeft, y: b.offsetTop + b.offsetHeight / 2 });
 		const curve = (a, b) => {
@@ -317,7 +343,9 @@ export const match = {
 					}
 				}, 1000);
 			},
-			destroy() {},
+			destroy() {
+				ro?.disconnect();
+			},
 		};
 	},
 	judge(v, value) {

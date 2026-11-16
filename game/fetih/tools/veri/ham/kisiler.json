@@ -11690,6 +11690,24 @@
 		"trwikiBaslik": "Henri Poincaré"
 	},
 	{
+		"qid": "Q134798",
+		"ad": "Haruki Murakami",
+		"dogumYili": 1949,
+		"olumYili": null,
+		"sitelinks": 131,
+		"meslekler": [
+			"yazar",
+			"çevirmen",
+			"nesir yazarı"
+		],
+		"ulke": [
+			"Japonya"
+		],
+		"aciklama": "Japon yazar",
+		"etiketSupheli": "Türkçe etiket İngilizce etiketle aynı",
+		"trwikiBaslik": "Haruki Murakami"
+	},
+	{
 		"qid": "Q234679",
 		"ad": "Charlotte Rampling",
 		"dogumYili": 1946,
@@ -11940,24 +11958,6 @@
 		],
 		"aciklama": "Amerikalı teorik fizikçi (1904-1967)",
 		"trwikiBaslik": "Robert Oppenheimer"
-	},
-	{
-		"qid": "Q134798",
-		"ad": "Haruki Murakami",
-		"dogumYili": 1949,
-		"olumYili": null,
-		"sitelinks": 130,
-		"meslekler": [
-			"yazar",
-			"çevirmen",
-			"nesir yazarı"
-		],
-		"ulke": [
-			"Japonya"
-		],
-		"aciklama": "Japon yazar",
-		"etiketSupheli": "Türkçe etiket İngilizce etiketle aynı",
-		"trwikiBaslik": "Haruki Murakami"
 	},
 	{
 		"qid": "Q311440",
@@ -59676,6 +59676,7 @@
 		"olumTartismaNeden": [
 			"farklı yıllar"
 		],
+		"yasSupheli": "170 yıl yaşamış görünüyor",
 		"trwikiBaslik": "Geronimo"
 	},
 	{
@@ -68598,6 +68599,7 @@
 			"Fransa"
 		],
 		"aciklama": "Dünya'nın bilinen en çok yaşamış insanı",
+		"yasSupheli": "122 yıl yaşamış görünüyor",
 		"etiketSupheli": "Türkçe etiket İngilizce etiketle aynı",
 		"trwikiBaslik": "Jeanne Calment"
 	},
@@ -74717,6 +74719,24 @@
 		"trwikiBaslik": "Mads Mikkelsen"
 	},
 	{
+		"qid": "Q309854",
+		"ad": "Joseph de Maistre",
+		"dogumYili": 1753,
+		"olumYili": 1821,
+		"sitelinks": 72,
+		"meslekler": [
+			"filozof",
+			"yazar",
+			"diplomat"
+		],
+		"ulke": [
+			"Kingdom of Sardinia"
+		],
+		"aciklama": null,
+		"etiketSupheli": "Türkçe etiket İngilizce etiketle aynı",
+		"trwikiBaslik": "Joseph de Maistre"
+	},
+	{
 		"qid": "Q310002",
 		"ad": "Fénelon",
 		"dogumYili": 1651,
@@ -77377,24 +77397,6 @@
 		],
 		"aciklama": "Malezya başbakanı (2022-günümüz)",
 		"trwikiBaslik": "Enver İbrahim"
-	},
-	{
-		"qid": "Q309854",
-		"ad": "Joseph de Maistre",
-		"dogumYili": 1753,
-		"olumYili": 1821,
-		"sitelinks": 71,
-		"meslekler": [
-			"filozof",
-			"yazar",
-			"diplomat"
-		],
-		"ulke": [
-			"Kingdom of Sardinia"
-		],
-		"aciklama": null,
-		"etiketSupheli": "Türkçe etiket İngilizce etiketle aynı",
-		"trwikiBaslik": "Joseph de Maistre"
 	},
 	{
 		"qid": "Q312954",
